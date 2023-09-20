@@ -1,3 +1,5 @@
+use crate::ir::IR;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     UnknownField(String),
@@ -12,11 +14,8 @@ pub struct Error {
     pub error: ParseError,
 }
 
-pub trait Parse
-where
-    Self: Sized,
-{
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Vec<Error>>;
+pub trait Parse {
+    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<IR, Vec<Error>>;
 }
 
 pub fn parse<P: Parse>(doc: &str) -> Result<P, Vec<Error>> {
