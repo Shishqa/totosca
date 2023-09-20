@@ -1,66 +1,66 @@
-use super::Value;
-use crate::parse::{get_field, Error, Parse, ParseError};
+use toto_tosca::{Entity, Relation};
+
+use crate::parse::{Context, Error, GraphHandle, Parse, ParseError};
+
+use super::value::Value;
 
 #[derive(Debug)]
-pub struct SchemaDefinition {
-    pub type_ref: String,
-    pub description: Option<String>,
-    pub validation: Option<Value>,
-    pub key_schema: Option<Box<SchemaDefinition>>,
-    pub entry_schema: Option<Box<SchemaDefinition>>,
-}
+pub struct SchemaDefinition;
 
 impl Parse for SchemaDefinition {
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Vec<Error>> {
-        let mut errors = Vec::<Error>::new();
+    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        let root = ctx.graph.add_node(Entity::Schema);
 
-        let mut type_ref: Option<String> = None;
-        let mut description: Option<String> = None;
-        let mut validation: Option<Value> = None;
-        let mut key_schema: Option<Box<SchemaDefinition>> = None;
-        let mut entry_schema: Option<Box<SchemaDefinition>> = None;
-
+        let mut has_type: bool = false;
         if let Ok(map) = n.as_map() {
             map.iter()
                 .for_each(|entry| match entry.0.as_str().unwrap() {
-                    "type" => get_field(entry.1, &mut type_ref, &mut errors),
-                    "description" => get_field(entry.1, &mut description, &mut errors),
-                    "validation" => get_field(entry.1, &mut validation, &mut errors),
-                    "key_schema" => get_field(entry.1, &mut key_schema, &mut errors),
-                    "entry_schema" => get_field(entry.1, &mut entry_schema, &mut errors),
-                    f => errors.push(Error {
+                    "type" => {
+                        has_type = true;
+                        let t = String::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Type);
+                    }
+                    "description" => {
+                        let t = String::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Description);
+                    }
+                    "validation" => {
+                        let t = Value::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Validation);
+                    }
+                    "key_schema" => {
+                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::KeySchema);
+                    }
+                    "entry_schema" => {
+                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::EntrySchema);
+                    }
+                    f => ctx.errors.push(Error {
                         pos: Some(entry.0.pos()),
                         error: ParseError::UnknownField(f.to_string()),
                     }),
                 });
-        } else if let Ok(s) = n.as_str() {
-            type_ref = Some(s.to_string());
+        } else if let Ok(_) = n.as_str() {
+            has_type = true;
+            let t = String::parse(ctx, n);
+            ctx.graph.add_edge(root, t, Relation::Type);
         } else {
-            errors.push(Error {
+            ctx.errors.push(Error {
                 pos: Some(n.pos()),
                 error: ParseError::UnexpectedType("map or string"),
             });
-            return Err(errors);
+            return root;
         }
 
-        if type_ref.is_none() {
-            errors.push(Error {
+        if !has_type {
+            ctx.errors.push(Error {
                 pos: Some(n.pos()),
                 error: ParseError::MissingField("type"),
             });
         }
 
-        if !errors.is_empty() {
-            Err(errors)
-        } else {
-            Ok(Self {
-                type_ref: type_ref.unwrap(),
-                description,
-                validation,
-                key_schema,
-                entry_schema,
-            })
-        }
+        root
     }
 }
 

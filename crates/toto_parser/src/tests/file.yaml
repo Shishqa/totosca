@@ -17,14 +17,14 @@ service_template:
       default: []
     num_slaves:
       type: integer
-      default: 1
+      default: {}
       validation:
         - greater_or_equal: 1
 
   node_templates:
 
     ray-master:
-      type: clouni.nodes.ray.master
+      type: 12
       properties:
         additional_packages: { get_input: [ additional_packages ] }
 

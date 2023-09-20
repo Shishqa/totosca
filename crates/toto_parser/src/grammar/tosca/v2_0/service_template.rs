@@ -1,0 +1,43 @@
+use toto_tosca::{Entity, Relation};
+
+use super::{parse_collection, NodeTemplate, ParameterDefinition};
+use crate::parse::{Error, GraphHandle, Parse, ParseError};
+
+#[derive(Debug)]
+pub struct ServiceTemplateDefinition;
+
+impl Parse for ServiceTemplateDefinition {
+    fn parse(ctx: &mut crate::parse::Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        let root = ctx.graph.add_node(Entity::ServiceTemplate);
+
+        if let Ok(map) = n.as_map() {
+            map.iter()
+                .for_each(|entry| match entry.0.as_str().unwrap() {
+                    "description" => {
+                        let t = String::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Description);
+                    }
+                    "inputs" => {
+                        parse_collection::<ParameterDefinition>(ctx, root, entry.1);
+                    }
+                    "outputs" => {
+                        parse_collection::<ParameterDefinition>(ctx, root, entry.1);
+                    }
+                    "node_templates" => {
+                        parse_collection::<NodeTemplate>(ctx, root, entry.1);
+                    }
+                    f => ctx.errors.push(Error {
+                        pos: Some(entry.0.pos()),
+                        error: ParseError::UnknownField(f.to_string()),
+                    }),
+                });
+        } else {
+            ctx.errors.push(Error {
+                pos: Some(n.pos()),
+                error: ParseError::UnexpectedType("map"),
+            });
+        }
+
+        root
+    }
+}

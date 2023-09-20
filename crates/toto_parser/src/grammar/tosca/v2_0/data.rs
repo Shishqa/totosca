@@ -1,0 +1,65 @@
+use toto_tosca::{Entity, Relation};
+
+use super::{parse_collection, value::Value, PropertyDefinition, SchemaDefinition};
+use crate::parse::{Context, Error, FromYaml, GraphHandle, Parse, ParseError};
+
+#[derive(Debug)]
+pub struct DataType;
+
+impl Parse for DataType {
+    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        let root = ctx.graph.add_node(Entity::DataType);
+
+        if let Ok(map) = n.as_map() {
+            map.iter()
+                .for_each(|entry| match entry.0.as_str().unwrap() {
+                    "derived_from" => {
+                        String::from_yaml(entry.1)
+                            .map_err(|err| ctx.errors.push(err))
+                            .map(|r| {
+                                let t = ctx.graph.add_node(Entity::Ref(r));
+                                ctx.graph.add_edge(root, t, Relation::DerivedFrom);
+                            });
+                    }
+                    "description" => {
+                        let t = String::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Description);
+                    }
+                    "metadata" => {
+                        parse_collection::<String>(ctx, root, entry.1);
+                    }
+                    "version" => {
+                        let t = String::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Version);
+                    }
+                    "validation" => {
+                        let t = Value::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Validation);
+                    }
+                    "key_schema" => {
+                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::KeySchema);
+                    }
+                    "entry_schema" => {
+                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::EntrySchema);
+                    }
+                    "properties" => {
+                        parse_collection::<PropertyDefinition>(ctx, root, entry.1);
+                    }
+                    f => ctx.errors.push(Error {
+                        pos: Some(entry.0.pos()),
+                        error: ParseError::UnknownField(f.to_string()),
+                    }),
+                });
+        } else {
+            ctx.errors.push(Error {
+                pos: Some(n.pos()),
+                error: ParseError::UnexpectedType("map"),
+            });
+            return root;
+        }
+
+        root
+    }
+}
