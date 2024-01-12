@@ -19,14 +19,16 @@ service_template:
       type: integer
       default: {}
       validation:
-        - greater_or_equal: 1
+        - $greater_or_equal:
+            - $value: []
+            - 1
 
   node_templates:
 
     ray-master:
       type: test
       properties:
-        additional_packages: { get_input: [ additional_packages ] }
+        additional_packages: { $get_input: [ additional_packages ] }
       attributes:
         test:
           description: I am description
@@ -35,9 +37,9 @@ service_template:
     ray-slave:
       type: clouni.nodes.ray.slave
       properties:
-        additional_packages: { get_input: [ additional_packages ] }
+        additional_packages: { $get_input: [ additional_packages ] }
         min_instances: 1
         max_instances: 10
-        default_instances: { get_input: [ num_slaves ] }
+        default_instances: { $get_input: [ num_slaves ] }
       requirements:
         - master: ray-master

@@ -29,18 +29,12 @@ pub trait ToscaDefinitionsVersion {
     type ImportDefinition: Parse;
     type ServiceTemplateDefinition: Parse;
     type FileDefinition: Parse;
+    type Value: Parse;
 
     fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle;
 
     // TODO: here we can add url pointing to actual spec which can be useful in report printing
     // fn spec_url() -> &'static str;
-}
-
-pub trait FromYaml
-where
-    Self: Sized,
-{
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Error>;
 }
 
 pub struct ToscaGrammar;

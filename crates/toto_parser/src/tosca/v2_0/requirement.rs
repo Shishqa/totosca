@@ -2,10 +2,11 @@ use toto_tosca::{Entity, Integer, Relation};
 
 use crate::{
     parse::{Context, Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
+    yaml::FromYaml,
 };
 
-use super::{value::Value, List};
+use super::{value::Value, List, Reference};
 
 #[derive(Debug)]
 pub struct RequirementDefinition;
@@ -68,19 +69,15 @@ impl Parse for RequirementDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "node" => {
                         has_node = true;
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Node);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Node);
                     }
                     "description" => {
                         let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "count_range" => {
-                        let t = List::<Value>::parse::<V>(ctx, entry.1);
+                        let t = List::<V::Value>::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::CountRange);
                     }
                     f => ctx.errors.push(Error {
@@ -121,12 +118,8 @@ impl Parse for RequirementAssignment {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "node" => {
                         has_node = true;
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Node);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Node);
                     }
                     "count" => {
                         let t = Integer::parse::<V>(ctx, entry.1);

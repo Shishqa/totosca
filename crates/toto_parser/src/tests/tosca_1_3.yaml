@@ -24,7 +24,7 @@ topology_template:
   node_templates:
 
     ray-master:
-      type: test
+      type: hello
       properties:
         additional_packages: { get_input: [ additional_packages ] }
       attributes:

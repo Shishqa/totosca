@@ -6,6 +6,7 @@ pub struct Tosca1_3;
 
 pub mod attribute;
 pub mod file;
+pub mod value;
 
 impl ToscaDefinitionsVersion for Tosca1_3 {
     type AttributeDefinition = v2_0::AttributeDefinition;
@@ -22,6 +23,7 @@ impl ToscaDefinitionsVersion for Tosca1_3 {
     type NodeTypeDefinition = v2_0::NodeType;
     type NodeTemplateDefinition = v2_0::NodeTemplate;
     type ServiceTemplateDefinition = v2_0::ServiceTemplateDefinition;
+    type Value = value::Value;
 
     fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         return Self::FileDefinition::parse::<Self>(ctx, n);

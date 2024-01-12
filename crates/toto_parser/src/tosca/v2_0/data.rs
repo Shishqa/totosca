@@ -1,9 +1,9 @@
 use toto_tosca::{Entity, Relation};
 
-use super::{parse_collection, value::Value, PropertyDefinition, SchemaDefinition};
+use super::{parse_collection, value::Value, Reference};
 use crate::{
     parse::{Context, Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
 };
 
 #[derive(Debug)]
@@ -17,12 +17,8 @@ impl Parse for DataType {
             map.iter()
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "derived_from" => {
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::DerivedFrom);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::DerivedFrom);
                     }
                     "description" => {
                         let t = String::parse::<V>(ctx, entry.1);

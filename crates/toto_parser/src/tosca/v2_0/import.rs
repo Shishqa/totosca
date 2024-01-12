@@ -2,8 +2,10 @@ use toto_tosca::{Entity, Relation};
 
 use crate::{
     parse::{Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
 };
+
+use super::Reference;
 
 #[derive(Debug)]
 pub struct ImportDefinition;
@@ -22,29 +24,17 @@ impl Parse for ImportDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "url" => {
                         has_url = true;
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Url);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Url);
                     }
                     "profile" => {
                         has_profile = true;
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Profile);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Profile);
                     }
                     "repository" => {
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Repository);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Repository);
                     }
                     "namespace" => {
                         let t = String::parse::<V>(ctx, entry.1);

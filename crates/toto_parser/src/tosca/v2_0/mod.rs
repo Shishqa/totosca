@@ -8,6 +8,7 @@ pub mod map;
 pub mod node;
 pub mod parameter;
 pub mod property;
+pub mod reference;
 pub mod requirement;
 pub mod schema;
 pub mod service_template;
@@ -23,9 +24,11 @@ pub use map::*;
 pub use node::*;
 pub use parameter::*;
 pub use property::*;
+pub use reference::*;
 pub use requirement::*;
 pub use schema::*;
 pub use service_template::*;
+pub use value::*;
 
 use crate::parse::{Context, GraphHandle};
 use crate::tosca::Parse;
@@ -49,6 +52,7 @@ impl ToscaDefinitionsVersion for Tosca2_0 {
     type NodeTypeDefinition = NodeType;
     type NodeTemplateDefinition = NodeTemplate;
     type ServiceTemplateDefinition = ServiceTemplateDefinition;
+    type Value = Value;
 
     fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         return Self::FileDefinition::parse::<Self>(ctx, n);
