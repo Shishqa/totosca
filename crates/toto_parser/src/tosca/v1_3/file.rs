@@ -77,14 +77,14 @@ mod tests {
         dbg!(Dot::new(
             &parse::<ToscaGrammar>(DOC)
                 .map_err(|errors| {
-                    Report::build(ReportKind::Error, "../../../tests/file.yaml", 0)
+                    Report::build(ReportKind::Error, "../../tests/tosca_1_3.yaml", 0)
                         .with_labels(
                             errors
                                 .iter()
                                 .map(|err| {
                                     let pos: usize =
                                         err.pos.unwrap_or_default().try_into().unwrap();
-                                    Label::new(("../../../tests/file.yaml", pos..pos + 1))
+                                    Label::new(("../../tests/tosca_1_3.yaml", pos..pos + 1))
                                         .with_message(format!("{:?}", err.error))
                                 })
                                 .collect::<Vec<_>>(),

@@ -5,7 +5,7 @@ use crate::{
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
-use super::value::Value;
+use super::{value::Value, Reference};
 
 #[derive(Debug)]
 pub struct SchemaDefinition;
@@ -20,7 +20,7 @@ impl Parse for SchemaDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "type" => {
                         has_type = true;
-                        let t = String::parse::<V>(ctx, entry.1);
+                        let t = Reference::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Type);
                     }
                     "description" => {
@@ -28,7 +28,7 @@ impl Parse for SchemaDefinition {
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "validation" => {
-                        let t = Value::parse::<V>(ctx, entry.1);
+                        let t = V::Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Validation);
                     }
                     "key_schema" => {

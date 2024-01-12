@@ -1,9 +1,9 @@
 use toto_tosca::{Boolean, Entity, Relation};
 
-use super::{parse_collection, value::Value, List, SchemaDefinition};
+use super::{parse_collection, value::Value, List, Reference};
 use crate::{
     parse::{Context, Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
 };
 
 #[derive(Debug)]
@@ -17,12 +17,8 @@ impl Parse for ParameterDefinition {
             map.iter()
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "type" => {
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Type);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Type);
                     }
                     "description" => {
                         let t = String::parse::<V>(ctx, entry.1);
@@ -36,11 +32,11 @@ impl Parse for ParameterDefinition {
                         ctx.graph.add_edge(root, t, Relation::Status);
                     }
                     "default" => {
-                        let t = Value::parse::<V>(ctx, entry.1);
+                        let t = V::Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Default);
                     }
                     "validation" => {
-                        let t = Value::parse::<V>(ctx, entry.1);
+                        let t = V::Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Default);
                     }
                     "key_schema" => {
@@ -56,7 +52,7 @@ impl Parse for ParameterDefinition {
                         ctx.graph.add_edge(root, t, Relation::Required);
                     }
                     "value" => {
-                        let t = Value::parse::<V>(ctx, entry.1);
+                        let t = V::Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Value);
                     }
                     "mapping" => {

@@ -1,5 +1,5 @@
 pub type Integer = i64;
-pub type Float = String;
+pub type Float = ordered_float::OrderedFloat<f64>;
 pub type Boolean = bool;
 pub type Bytes = Vec<u8>;
 
@@ -75,6 +75,8 @@ pub enum Entity {
     Nil,
     List,
     Map,
+    Function(String),
+    FunctionCall,
 }
 
 #[derive(Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -104,4 +106,5 @@ pub enum Relation {
     Profile,
     Repository,
     ServiceTemplate,
+    Function,
 }
