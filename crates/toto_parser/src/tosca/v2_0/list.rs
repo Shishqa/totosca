@@ -2,13 +2,20 @@ use std::marker::PhantomData;
 
 use toto_tosca::{Entity, Relation};
 
-use crate::parse::{Context, Error, GraphHandle, Parse, ParseError};
+use crate::{
+    parse::{Context, Error, GraphHandle, ParseError},
+    tosca::{Parse, ToscaDefinitionsVersion},
+};
 
-pub struct List<T> {
-    _e: PhantomData<T>,
+pub struct List<P: Parse> {
+    _e: PhantomData<P>,
 }
 
-pub fn parse_list<T: Parse>(ctx: &mut Context, root: GraphHandle, n: &yaml_peg::NodeRc) {
+pub fn parse_list<P: Parse, V: ToscaDefinitionsVersion>(
+    ctx: &mut Context,
+    root: GraphHandle,
+    n: &yaml_peg::NodeRc,
+) {
     n.as_seq()
         .map_err(|pos| {
             ctx.errors.push(Error {
@@ -18,20 +25,20 @@ pub fn parse_list<T: Parse>(ctx: &mut Context, root: GraphHandle, n: &yaml_peg::
         })
         .map(|seq| {
             for (idx, n) in seq.iter().enumerate() {
-                let elem = T::parse(ctx, &n);
+                let elem = P::parse::<V>(ctx, &n);
                 ctx.graph
                     .add_edge(root, elem, Relation::ListValue(idx as u64));
             }
         });
 }
 
-impl<T> Parse for List<T>
+impl<P> Parse for List<P>
 where
-    T: Parse,
+    P: Parse,
 {
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::List);
-        parse_list::<T>(ctx, root, n);
+        parse_list::<P, V>(ctx, root, n);
         root
     }
 }

@@ -3,13 +3,19 @@ use toto_tosca::{Entity, Relation};
 use super::{
     parse_collection, parse_list, DataType, ImportDefinition, NodeType, ServiceTemplateDefinition,
 };
-use crate::parse::{Error, GraphHandle, Parse, ParseError};
+use crate::{
+    parse::{Error, GraphHandle, ParseError},
+    tosca::{Parse, ToscaDefinitionsVersion},
+};
 
 #[derive(Debug)]
 pub struct ToscaFileDefinition;
 
 impl Parse for ToscaFileDefinition {
-    fn parse(ctx: &mut crate::parse::Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut crate::parse::Context,
+        n: &yaml_peg::NodeRc,
+    ) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::File);
 
         if let Ok(map) = n.as_map() {
@@ -17,27 +23,27 @@ impl Parse for ToscaFileDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "tosca_definitions_version" => {}
                     "profile" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Profile);
                     }
                     "metadata" => {
-                        parse_collection::<String>(ctx, root, entry.1);
+                        parse_collection::<String, V>(ctx, root, entry.1);
                     }
                     "description" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "imports" => {
-                        parse_list::<ImportDefinition>(ctx, root, entry.1);
+                        parse_list::<ImportDefinition, V>(ctx, root, entry.1);
                     }
                     "data_types" => {
-                        parse_collection::<DataType>(ctx, root, entry.1);
+                        parse_collection::<V::DataTypeDefinition, V>(ctx, root, entry.1);
                     }
                     "node_types" => {
-                        parse_collection::<NodeType>(ctx, root, entry.1);
+                        parse_collection::<V::NodeTypeDefinition, V>(ctx, root, entry.1);
                     }
                     "service_template" => {
-                        let t = ServiceTemplateDefinition::parse(ctx, entry.1);
+                        let t = ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::ServiceTemplate);
                     }
                     f => ctx.errors.push(Error {
@@ -62,15 +68,14 @@ mod tests {
     use ariadne::{Label, Report, ReportKind, Source};
     use petgraph::dot::Dot;
 
-    use super::*;
-    use crate::parse::parse;
+    use crate::{parse::parse, tosca::ToscaGrammar};
 
     #[test]
     fn it_works() {
-        const DOC: &str = include_str!("../../../tests/file.yaml");
+        const DOC: &str = include_str!("../../tests/tosca_2_0.yaml");
 
         dbg!(Dot::new(
-            &parse::<ToscaFileDefinition>(DOC)
+            &parse::<ToscaGrammar>(DOC)
                 .map_err(|errors| {
                     Report::build(ReportKind::Error, "../../../tests/file.yaml", 0)
                         .with_labels(
@@ -85,7 +90,7 @@ mod tests {
                                 .collect::<Vec<_>>(),
                         )
                         .finish()
-                        .eprint(("../../../tests/file.yaml", Source::from(DOC)))
+                        .eprint(("../../tests/tosca_2_0.yaml", Source::from(DOC)))
                         .unwrap();
                 })
                 .unwrap()

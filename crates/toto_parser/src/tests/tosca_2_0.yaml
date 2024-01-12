@@ -27,6 +27,10 @@ service_template:
       type: test
       properties:
         additional_packages: { get_input: [ additional_packages ] }
+      attributes:
+        test:
+          description: I am description
+          value: I am value
 
     ray-slave:
       type: clouni.nodes.ray.slave

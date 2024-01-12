@@ -2,20 +2,23 @@ use std::marker::PhantomData;
 
 use toto_tosca::{Entity, Relation};
 
-use crate::parse::{Context, Error, GraphHandle, Parse, ParseError};
+use crate::{
+    parse::{Context, Error, GraphHandle, ParseError},
+    tosca::{Parse, ToscaDefinitionsVersion},
+};
 
 #[derive(Debug)]
-pub struct Map<K, V> {
-    _k: PhantomData<K>,
-    _v: PhantomData<V>,
+pub struct Map<PK: Parse, PV: Parse> {
+    _k: PhantomData<PK>,
+    _v: PhantomData<PV>,
 }
 
-impl<K, V> Parse for Map<K, V>
+impl<PK, PV> Parse for Map<PK, PV>
 where
-    K: Parse,
-    V: Parse,
+    PK: Parse,
+    PV: Parse,
 {
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::Map);
 
         let _ = n
@@ -28,8 +31,8 @@ where
             })
             .map(|mut m| {
                 m.drain().for_each(|entry| {
-                    let key = K::parse(ctx, &entry.0);
-                    let value = V::parse(ctx, &entry.1);
+                    let key = PK::parse::<V>(ctx, &entry.0);
+                    let value = PV::parse::<V>(ctx, &entry.1);
 
                     ctx.graph.add_edge(root, key, Relation::MapKey);
                     ctx.graph.add_edge(key, value, Relation::MapValue);

@@ -1,6 +1,9 @@
 use toto_tosca::{Entity, Integer, Relation};
 
-use crate::parse::{Context, Error, FromYaml, GraphHandle, Parse, ParseError};
+use crate::{
+    parse::{Context, Error, GraphHandle, ParseError},
+    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+};
 
 use super::{value::Value, List};
 
@@ -10,7 +13,7 @@ pub struct RequirementDefinition;
 #[derive(Debug)]
 pub struct RequirementAssignment;
 
-pub fn parse_keyed_list_collection<V: Parse>(
+pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
     ctx: &mut Context,
     root: GraphHandle,
     n: &yaml_peg::NodeRc,
@@ -28,7 +31,7 @@ pub fn parse_keyed_list_collection<V: Parse>(
                     if map.len() != 1 {
                         ctx.errors.push(Error {
                             pos: Some(item.pos()),
-                            error: ParseError::Custom("should have only one key"),
+                            error: ParseError::Custom("should have only one key".to_string()),
                         });
                         continue;
                     }
@@ -39,7 +42,7 @@ pub fn parse_keyed_list_collection<V: Parse>(
                         .map_err(|err| ctx.errors.push(err))
                         .unwrap_or_default();
 
-                    let elem = V::parse(ctx, &value);
+                    let elem = P::parse::<V>(ctx, &value);
 
                     ctx.graph.add_edge(root, elem, Relation::Subdef(name));
                     ctx.graph
@@ -56,7 +59,7 @@ pub fn parse_keyed_list_collection<V: Parse>(
 }
 
 impl Parse for RequirementDefinition {
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::Requirement);
 
         let mut has_node: bool = false;
@@ -73,11 +76,11 @@ impl Parse for RequirementDefinition {
                             });
                     }
                     "description" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "count_range" => {
-                        let t = List::<Value>::parse(ctx, entry.1);
+                        let t = List::<Value>::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::CountRange);
                     }
                     f => ctx.errors.push(Error {
@@ -109,7 +112,7 @@ impl Parse for RequirementDefinition {
 }
 
 impl Parse for RequirementAssignment {
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::Requirement);
 
         let mut has_node: bool = false;
@@ -126,7 +129,7 @@ impl Parse for RequirementAssignment {
                             });
                     }
                     "count" => {
-                        let t = Integer::parse(ctx, entry.1);
+                        let t = Integer::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Count);
                     }
                     f => ctx.errors.push(Error {

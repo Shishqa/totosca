@@ -1,13 +1,16 @@
 use toto_tosca::{Boolean, Entity, Relation};
 
-use super::{parse_collection, value::Value, List, Map, SchemaDefinition};
-use crate::parse::{Context, Error, FromYaml, GraphHandle, Parse, ParseError};
+use super::{parse_collection, value::Value, List, SchemaDefinition};
+use crate::{
+    parse::{Context, Error, GraphHandle, ParseError},
+    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+};
 
 #[derive(Debug)]
 pub struct ParameterDefinition;
 
 impl Parse for ParameterDefinition {
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         let root = ctx.graph.add_node(Entity::Parameter);
 
         if let Ok(map) = n.as_map() {
@@ -22,46 +25,46 @@ impl Parse for ParameterDefinition {
                             });
                     }
                     "description" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "metadata" => {
-                        parse_collection::<String>(ctx, root, entry.1);
+                        parse_collection::<String, V>(ctx, root, entry.1);
                     }
                     "status" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Status);
                     }
                     "default" => {
-                        let t = Value::parse(ctx, entry.1);
+                        let t = Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Default);
                     }
                     "validation" => {
-                        let t = Value::parse(ctx, entry.1);
+                        let t = Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Default);
                     }
                     "key_schema" => {
-                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        let t = V::SchemaDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::KeySchema);
                     }
                     "entry_schema" => {
-                        let t = SchemaDefinition::parse(ctx, entry.1);
+                        let t = V::SchemaDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::EntrySchema);
                     }
                     "required" => {
-                        let t = Boolean::parse(ctx, entry.1);
+                        let t = Boolean::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Required);
                     }
                     "value" => {
-                        let t = Value::parse(ctx, entry.1);
+                        let t = Value::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Value);
                     }
                     "mapping" => {
-                        let t = List::<String>::parse(ctx, entry.1);
+                        let t = List::<String>::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Mapping);
                     }
                     "external-schema" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::ExternalSchema);
                     }
                     f => ctx.errors.push(Error {

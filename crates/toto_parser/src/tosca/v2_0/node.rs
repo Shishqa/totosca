@@ -1,6 +1,9 @@
 use toto_tosca::{Entity, Relation};
 
-use crate::parse::{Error, FromYaml, Parse, ParseError};
+use crate::{
+    parse::{Error, ParseError},
+    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+};
 
 use super::{
     parse_collection, parse_keyed_list_collection, AttributeAssignment, AttributeDefinition,
@@ -14,7 +17,10 @@ pub struct NodeType;
 pub struct NodeTemplate;
 
 impl Parse for NodeType {
-    fn parse(ctx: &mut crate::parse::Context, n: &yaml_peg::NodeRc) -> crate::parse::GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut crate::parse::Context,
+        n: &yaml_peg::NodeRc,
+    ) -> crate::parse::GraphHandle {
         let root = ctx.graph.add_node(Entity::NodeType);
 
         if let Ok(map) = n.as_map() {
@@ -29,24 +35,26 @@ impl Parse for NodeType {
                             });
                     }
                     "description" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "metadata" => {
-                        parse_collection::<String>(ctx, root, entry.1);
+                        parse_collection::<String, V>(ctx, root, entry.1);
                     }
                     "version" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Version);
                     }
                     "properties" => {
-                        parse_collection::<PropertyDefinition>(ctx, root, entry.1);
+                        parse_collection::<V::PropertyDefinition, V>(ctx, root, entry.1);
                     }
                     "attributes" => {
-                        parse_collection::<AttributeDefinition>(ctx, root, entry.1);
+                        parse_collection::<V::AttributeDefinition, V>(ctx, root, entry.1);
                     }
                     "requirements" => {
-                        parse_keyed_list_collection::<RequirementDefinition>(ctx, root, entry.1);
+                        parse_keyed_list_collection::<V::RequirementDefinition, V>(
+                            ctx, root, entry.1,
+                        );
                     }
                     f => ctx.errors.push(Error {
                         pos: Some(entry.0.pos()),
@@ -65,7 +73,10 @@ impl Parse for NodeType {
 }
 
 impl Parse for NodeTemplate {
-    fn parse(ctx: &mut crate::parse::Context, n: &yaml_peg::NodeRc) -> crate::parse::GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut crate::parse::Context,
+        n: &yaml_peg::NodeRc,
+    ) -> crate::parse::GraphHandle {
         let root = ctx.graph.add_node(Entity::NodeType);
 
         let mut has_type: bool = false;
@@ -73,6 +84,7 @@ impl Parse for NodeTemplate {
             map.iter()
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "type" => {
+                        has_type = true;
                         String::from_yaml(entry.1)
                             .map_err(|err| ctx.errors.push(err))
                             .map(|r| {
@@ -81,20 +93,22 @@ impl Parse for NodeTemplate {
                             });
                     }
                     "description" => {
-                        let t = String::parse(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "metadata" => {
-                        parse_collection::<String>(ctx, root, entry.1);
+                        parse_collection::<String, V>(ctx, root, entry.1);
                     }
                     "properties" => {
-                        parse_collection::<PropertyAssignment>(ctx, root, entry.1);
+                        parse_collection::<V::PropertyAssignment, V>(ctx, root, entry.1);
                     }
                     "attributes" => {
-                        parse_collection::<AttributeAssignment>(ctx, root, entry.1);
+                        parse_collection::<V::AttributeAssignment, V>(ctx, root, entry.1);
                     }
                     "requirements" => {
-                        parse_keyed_list_collection::<RequirementDefinition>(ctx, root, entry.1);
+                        parse_keyed_list_collection::<V::RequirementDefinition, V>(
+                            ctx, root, entry.1,
+                        );
                     }
                     f => ctx.errors.push(Error {
                         pos: Some(entry.0.pos()),
