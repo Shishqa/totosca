@@ -1,6 +1,6 @@
 use toto_tosca::{Entity, Relation};
 
-use super::{parse_collection, NodeTemplate, ParameterDefinition};
+use super::parse_collection;
 use crate::{
     parse::{Error, GraphHandle, ParseError},
     tosca::{Parse, ToscaDefinitionsVersion},

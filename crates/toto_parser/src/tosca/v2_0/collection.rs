@@ -2,7 +2,8 @@ use toto_tosca::Relation;
 
 use crate::{
     parse::{Context, Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
+    yaml::FromYaml,
 };
 
 pub fn parse_collection<P: Parse, V: ToscaDefinitionsVersion>(

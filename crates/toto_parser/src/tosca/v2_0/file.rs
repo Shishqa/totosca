@@ -1,8 +1,6 @@
 use toto_tosca::{Entity, Relation};
 
-use super::{
-    parse_collection, parse_list, DataType, ImportDefinition, NodeType, ServiceTemplateDefinition,
-};
+use super::{parse_collection, parse_list};
 use crate::{
     parse::{Error, GraphHandle, ParseError},
     tosca::{Parse, ToscaDefinitionsVersion},
@@ -34,7 +32,7 @@ impl Parse for ToscaFileDefinition {
                         ctx.graph.add_edge(root, t, Relation::Description);
                     }
                     "imports" => {
-                        parse_list::<ImportDefinition, V>(ctx, root, entry.1);
+                        parse_list::<V::ImportDefinition, V>(ctx, root, entry.1);
                     }
                     "data_types" => {
                         parse_collection::<V::DataTypeDefinition, V>(ctx, root, entry.1);
@@ -43,7 +41,7 @@ impl Parse for ToscaFileDefinition {
                         parse_collection::<V::NodeTypeDefinition, V>(ctx, root, entry.1);
                     }
                     "service_template" => {
-                        let t = ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
+                        let t = V::ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::ServiceTemplate);
                     }
                     f => ctx.errors.push(Error {
@@ -77,14 +75,14 @@ mod tests {
         dbg!(Dot::new(
             &parse::<ToscaGrammar>(DOC)
                 .map_err(|errors| {
-                    Report::build(ReportKind::Error, "../../../tests/file.yaml", 0)
+                    Report::build(ReportKind::Error, "../../tests/tosca_2_0.yaml", 0)
                         .with_labels(
                             errors
                                 .iter()
                                 .map(|err| {
                                     let pos: usize =
                                         err.pos.unwrap_or_default().try_into().unwrap();
-                                    Label::new(("../../../tests/file.yaml", pos..pos + 1))
+                                    Label::new(("../../tests/tosca_2_0.yaml", pos..pos + 1))
                                         .with_message(format!("{:?}", err.error))
                                 })
                                 .collect::<Vec<_>>(),

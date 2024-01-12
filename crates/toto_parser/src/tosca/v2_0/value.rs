@@ -1,37 +1,55 @@
-use toto_tosca::{Boolean, Entity, Integer};
+use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
 
-use super::{List, Map};
+use super::{parse_list, List, Map};
 use crate::{
-    parse::{Context, Error, GraphHandle, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    parse::{Context, GraphHandle},
+    tosca::{Parse, ToscaDefinitionsVersion},
+    yaml::FromYaml,
 };
 
 pub struct Value;
 
 impl Parse for Value {
     fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        if let Ok(map) = n.as_map() {
+            if map.len() == 1 {
+                let elem = map.iter().next().unwrap();
+                if let Ok(s) = elem.0.as_str() {
+                    if s.chars().nth(0).is_some_and(|c| c == '$')
+                        && s.chars().nth(1).is_some_and(|c| c != '$')
+                    {
+                        let root = ctx.graph.add_node(Entity::FunctionCall);
+                        let r = ctx.graph.add_node(Entity::Ref(s.to_string()));
+                        ctx.graph.add_edge(root, r, Relation::Function);
+                        parse_list::<V::Value, V>(ctx, root, elem.1);
+
+                        return root;
+                    }
+                }
+            }
+        }
+
         match n.rc_ref().as_ref() {
             yaml_peg::Yaml::Null => ctx.graph.add_node(Entity::Nil),
-            yaml_peg::Yaml::Int(_) => Integer::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Float(f) => ctx.graph.add_node(Entity::Float(f.to_string())),
-            yaml_peg::Yaml::Str(_) => String::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Bool(_) => Boolean::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Seq(_) => List::<Value>::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Map(_) => Map::<Value, Value>::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Int(v) => Integer::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Float(v) => Float::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Str(v) => String::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Bool(v) => Boolean::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Seq(v) => List::<Value>::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Map(v) => Map::<Value, Value>::parse::<V>(ctx, n),
             // TODO: handle anchors
             _ => unimplemented!(),
         }
     }
 }
 
-impl FromYaml for String {
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Error> {
-        n.as_str()
-            .map_err(|pos| Error {
-                pos: Some(pos),
-                error: ParseError::UnexpectedType("string"),
-            })
-            .map(|s| s.to_string())
+impl Parse for Float {
+    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        ctx.graph.add_node(Entity::Float(
+            Float::from_yaml(n)
+                .map_err(|err| ctx.errors.push(err))
+                .unwrap_or_default(),
+        ))
     }
 }
 
@@ -45,15 +63,6 @@ impl Parse for String {
     }
 }
 
-impl FromYaml for Integer {
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Error> {
-        n.as_int().map_err(|pos| Error {
-            pos: Some(pos),
-            error: ParseError::UnexpectedType("integer"),
-        })
-    }
-}
-
 impl Parse for Integer {
     fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
         ctx.graph.add_node(Entity::Integer(
@@ -61,15 +70,6 @@ impl Parse for Integer {
                 .map_err(|err| ctx.errors.push(err))
                 .unwrap_or_default(),
         ))
-    }
-}
-
-impl FromYaml for Boolean {
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Error> {
-        n.as_bool().map_err(|pos| Error {
-            pos: Some(pos),
-            error: ParseError::UnexpectedType("boolean"),
-        })
     }
 }
 

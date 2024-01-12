@@ -2,13 +2,10 @@ use toto_tosca::{Entity, Relation};
 
 use crate::{
     parse::{Error, ParseError},
-    tosca::{FromYaml, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
 };
 
-use super::{
-    parse_collection, parse_keyed_list_collection, AttributeAssignment, AttributeDefinition,
-    PropertyAssignment, PropertyDefinition, RequirementDefinition,
-};
+use super::{parse_collection, parse_keyed_list_collection, Reference};
 
 #[derive(Debug)]
 pub struct NodeType;
@@ -27,12 +24,8 @@ impl Parse for NodeType {
             map.iter()
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "derived_from" => {
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::DerivedFrom);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::DerivedFrom);
                     }
                     "description" => {
                         let t = String::parse::<V>(ctx, entry.1);
@@ -85,12 +78,8 @@ impl Parse for NodeTemplate {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "type" => {
                         has_type = true;
-                        String::from_yaml(entry.1)
-                            .map_err(|err| ctx.errors.push(err))
-                            .map(|r| {
-                                let t = ctx.graph.add_node(Entity::Ref(r));
-                                ctx.graph.add_edge(root, t, Relation::Type);
-                            });
+                        let t = Reference::parse::<V>(ctx, entry.1);
+                        ctx.graph.add_edge(root, t, Relation::Type);
                     }
                     "description" => {
                         let t = String::parse::<V>(ctx, entry.1);
