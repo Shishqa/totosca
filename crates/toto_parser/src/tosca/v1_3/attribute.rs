@@ -3,7 +3,7 @@ use yaml_peg::node;
 
 use crate::{
     parse::{Context, GraphHandle},
-    tosca::{v2_0::value::Value, Parse, ToscaDefinitionsVersion},
+    tosca::{Parse, ToscaDefinitionsVersion},
 };
 
 #[derive(Debug)]
@@ -15,12 +15,12 @@ impl Parse for AttributeAssignment {
             if let (Some(description), Some(value)) =
                 (map.get(&node!("description")), map.get(&node!("value")))
             {
-                let value = Value::parse::<V>(ctx, value);
+                let value = V::Value::parse::<V>(ctx, value);
                 let t = String::parse::<V>(ctx, description);
                 ctx.graph.add_edge(value, t, Relation::Description);
                 return value;
             }
         }
-        Value::parse::<V>(ctx, n)
+        V::Value::parse::<V>(ctx, n)
     }
 }
