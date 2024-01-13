@@ -75,7 +75,7 @@ pub enum Entity {
     Nil,
     List,
     Map,
-    Function(String),
+    Function,
     FunctionCall,
 }
 

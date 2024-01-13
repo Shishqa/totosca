@@ -28,6 +28,7 @@ pub use reference::*;
 pub use requirement::*;
 pub use schema::*;
 pub use service_template::*;
+use toto_tosca::{Entity, Relation};
 pub use value::*;
 
 use crate::parse::{Context, GraphHandle};
@@ -55,6 +56,73 @@ impl ToscaDefinitionsVersion for Tosca2_0 {
     type Value = Value;
 
     fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+        // builtin
+        let root = ctx.graph.add_node(Entity::File);
+        let builtin_url = ctx.graph.add_node(Entity::String("$builtin".to_string()));
+        ctx.graph.add_edge(root, builtin_url, Relation::Url);
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("string".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("integer".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("float".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("boolean".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("bytes".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("nil".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("version".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("range".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("timestamp".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("scalar-unit.size".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("list".to_string()));
+
+        let dt = ctx.graph.add_node(Entity::DataType);
+        ctx.graph
+            .add_edge(root, dt, Relation::Subdef("map".to_string()));
+
+        let f = ctx.graph.add_node(Entity::Function);
+        ctx.graph
+            .add_edge(root, f, Relation::Subdef("$get_input".to_string()));
+
+        let f = ctx.graph.add_node(Entity::Function);
+        ctx.graph
+            .add_edge(root, f, Relation::Subdef("$get_attribute".to_string()));
+
+        let f = ctx.graph.add_node(Entity::Function);
+        ctx.graph
+            .add_edge(root, f, Relation::Subdef("$get_property".to_string()));
+
+        // TODO: add more builtin entities
+
         return Self::FileDefinition::parse::<Self>(ctx, n);
     }
 }

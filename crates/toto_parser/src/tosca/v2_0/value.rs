@@ -20,7 +20,7 @@ impl Parse for Value {
                     {
                         let root = ctx.graph.add_node(Entity::FunctionCall);
                         let r = ctx.graph.add_node(Entity::Ref(s.to_string()));
-                        ctx.graph.add_edge(root, r, Relation::Function);
+                        ctx.graph.add_edge(root, r, Relation::Type);
                         parse_list::<V::Value, V>(ctx, root, elem.1);
 
                         return root;

@@ -41,9 +41,20 @@ pub struct ToscaGrammar;
 
 impl Grammar for ToscaGrammar {
     fn parse(doc: &str, ctx: &mut Context) {
-        let n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
-            .unwrap()
-            .remove(0);
+        let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
+            .map_err(|err| {
+                ctx.errors.push(Error {
+                    pos: None,
+                    error: ParseError::Custom(format!("cannot parse yaml: {:?}", err)),
+                })
+            })
+            .unwrap_or_default();
+
+        if !ctx.errors.is_empty() {
+            return;
+        }
+
+        let n = n.remove(0);
 
         if let Ok(map) = n.as_map() {
             match map.get(&node!("tosca_definitions_version")) {

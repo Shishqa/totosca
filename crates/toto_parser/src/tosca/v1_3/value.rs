@@ -1,6 +1,4 @@
-use std::collections::HashSet;
-
-use once_cell::sync::Lazy;
+use petgraph::Direction::Incoming;
 use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
 
 use crate::{
@@ -15,17 +13,28 @@ pub struct Value;
 
 impl Parse for Value {
     fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
-        static FUNCS: Lazy<HashSet<&'static str>> =
-            Lazy::new(|| HashSet::from(["get_input", "get_property", "get_attribute"]));
-
         if let Ok(map) = n.as_map() {
             if map.len() == 1 {
                 let elem = map.iter().next().unwrap();
                 if let Ok(s) = elem.0.as_str() {
-                    if FUNCS.contains(s) {
+                    let available_func = ctx
+                        .graph
+                        .node_indices()
+                        .filter(|i| matches!(ctx.graph[*i], Entity::Function))
+                        .filter(|i| {
+                            ctx.graph
+                                .edges_directed(*i, Incoming)
+                                .find(|e| match e.weight() {
+                                    Relation::Subdef(name) => name == s,
+                                    _ => false,
+                                })
+                                .is_some()
+                        })
+                        .next();
+
+                    if let Some(func) = available_func {
                         let root = ctx.graph.add_node(Entity::FunctionCall);
-                        let r = ctx.graph.add_node(Entity::Ref(s.to_string()));
-                        ctx.graph.add_edge(root, r, Relation::Function);
+                        ctx.graph.add_edge(root, func, Relation::Function);
                         parse_list::<V::Value, V>(ctx, root, elem.1);
 
                         return root;
