@@ -122,26 +122,37 @@ fn refresh_diag(connection: &Connection, uri: &Url) -> Result<(), Box<dyn Error 
         Err(errors) => errors
             .iter()
             .map(|err| {
-                let lineno = contents[0..err.pos.unwrap() as usize]
+                let offset: usize = err.pos.unwrap_or_default().try_into().unwrap();
+                let linebreaks = contents[0..offset]
                     .chars()
-                    .filter(|c| *c == '\n')
-                    .count();
+                    .enumerate()
+                    .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
+                    .collect::<Vec<_>>();
+                let lineno = linebreaks.len();
+                let charno = offset
+                    - linebreaks
+                        .iter()
+                        .rev()
+                        .next()
+                        .map(|n| *n)
+                        .unwrap_or_default()
+                    - 1;
 
                 Diagnostic::new(
                     lsp_types::Range {
                         start: Position {
                             line: lineno as u32,
-                            character: 0,
+                            character: charno as u32,
                         },
                         end: Position {
                             line: lineno as u32,
-                            character: 0,
+                            character: charno as u32 + 1,
                         },
                     },
                     None,
                     None,
                     None,
-                    format!("{:?}", err),
+                    format!("{:?}", err.error),
                     None,
                     None,
                 )
