@@ -1,4 +1,5 @@
 use toto_tosca::{Entity, Relation};
+use url::Url;
 
 use crate::{
     parse::{Error, GraphHandle, ParseError},
@@ -24,7 +25,7 @@ impl Parse for ImportDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "url" => {
                         has_url = true;
-                        let t = Reference::parse::<V>(ctx, entry.1);
+                        let t = <Url as Parse>::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Url);
                     }
                     "profile" => {
@@ -45,9 +46,9 @@ impl Parse for ImportDefinition {
                         error: ParseError::UnknownField(f.to_string()),
                     }),
                 });
-        } else if let Ok(s) = n.as_str() {
+        } else if let Ok(_) = n.as_str() {
             has_url = true;
-            let t = ctx.graph.add_node(Entity::Ref(s.to_string()));
+            let t = <Url as Parse>::parse::<V>(ctx, n);
             ctx.graph.add_edge(root, t, Relation::Url);
         } else {
             ctx.errors.push(Error {
