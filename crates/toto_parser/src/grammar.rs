@@ -1,5 +1,3 @@
-use std::path::Path;
-
 pub trait Grammar {
-    fn parse<P: AsRef<Path>>(path: P, ctx: &mut toto_ast::AST);
+    fn parse(doc: &str, ctx: &mut toto_ast::AST) -> Option<toto_ast::GraphHandle>;
 }

@@ -1,5 +1,3 @@
-use std::{fs, path::Path};
-
 use yaml_peg::node;
 
 use crate::{
@@ -45,23 +43,8 @@ pub trait ToscaDefinitionsVersion {
 pub struct ToscaGrammar;
 
 impl Grammar for ToscaGrammar {
-    fn parse<P: AsRef<Path>>(path: P, ctx: &mut toto_ast::AST) {
-        let doc = fs::read_to_string(path.as_ref()).map_err(|err| {
-            ctx.errors.push(Box::new(ParseError {
-                pos: None,
-                error: ParseErrorKind::Custom(format!(
-                    "{}: {}",
-                    path.as_ref().display(),
-                    err.to_string()
-                )),
-            }))
-        });
-        if let Err(_) = doc {
-            return;
-        }
-        let doc = doc.unwrap();
-
-        let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc)
+    fn parse(doc: &str, ctx: &mut toto_ast::AST) -> Option<toto_ast::GraphHandle> {
+        let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
             .map_err(|err| {
                 ctx.errors.push(Box::new(ParseError {
                     pos: None,
@@ -71,7 +54,7 @@ impl Grammar for ToscaGrammar {
             .unwrap_or_default();
 
         if !ctx.errors.is_empty() {
-            return;
+            return None;
         }
 
         let n = n.remove(0);
@@ -80,35 +63,41 @@ impl Grammar for ToscaGrammar {
             match map.get(&node!("tosca_definitions_version")) {
                 Some(version) => match version.as_str() {
                     Ok(version_str) => match version_str {
-                        "tosca_simple_yaml_1_3" => {
-                            Tosca1_3::parse(ctx, &n);
+                        "tosca_simple_yaml_1_3" => Some(Tosca1_3::parse(ctx, &n)),
+                        "tosca_2_0" => Some(Tosca2_0::parse(ctx, &n)),
+                        unknown => {
+                            ctx.errors.push(Box::new(ParseError {
+                                pos: Some(n.pos()),
+                                error: ParseErrorKind::Custom(format!(
+                                    "unknown tosca definitions version: {}",
+                                    unknown
+                                )),
+                            }));
+                            None
                         }
-                        "tosca_2_0" => {
-                            Tosca2_0::parse(ctx, &n);
-                        }
-                        unknown => ctx.errors.push(Box::new(ParseError {
-                            pos: Some(n.pos()),
-                            error: ParseErrorKind::Custom(format!(
-                                "unknown tosca definitions version: {}",
-                                unknown
-                            )),
-                        })),
                     },
-                    Err(pos) => ctx.errors.push(Box::new(ParseError {
-                        pos: Some(pos),
-                        error: ParseErrorKind::UnexpectedType("string"),
-                    })),
+                    Err(pos) => {
+                        ctx.errors.push(Box::new(ParseError {
+                            pos: Some(pos),
+                            error: ParseErrorKind::UnexpectedType("string"),
+                        }));
+                        None
+                    }
                 },
-                None => ctx.errors.push(Box::new(ParseError {
-                    pos: Some(n.pos()),
-                    error: ParseErrorKind::MissingField("tosca_definitions_version"),
-                })),
+                None => {
+                    ctx.errors.push(Box::new(ParseError {
+                        pos: Some(n.pos()),
+                        error: ParseErrorKind::MissingField("tosca_definitions_version"),
+                    }));
+                    None
+                }
             }
         } else {
             ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
                 error: ParseErrorKind::UnexpectedType("map"),
-            }))
+            }));
+            None
         }
     }
 }

@@ -65,39 +65,42 @@ impl Parse for ToscaFileDefinition {
 
 #[cfg(test)]
 mod tests {
-    use std::path::PathBuf;
-
     use ariadne::{Label, Report, ReportKind, Source};
     use petgraph::dot::Dot;
 
-    use crate::{parse::parse, tosca::ToscaGrammar};
+    use crate::{grammar::Grammar, tosca::ToscaGrammar};
 
     #[test]
     fn it_works() {
-        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        p.push("src/tests/tosca_1_3.yaml");
+        let doc = include_str!("../../tests/tosca_1_3.yaml");
 
-        let ast = parse::<ToscaGrammar, _>(p);
+        let mut ast = toto_ast::AST::new();
+
+        ToscaGrammar::parse(doc, &mut ast);
         let errors = ast.errors;
 
         dbg!(Dot::new(&ast.graph));
 
-        Report::build(ReportKind::Error, "../../tests/tosca_1_3.yaml", 0)
-            .with_labels(
-                errors
-                    .iter()
-                    .map(|err| {
-                        let pos: usize = err.loc().try_into().unwrap();
-                        Label::new(("../../tests/tosca_1_3.yaml", pos..pos + 1))
-                            .with_message(err.what())
-                    })
-                    .collect::<Vec<_>>(),
-            )
-            .finish()
-            .eprint((
-                "../../tests/tosca_1_3.yaml",
-                Source::from(include_str!("../../tests/tosca_1_3.yaml")),
-            ))
-            .unwrap();
+        if !errors.is_empty() {
+            Report::build(ReportKind::Error, "../../tests/tosca_1_3.yaml", 0)
+                .with_labels(
+                    errors
+                        .iter()
+                        .map(|err| {
+                            let pos: usize = err.loc().try_into().unwrap();
+                            Label::new(("../../tests/tosca_1_3.yaml", pos..pos + 1))
+                                .with_message(err.what())
+                        })
+                        .collect::<Vec<_>>(),
+                )
+                .finish()
+                .eprint((
+                    "../../tests/tosca_1_3.yaml",
+                    Source::from(include_str!("../../tests/tosca_1_3.yaml")),
+                ))
+                .unwrap();
+        }
+
+        assert!(errors.is_empty())
     }
 }
