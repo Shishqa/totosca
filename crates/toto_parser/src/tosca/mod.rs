@@ -1,3 +1,8 @@
+use std::{fs, path::Path};
+
+use petgraph::data::Build;
+use toto_tosca::Entity;
+use url::Url;
 use yaml_peg::node;
 
 use crate::{
@@ -40,8 +45,23 @@ pub trait ToscaDefinitionsVersion {
 pub struct ToscaGrammar;
 
 impl Grammar for ToscaGrammar {
-    fn parse(doc: &str, ctx: &mut Context) {
-        let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
+    fn parse<P: AsRef<Path>>(path: P, ctx: &mut Context) {
+        let doc = fs::read_to_string(path.as_ref()).map_err(|err| {
+            ctx.errors.push(Error {
+                pos: None,
+                error: ParseError::Custom(format!(
+                    "{}: {}",
+                    path.as_ref().display(),
+                    err.to_string()
+                )),
+            })
+        });
+        if let Err(_) = doc {
+            return;
+        }
+        let doc = doc.unwrap();
+
+        let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc)
             .map_err(|err| {
                 ctx.errors.push(Error {
                     pos: None,
@@ -91,4 +111,6 @@ impl Grammar for ToscaGrammar {
             })
         }
     }
+
+    fn resolve(_ctx: &mut Context) {}
 }

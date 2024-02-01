@@ -1,3 +1,5 @@
+use url::Url;
+
 pub type Integer = i64;
 pub type Float = ordered_float::OrderedFloat<f64>;
 pub type Boolean = bool;
@@ -60,6 +62,7 @@ pub enum Entity {
     Import,
     DataType,
     Ref(String),
+    Url(Url),
     Metadata(String),
     Schema,
     Node,

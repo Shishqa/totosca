@@ -1,3 +1,5 @@
+use std::path::{Path, PathBuf};
+
 use petgraph::stable_graph::{NodeIndex, StableDiGraph};
 use toto_tosca::{Entity, Relation};
 
@@ -24,13 +26,15 @@ pub struct Context {
     pub(crate) errors: Vec<Error>,
 }
 
-pub fn parse<G: Grammar>(doc: &str) -> Result<StableDiGraph<Entity, Relation>, Vec<Error>> {
+pub fn parse<G: Grammar, P: AsRef<Path>>(
+    path: P,
+) -> Result<StableDiGraph<Entity, Relation>, Vec<Error>> {
     let mut ctx = Context {
         graph: StableDiGraph::new(),
         errors: vec![],
     };
 
-    G::parse(doc, &mut ctx);
+    G::parse(path, &mut ctx);
 
     if ctx.errors.is_empty() {
         Ok(ctx.graph)

@@ -65,6 +65,8 @@ impl Parse for ToscaFileDefinition {
 
 #[cfg(test)]
 mod tests {
+    use std::path::PathBuf;
+
     use ariadne::{Label, Report, ReportKind, Source};
     use petgraph::dot::Dot;
 
@@ -72,10 +74,11 @@ mod tests {
 
     #[test]
     fn it_works() {
-        const DOC: &str = include_str!("../../tests/tosca_1_3.yaml");
+        let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        p.push("src/tests/tosca_1_3.yaml");
 
         dbg!(Dot::new(
-            &parse::<ToscaGrammar>(DOC)
+            &parse::<ToscaGrammar, _>(p)
                 .map_err(|errors| {
                     Report::build(ReportKind::Error, "../../tests/tosca_1_3.yaml", 0)
                         .with_labels(
@@ -90,7 +93,10 @@ mod tests {
                                 .collect::<Vec<_>>(),
                         )
                         .finish()
-                        .eprint(("../../tests/tosca_1_3.yaml", Source::from(DOC)))
+                        .eprint((
+                            "../../tests/tosca_1_3.yaml",
+                            Source::from(include_str!("../../tests/tosca_1_3.yaml")),
+                        ))
                         .unwrap();
                 })
                 .unwrap()
