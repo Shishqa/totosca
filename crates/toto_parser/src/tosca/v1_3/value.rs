@@ -1,18 +1,18 @@
 use petgraph::Direction::Incoming;
 use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
 
-use crate::{
-    parse::{Context, GraphHandle},
-    tosca::{
-        v2_0::{parse_list, List, Map},
-        Parse, ToscaDefinitionsVersion,
-    },
+use crate::tosca::{
+    v2_0::{parse_list, List, Map},
+    Parse, ToscaDefinitionsVersion,
 };
 
 pub struct Value;
 
 impl Parse for Value {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         if let Ok(map) = n.as_map() {
             if map.len() == 1 {
                 let elem = map.iter().next().unwrap();

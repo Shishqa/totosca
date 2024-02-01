@@ -1,12 +1,11 @@
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
-use petgraph::stable_graph::{NodeIndex, StableDiGraph};
-use toto_tosca::{Entity, Relation};
+use petgraph::stable_graph::StableDiGraph;
 
 use crate::grammar::Grammar;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum ParseError {
+pub enum ParseErrorKind {
     UnknownField(String),
     MissingField(&'static str),
     UnexpectedType(&'static str),
@@ -14,31 +13,28 @@ pub enum ParseError {
 }
 
 #[derive(Debug)]
-pub struct Error {
+pub struct ParseError {
     pub pos: Option<u64>,
-    pub error: ParseError,
+    pub error: ParseErrorKind,
 }
 
-pub type GraphHandle = NodeIndex;
+impl toto_ast::Error for ParseError {
+    fn loc(&self) -> u64 {
+        self.pos.unwrap_or_default()
+    }
 
-pub struct Context {
-    pub(crate) graph: StableDiGraph<Entity, Relation>,
-    pub(crate) errors: Vec<Error>,
+    fn what(&self) -> String {
+        format!("{:?}", self.error)
+    }
 }
 
-pub fn parse<G: Grammar, P: AsRef<Path>>(
-    path: P,
-) -> Result<StableDiGraph<Entity, Relation>, Vec<Error>> {
-    let mut ctx = Context {
+pub fn parse<G: Grammar, P: AsRef<Path>>(path: P) -> toto_ast::AST {
+    let mut ctx = toto_ast::AST {
         graph: StableDiGraph::new(),
         errors: vec![],
     };
 
     G::parse(path, &mut ctx);
 
-    if ctx.errors.is_empty() {
-        Ok(ctx.graph)
-    } else {
-        Err(ctx.errors)
-    }
+    ctx
 }

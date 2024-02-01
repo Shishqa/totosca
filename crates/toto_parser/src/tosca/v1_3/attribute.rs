@@ -1,16 +1,16 @@
 use toto_tosca::Relation;
 use yaml_peg::node;
 
-use crate::{
-    parse::{Context, GraphHandle},
-    tosca::{Parse, ToscaDefinitionsVersion},
-};
+use crate::tosca::{Parse, ToscaDefinitionsVersion};
 
 #[derive(Debug)]
 pub struct AttributeAssignment;
 
 impl Parse for AttributeAssignment {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         if let Ok(map) = n.as_map() {
             if let (Some(description), Some(value)) =
                 (map.get(&node!("description")), map.get(&node!("value")))

@@ -2,7 +2,7 @@ use toto_tosca::{Entity, Relation};
 
 use super::parse_collection;
 use crate::{
-    parse::{Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -11,9 +11,9 @@ pub struct ServiceTemplateDefinition;
 
 impl Parse for ServiceTemplateDefinition {
     fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut crate::parse::Context,
+        ctx: &mut toto_ast::AST,
         n: &yaml_peg::NodeRc,
-    ) -> GraphHandle {
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::ServiceTemplate);
 
         if let Ok(map) = n.as_map() {
@@ -32,16 +32,16 @@ impl Parse for ServiceTemplateDefinition {
                     "node_templates" => {
                         parse_collection::<V::NodeTemplateDefinition, V>(ctx, root, entry.1);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            });
+                error: ParseErrorKind::UnexpectedType("map"),
+            }));
         }
 
         root

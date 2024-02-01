@@ -1,13 +1,10 @@
 use std::{fs, path::Path};
 
-use petgraph::data::Build;
-use toto_tosca::Entity;
-use url::Url;
 use yaml_peg::node;
 
 use crate::{
     grammar::Grammar,
-    parse::{Context, Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
 };
 
 use self::{v1_3::Tosca1_3, v2_0::Tosca2_0};
@@ -16,7 +13,10 @@ pub mod v1_3;
 pub mod v2_0;
 
 pub trait Parse {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle;
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle;
 }
 
 pub trait ToscaDefinitionsVersion {
@@ -36,7 +36,7 @@ pub trait ToscaDefinitionsVersion {
     type FileDefinition: Parse;
     type Value: Parse;
 
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle;
+    fn parse(ctx: &mut toto_ast::AST, n: &yaml_peg::NodeRc) -> toto_ast::GraphHandle;
 
     // TODO: here we can add url pointing to actual spec which can be useful in report printing
     // fn spec_url() -> &'static str;
@@ -45,16 +45,16 @@ pub trait ToscaDefinitionsVersion {
 pub struct ToscaGrammar;
 
 impl Grammar for ToscaGrammar {
-    fn parse<P: AsRef<Path>>(path: P, ctx: &mut Context) {
+    fn parse<P: AsRef<Path>>(path: P, ctx: &mut toto_ast::AST) {
         let doc = fs::read_to_string(path.as_ref()).map_err(|err| {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: None,
-                error: ParseError::Custom(format!(
+                error: ParseErrorKind::Custom(format!(
                     "{}: {}",
                     path.as_ref().display(),
                     err.to_string()
                 )),
-            })
+            }))
         });
         if let Err(_) = doc {
             return;
@@ -63,10 +63,10 @@ impl Grammar for ToscaGrammar {
 
         let mut n = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc)
             .map_err(|err| {
-                ctx.errors.push(Error {
+                ctx.errors.push(Box::new(ParseError {
                     pos: None,
-                    error: ParseError::Custom(format!("cannot parse yaml: {:?}", err)),
-                })
+                    error: ParseErrorKind::Custom(format!("cannot parse yaml: {:?}", err)),
+                }))
             })
             .unwrap_or_default();
 
@@ -86,31 +86,29 @@ impl Grammar for ToscaGrammar {
                         "tosca_2_0" => {
                             Tosca2_0::parse(ctx, &n);
                         }
-                        unknown => ctx.errors.push(Error {
+                        unknown => ctx.errors.push(Box::new(ParseError {
                             pos: Some(n.pos()),
-                            error: ParseError::Custom(format!(
+                            error: ParseErrorKind::Custom(format!(
                                 "unknown tosca definitions version: {}",
                                 unknown
                             )),
-                        }),
+                        })),
                     },
-                    Err(pos) => ctx.errors.push(Error {
+                    Err(pos) => ctx.errors.push(Box::new(ParseError {
                         pos: Some(pos),
-                        error: ParseError::UnexpectedType("string"),
-                    }),
+                        error: ParseErrorKind::UnexpectedType("string"),
+                    })),
                 },
-                None => ctx.errors.push(Error {
+                None => ctx.errors.push(Box::new(ParseError {
                     pos: Some(n.pos()),
-                    error: ParseError::MissingField("tosca_definitions_version"),
-                }),
+                    error: ParseErrorKind::MissingField("tosca_definitions_version"),
+                })),
             }
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            })
+                error: ParseErrorKind::UnexpectedType("map"),
+            }))
         }
     }
-
-    fn resolve(_ctx: &mut Context) {}
 }

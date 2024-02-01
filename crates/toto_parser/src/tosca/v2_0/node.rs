@@ -1,7 +1,7 @@
 use toto_tosca::{Entity, Relation};
 
 use crate::{
-    parse::{Error, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -15,9 +15,9 @@ pub struct NodeTemplate;
 
 impl Parse for NodeType {
     fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut crate::parse::Context,
+        ctx: &mut toto_ast::AST,
         n: &yaml_peg::NodeRc,
-    ) -> crate::parse::GraphHandle {
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::NodeType);
 
         if let Ok(map) = n.as_map() {
@@ -49,16 +49,16 @@ impl Parse for NodeType {
                             ctx, root, entry.1,
                         );
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            });
+                error: ParseErrorKind::UnexpectedType("map"),
+            }));
         }
 
         root
@@ -67,9 +67,9 @@ impl Parse for NodeType {
 
 impl Parse for NodeTemplate {
     fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut crate::parse::Context,
+        ctx: &mut toto_ast::AST,
         n: &yaml_peg::NodeRc,
-    ) -> crate::parse::GraphHandle {
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::NodeType);
 
         let mut has_type: bool = false;
@@ -99,23 +99,23 @@ impl Parse for NodeTemplate {
                             ctx, root, entry.1,
                         );
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            });
+                error: ParseErrorKind::UnexpectedType("map"),
+            }));
         }
 
         if !has_type {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("type"),
-            });
+                error: ParseErrorKind::MissingField("type"),
+            }));
         }
 
         root

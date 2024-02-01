@@ -1,7 +1,7 @@
 use toto_tosca::{Entity, Relation};
 
 use crate::{
-    parse::{Context, Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -13,7 +13,10 @@ pub struct AttributeDefinition;
 pub type AttributeAssignment = Value;
 
 impl Parse for AttributeDefinition {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::Attribute);
 
         let mut has_type: bool = false;
@@ -52,24 +55,24 @@ impl Parse for AttributeDefinition {
                         let t = V::SchemaDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::EntrySchema);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            });
+                error: ParseErrorKind::UnexpectedType("map"),
+            }));
             return root;
         }
 
         if !has_type {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("type"),
-            });
+                error: ParseErrorKind::MissingField("type"),
+            }));
         }
 
         root

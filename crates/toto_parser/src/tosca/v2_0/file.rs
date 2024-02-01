@@ -2,7 +2,7 @@ use toto_tosca::{Entity, Relation};
 
 use super::{parse_collection, parse_list};
 use crate::{
-    parse::{Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -11,9 +11,9 @@ pub struct ToscaFileDefinition;
 
 impl Parse for ToscaFileDefinition {
     fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut crate::parse::Context,
+        ctx: &mut toto_ast::AST,
         n: &yaml_peg::NodeRc,
-    ) -> GraphHandle {
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::File);
 
         if let Ok(map) = n.as_map() {
@@ -44,16 +44,16 @@ impl Parse for ToscaFileDefinition {
                         let t = V::ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::ServiceTemplate);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map"),
-            });
+                error: ParseErrorKind::UnexpectedType("map"),
+            }));
             return root;
         }
 
@@ -75,29 +75,27 @@ mod tests {
         let mut p = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         p.push("src/tests/tosca_2_0.yaml");
 
-        dbg!(Dot::new(
-            &parse::<ToscaGrammar, _>(p)
-                .map_err(|errors| {
-                    Report::build(ReportKind::Error, "../../tests/tosca_2_0.yaml", 0)
-                        .with_labels(
-                            errors
-                                .iter()
-                                .map(|err| {
-                                    let pos: usize =
-                                        err.pos.unwrap_or_default().try_into().unwrap();
-                                    Label::new(("../../tests/tosca_2_0.yaml", pos..pos + 1))
-                                        .with_message(format!("{:?}", err.error))
-                                })
-                                .collect::<Vec<_>>(),
-                        )
-                        .finish()
-                        .eprint((
-                            "../../tests/tosca_2_0.yaml",
-                            Source::from(include_str!("../../tests/tosca_2_0.yaml")),
-                        ))
-                        .unwrap();
-                })
-                .unwrap()
-        ));
+        let ast = parse::<ToscaGrammar, _>(p);
+        let errors = ast.errors;
+
+        dbg!(Dot::new(&ast.graph));
+
+        Report::build(ReportKind::Error, "../../tests/tosca_2_0.yaml", 0)
+            .with_labels(
+                errors
+                    .iter()
+                    .map(|err| {
+                        let pos: usize = err.loc().try_into().unwrap();
+                        Label::new(("../../tests/tosca_2_0.yaml", pos..pos + 1))
+                            .with_message(err.what())
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
+            .eprint((
+                "../../tests/tosca_2_0.yaml",
+                Source::from(include_str!("../../tests/tosca_2_0.yaml")),
+            ))
+            .unwrap();
     }
 }
