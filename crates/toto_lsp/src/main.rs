@@ -45,6 +45,8 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::fs;
 
+use graphviz_rust::cmd::{CommandArg, Format};
+use graphviz_rust::printer::PrinterContext;
 use lsp_types::notification::{
     DidChangeTextDocument, DidOpenTextDocument, DidSaveTextDocument, Notification,
     PublishDiagnostics,
@@ -116,7 +118,19 @@ fn refresh_diag(connection: &Connection, uri: &Url) -> Result<(), Box<dyn Error 
     let result = toto_parser::parse::parse::<ToscaGrammar>(contents.as_str());
 
     let diagnostics: Vec<Diagnostic> = match result {
-        Ok(_) => {
+        Ok(graph) => {
+            let dot = petgraph::dot::Dot::new(&graph);
+            let dot = graphviz_rust::parse(format!("{:?}", dot).as_str()).unwrap();
+            graphviz_rust::exec(
+                dot,
+                &mut PrinterContext::default(),
+                vec![
+                    Format::Svg.into(),
+                    CommandArg::Output("graph.svg".to_string()),
+                ],
+            )
+            .unwrap();
+
             vec![]
         }
         Err(errors) => errors
