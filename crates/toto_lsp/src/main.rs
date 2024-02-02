@@ -66,7 +66,6 @@ use lsp_types::{
 
 use lsp_server::{Connection, ExtractError, Message, Response};
 use serde_json::from_value;
-use toto_parser::tosca::ToscaGrammar;
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
@@ -110,69 +109,66 @@ fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
 }
 
 fn refresh_diag(connection: &Connection, uri: &Url) -> Result<(), Box<dyn Error + Sync + Send>> {
-    let path = String::from(uri.clone())[7..].to_string();
-    eprintln!("trying read: {path:?}");
+    eprintln!("trying read: {uri:?}");
+    let mut scope = toto_semantic::Scope::new();
 
-    let contents = fs::read_to_string(path)?;
+    scope.add_file(uri.as_str());
 
-    let result = toto_parser::parse::parse::<ToscaGrammar>(contents.as_str());
+    let dot = petgraph::dot::Dot::new(&scope.ast.graph);
+    let dot = graphviz_rust::parse(format!("{:?}", dot).as_str()).unwrap();
+    graphviz_rust::exec(
+        dot,
+        &mut PrinterContext::default(),
+        vec![
+            Format::Svg.into(),
+            CommandArg::Output("graph.svg".to_string()),
+        ],
+    )
+    .unwrap();
 
-    let diagnostics: Vec<Diagnostic> = match result {
-        Ok(graph) => {
-            let dot = petgraph::dot::Dot::new(&graph);
-            let dot = graphviz_rust::parse(format!("{:?}", dot).as_str()).unwrap();
-            graphviz_rust::exec(
-                dot,
-                &mut PrinterContext::default(),
-                vec![
-                    Format::Svg.into(),
-                    CommandArg::Output("graph.svg".to_string()),
-                ],
-            )
-            .unwrap();
+    let contents = &scope.files.get(uri).unwrap().source;
 
-            vec![]
-        }
-        Err(errors) => errors
-            .iter()
-            .map(|err| {
-                let offset: usize = err.pos.unwrap_or_default().try_into().unwrap();
-                let linebreaks = contents[0..offset]
-                    .chars()
-                    .enumerate()
-                    .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
-                    .collect::<Vec<_>>();
-                let lineno = linebreaks.len();
-                let charno = offset
-                    - linebreaks
-                        .iter()
-                        .rev()
-                        .next()
-                        .map(|n| *n)
-                        .unwrap_or_default()
-                    - 1;
+    let diagnostics: Vec<Diagnostic> = scope
+        .ast
+        .errors
+        .iter()
+        .map(|err| {
+            let offset: usize = err.loc().try_into().unwrap();
+            let linebreaks = contents[0..offset]
+                .chars()
+                .enumerate()
+                .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
+                .collect::<Vec<_>>();
+            let lineno = linebreaks.len();
+            let charno = offset
+                - linebreaks
+                    .iter()
+                    .rev()
+                    .next()
+                    .map(|n| *n)
+                    .unwrap_or_default()
+                - 1;
 
-                Diagnostic::new(
-                    lsp_types::Range {
-                        start: Position {
-                            line: lineno as u32,
-                            character: charno as u32,
-                        },
-                        end: Position {
-                            line: lineno as u32,
-                            character: charno as u32 + 1,
-                        },
+            Diagnostic::new(
+                lsp_types::Range {
+                    start: Position {
+                        line: lineno as u32,
+                        character: charno as u32,
                     },
-                    None,
-                    None,
-                    None,
-                    format!("{:?}", err.error),
-                    None,
-                    None,
-                )
-            })
-            .collect(),
-    };
+                    end: Position {
+                        line: lineno as u32,
+                        character: charno as u32 + 1,
+                    },
+                },
+                None,
+                None,
+                None,
+                err.what(),
+                None,
+                None,
+            )
+        })
+        .collect();
 
     let notif_params = Some(PublishDiagnosticsParams {
         uri: uri.clone(),

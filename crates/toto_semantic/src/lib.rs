@@ -9,7 +9,7 @@ use toto_parser::{grammar::Grammar, tosca::ToscaGrammar};
 
 pub struct File {
     pub source: String,
-    pub root: toto_ast::GraphHandle,
+    pub root: Option<toto_ast::GraphHandle>,
 }
 
 pub struct Scope {
@@ -56,13 +56,15 @@ impl Scope {
                 }
                 let doc = doc.unwrap();
 
-                let root = ToscaGrammar::parse(&doc, &mut self.ast).unwrap();
+                let root = ToscaGrammar::parse(&doc, &mut self.ast);
                 let file = File { source: doc, root };
-                let imports = file.get_imports(&self.ast);
                 self.files.insert(url.clone(), file);
 
-                for import in imports {
-                    self.add_file_relative(&import, url.clone());
+                if self.files[&url].root.is_some() {
+                    let imports = self.files[&url].get_imports(&self.ast);
+                    for import in imports {
+                        self.add_file_relative(&import, url.clone());
+                    }
                 }
             }
             Err(error) => {
@@ -79,7 +81,7 @@ impl Scope {
 impl File {
     pub fn get_imports(&self, ast: &toto_ast::AST) -> Vec<String> {
         ast.graph
-            .neighbors(self.root)
+            .neighbors(self.root.unwrap())
             .filter(|n| matches!(ast.graph[*n], toto_tosca::Entity::Import))
             .filter_map(|import| {
                 ast.graph
