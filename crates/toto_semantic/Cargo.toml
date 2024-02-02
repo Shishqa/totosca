@@ -1,0 +1,14 @@
+[package]
+name = "toto_semantic"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+toto_ast = { path = "../toto_ast" }
+toto_tosca = { path = "../toto_tosca" }
+toto_parser = { path = "../toto_parser" }
+url = "2.5.0"
+petgraph = { version = "0.6.4", features = ["all", "serde"] }
+ariadne = "0.4.0"

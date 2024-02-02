@@ -72,7 +72,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let doc = include_str!("../../tests/tosca_1_3.yaml");
+        let doc = include_str!("../../../../../tests/tosca_1_3.yaml");
 
         let mut ast = toto_ast::AST::new();
 
@@ -82,21 +82,21 @@ mod tests {
         dbg!(Dot::new(&ast.graph));
 
         if !errors.is_empty() {
-            Report::build(ReportKind::Error, "../../tests/tosca_1_3.yaml", 0)
+            Report::build(ReportKind::Error, "../../../../../tests/tosca_1_3.yaml", 0)
                 .with_labels(
                     errors
                         .iter()
                         .map(|err| {
                             let pos: usize = err.loc().try_into().unwrap();
-                            Label::new(("../../tests/tosca_1_3.yaml", pos..pos + 1))
+                            Label::new(("../../../../../tests/tosca_1_3.yaml", pos..pos + 1))
                                 .with_message(err.what())
                         })
                         .collect::<Vec<_>>(),
                 )
                 .finish()
                 .eprint((
-                    "../../tests/tosca_1_3.yaml",
-                    Source::from(include_str!("../../tests/tosca_1_3.yaml")),
+                    "../../../../../tests/tosca_1_3.yaml",
+                    Source::from(include_str!("../../../../../tests/tosca_1_3.yaml")),
                 ))
                 .unwrap();
         }

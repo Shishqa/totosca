@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let doc = include_str!("../../tests/tosca_2_0.yaml");
+        let doc = include_str!("../../../../../tests/tosca_2_0.yaml");
 
         let mut ast = toto_ast::AST::new();
 
@@ -80,21 +80,21 @@ mod tests {
         dbg!(Dot::new(&ast.graph));
 
         if !errors.is_empty() {
-            Report::build(ReportKind::Error, "../../tests/tosca_2_0.yaml", 0)
+            Report::build(ReportKind::Error, "../../../../../tests/tosca_2_0.yaml", 0)
                 .with_labels(
                     errors
                         .iter()
                         .map(|err| {
                             let pos: usize = err.loc().try_into().unwrap();
-                            Label::new(("../../tests/tosca_2_0.yaml", pos..pos + 1))
+                            Label::new(("../../../../../tests/tosca_2_0.yaml", pos..pos + 1))
                                 .with_message(err.what())
                         })
                         .collect::<Vec<_>>(),
                 )
                 .finish()
                 .eprint((
-                    "../../tests/tosca_2_0.yaml",
-                    Source::from(include_str!("../../tests/tosca_2_0.yaml")),
+                    "../../../../../tests/tosca_2_0.yaml",
+                    Source::from(include_str!("../../../../../tests/tosca_2_0.yaml")),
                 ))
                 .unwrap();
         }
