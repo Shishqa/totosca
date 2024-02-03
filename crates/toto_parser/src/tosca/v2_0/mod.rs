@@ -122,6 +122,6 @@ impl ToscaDefinitionsVersion for Tosca2_0 {
 
         // TODO: add more builtin entities
 
-        return Self::FileDefinition::parse::<Self>(ctx, n);
+        Self::FileDefinition::parse::<Self>(ctx, n)
     }
 }

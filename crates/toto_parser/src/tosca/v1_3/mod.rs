@@ -42,6 +42,6 @@ impl ToscaDefinitionsVersion for Tosca1_3 {
         ctx.graph
             .add_edge(root, f, Relation::Subdef("get_property".to_string()));
 
-        return Self::FileDefinition::parse::<Self>(ctx, n);
+        Self::FileDefinition::parse::<Self>(ctx, n)
     }
 }

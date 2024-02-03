@@ -9,18 +9,9 @@ pub trait Error {
     fn what(&self) -> String;
 }
 
+#[derive(Default)]
 pub struct AST {
     pub files: HashMap<String, GraphHandle>,
     pub graph: petgraph::Graph<Entity, Relation, petgraph::Directed, u32>,
     pub errors: Vec<Box<dyn Error>>,
-}
-
-impl AST {
-    pub fn new() -> Self {
-        Self {
-            files: HashMap::new(),
-            graph: petgraph::Graph::new(),
-            errors: vec![],
-        }
-    }
 }

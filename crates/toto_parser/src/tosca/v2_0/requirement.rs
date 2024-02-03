@@ -19,7 +19,8 @@ pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
     root: toto_ast::GraphHandle,
     n: &yaml_peg::NodeRc,
 ) {
-    n.as_seq()
+    let _ = n
+        .as_seq()
         .map_err(|pos| {
             ctx.errors.push(Box::new(ParseError {
                 pos: Some(pos),
@@ -43,7 +44,7 @@ pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
                         .map_err(|err| ctx.errors.push(Box::new(err)))
                         .unwrap_or_default();
 
-                    let elem = P::parse::<V>(ctx, &value);
+                    let elem = P::parse::<V>(ctx, value);
 
                     ctx.graph.add_edge(root, elem, Relation::Subdef(name));
                     ctx.graph

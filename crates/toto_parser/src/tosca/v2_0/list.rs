@@ -16,7 +16,8 @@ pub fn parse_list<P: Parse, V: ToscaDefinitionsVersion>(
     root: toto_ast::GraphHandle,
     n: &yaml_peg::NodeRc,
 ) {
-    n.as_seq()
+    let _ = n
+        .as_seq()
         .map_err(|pos| {
             ctx.errors.push(Box::new(ParseError {
                 pos: Some(pos),
@@ -25,7 +26,7 @@ pub fn parse_list<P: Parse, V: ToscaDefinitionsVersion>(
         })
         .map(|seq| {
             for (idx, n) in seq.iter().enumerate() {
-                let elem = P::parse::<V>(ctx, &n);
+                let elem = P::parse::<V>(ctx, n);
                 ctx.graph
                     .add_edge(root, elem, Relation::ListValue(idx as u64));
             }

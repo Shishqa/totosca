@@ -21,16 +21,14 @@ impl Parse for Value {
                         .graph
                         .node_indices()
                         .filter(|i| matches!(ctx.graph[*i], Entity::Function))
-                        .filter(|i| {
+                        .find(|i| {
                             ctx.graph
                                 .edges_directed(*i, Incoming)
-                                .find(|e| match e.weight() {
+                                .any(|e| match e.weight() {
                                     Relation::Subdef(name) => name == s,
                                     _ => false,
                                 })
-                                .is_some()
-                        })
-                        .next();
+                        });
 
                     if let Some(func) = available_func {
                         let root = ctx.graph.add_node(Entity::FunctionCall);

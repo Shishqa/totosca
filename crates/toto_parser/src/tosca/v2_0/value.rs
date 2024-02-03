@@ -33,12 +33,12 @@ impl Parse for Value {
 
         match n.rc_ref().as_ref() {
             yaml_peg::Yaml::Null => ctx.graph.add_node(Entity::Nil),
-            yaml_peg::Yaml::Int(v) => Integer::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Float(v) => Float::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Str(v) => String::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Bool(v) => Boolean::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Seq(v) => List::<Value>::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Map(v) => Map::<Value, Value>::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Int(_) => Integer::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Float(_) => Float::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Str(_) => String::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Bool(_) => Boolean::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Seq(_) => List::<Value>::parse::<V>(ctx, n),
+            yaml_peg::Yaml::Map(_) => Map::<Value, Value>::parse::<V>(ctx, n),
             // TODO: handle anchors
             _ => unimplemented!(),
         }
