@@ -16,7 +16,8 @@ pub fn parse_list<P: Parse, V: ToscaDefinitionsVersion>(
     root: toto_ast::GraphHandle,
     n: &yaml_peg::NodeRc,
 ) {
-    n.as_seq()
+    let _ = n
+        .as_seq()
         .map_err(|pos| {
             ctx.errors.push(Box::new(ParseError {
                 pos: Some(pos),
