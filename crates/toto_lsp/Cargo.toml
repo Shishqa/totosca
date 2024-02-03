@@ -8,6 +8,7 @@ serde.workspace = true
 serde_json.workspace = true
 graphviz-rust.workspace = true
 petgraph.workspace = true
+url.workspace = true
 lsp-positions = "0.3.2"
 lsp-server = "0.7.6"
 lsp-types = "0.95.0"

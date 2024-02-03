@@ -697,6 +697,7 @@ dependencies = [
  "serde_json",
  "toto_ast",
  "toto_semantic",
+ "url",
 ]
 
 [[package]]
