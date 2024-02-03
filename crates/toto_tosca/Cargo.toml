@@ -10,3 +10,4 @@ ordered-float = "4.2.0"
 petgraph = "0.6.4"
 petgraph-gen = "0.1.3"
 rand = { version = "0.8.5", features = ["small_rng"] }
+url = "2.5.0"

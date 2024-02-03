@@ -1,0 +1,14 @@
+tosca_definitions_version: tosca_2_0
+
+imports:
+- ./b.yaml
+
+service_template:
+
+  node_templates:
+
+    a:
+      type: test
+
+    b:
+      type: test

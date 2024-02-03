@@ -2,7 +2,6 @@ use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
 
 use super::{parse_list, List, Map};
 use crate::{
-    parse::{Context, GraphHandle},
     tosca::{Parse, ToscaDefinitionsVersion},
     yaml::FromYaml,
 };
@@ -10,7 +9,10 @@ use crate::{
 pub struct Value;
 
 impl Parse for Value {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         if let Ok(map) = n.as_map() {
             if map.len() == 1 {
                 let elem = map.iter().next().unwrap();
@@ -44,40 +46,52 @@ impl Parse for Value {
 }
 
 impl Parse for Float {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         ctx.graph.add_node(Entity::Float(
             Float::from_yaml(n)
-                .map_err(|err| ctx.errors.push(err))
+                .map_err(|err| ctx.errors.push(Box::new(err)))
                 .unwrap_or_default(),
         ))
     }
 }
 
 impl Parse for String {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         ctx.graph.add_node(Entity::String(
             String::from_yaml(n)
-                .map_err(|err| ctx.errors.push(err))
+                .map_err(|err| ctx.errors.push(Box::new(err)))
                 .unwrap_or_default(),
         ))
     }
 }
 
 impl Parse for Integer {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         ctx.graph.add_node(Entity::Integer(
             Integer::from_yaml(n)
-                .map_err(|err| ctx.errors.push(err))
+                .map_err(|err| ctx.errors.push(Box::new(err)))
                 .unwrap_or_default(),
         ))
     }
 }
 
 impl Parse for Boolean {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         ctx.graph.add_node(Entity::Boolean(
             Boolean::from_yaml(n)
-                .map_err(|err| ctx.errors.push(err))
+                .map_err(|err| ctx.errors.push(Box::new(err)))
                 .unwrap_or_default(),
         ))
     }

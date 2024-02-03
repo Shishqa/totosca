@@ -1,7 +1,5 @@
 use toto_tosca::{Entity, Relation};
 
-use crate::parse::{Context, GraphHandle};
-
 use super::{v2_0, Parse, ToscaDefinitionsVersion};
 
 pub struct Tosca1_3;
@@ -27,7 +25,7 @@ impl ToscaDefinitionsVersion for Tosca1_3 {
     type ServiceTemplateDefinition = v2_0::ServiceTemplateDefinition;
     type Value = value::Value;
 
-    fn parse(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse(ctx: &mut toto_ast::AST, n: &yaml_peg::NodeRc) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::File);
         let builtin_url = ctx.graph.add_node(Entity::String("$builtin".to_string()));
         ctx.graph.add_edge(root, builtin_url, Relation::Url);

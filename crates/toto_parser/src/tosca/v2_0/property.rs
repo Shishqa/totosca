@@ -2,7 +2,7 @@ use toto_tosca::{Boolean, Entity, Relation};
 
 use super::{parse_collection, value::Value, Reference};
 use crate::{
-    parse::{Context, Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -12,7 +12,10 @@ pub struct PropertyDefinition;
 pub type PropertyAssignment = Value;
 
 impl Parse for PropertyDefinition {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::Property);
 
         let mut has_type: bool = false;
@@ -63,24 +66,26 @@ impl Parse for PropertyDefinition {
                         let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::ExternalSchema);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map (single-line notation is not supported)"),
-            });
+                error: ParseErrorKind::UnexpectedType(
+                    "map (single-line notation is not supported)",
+                ),
+            }));
             return root;
         }
 
         if !has_type {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("type"),
-            });
+                error: ParseErrorKind::MissingField("type"),
+            }));
         }
 
         root

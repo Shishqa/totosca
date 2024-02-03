@@ -1,12 +1,12 @@
 use toto_tosca::{Entity, Integer, Relation};
 
 use crate::{
-    parse::{Context, Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
     yaml::FromYaml,
 };
 
-use super::{value::Value, List, Reference};
+use super::{List, Reference};
 
 #[derive(Debug)]
 pub struct RequirementDefinition;
@@ -15,32 +15,32 @@ pub struct RequirementDefinition;
 pub struct RequirementAssignment;
 
 pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
-    ctx: &mut Context,
-    root: GraphHandle,
+    ctx: &mut toto_ast::AST,
+    root: toto_ast::GraphHandle,
     n: &yaml_peg::NodeRc,
 ) {
     n.as_seq()
         .map_err(|pos| {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(pos),
-                error: ParseError::UnexpectedType("list"),
-            })
+                error: ParseErrorKind::UnexpectedType("list"),
+            }))
         })
         .map(|seq| {
             for (idx, item) in seq.iter().enumerate() {
                 if let Ok(map) = item.as_map() {
                     if map.len() != 1 {
-                        ctx.errors.push(Error {
+                        ctx.errors.push(Box::new(ParseError {
                             pos: Some(item.pos()),
-                            error: ParseError::Custom("should have only one key".to_string()),
-                        });
+                            error: ParseErrorKind::Custom("should have only one key".to_string()),
+                        }));
                         continue;
                     }
 
                     let (key, value) = map.iter().next().unwrap();
 
                     let name = String::from_yaml(key)
-                        .map_err(|err| ctx.errors.push(err))
+                        .map_err(|err| ctx.errors.push(Box::new(err)))
                         .unwrap_or_default();
 
                     let elem = P::parse::<V>(ctx, &value);
@@ -49,10 +49,10 @@ pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
                     ctx.graph
                         .add_edge(root, elem, Relation::ListValue(idx as u64));
                 } else {
-                    ctx.errors.push(Error {
+                    ctx.errors.push(Box::new(ParseError {
                         pos: Some(item.pos()),
-                        error: ParseError::UnexpectedType("map"),
-                    });
+                        error: ParseErrorKind::UnexpectedType("map"),
+                    }));
                     continue;
                 }
             }
@@ -60,7 +60,10 @@ pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
 }
 
 impl Parse for RequirementDefinition {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::Requirement);
 
         let mut has_node: bool = false;
@@ -80,28 +83,28 @@ impl Parse for RequirementDefinition {
                         let t = List::<V::Value>::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::CountRange);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else if let Ok(r) = n.as_str() {
             has_node = true;
             let t = ctx.graph.add_node(Entity::Ref(r.to_string()));
             ctx.graph.add_edge(root, t, Relation::Node);
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map or string"),
-            });
+                error: ParseErrorKind::UnexpectedType("map or string"),
+            }));
             return root;
         }
 
         if !has_node {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("node"),
-            });
+                error: ParseErrorKind::MissingField("node"),
+            }));
         }
 
         root
@@ -109,7 +112,10 @@ impl Parse for RequirementDefinition {
 }
 
 impl Parse for RequirementAssignment {
-    fn parse<V: ToscaDefinitionsVersion>(ctx: &mut Context, n: &yaml_peg::NodeRc) -> GraphHandle {
+    fn parse<V: ToscaDefinitionsVersion>(
+        ctx: &mut toto_ast::AST,
+        n: &yaml_peg::NodeRc,
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::Requirement);
 
         let mut has_node: bool = false;
@@ -125,28 +131,28 @@ impl Parse for RequirementAssignment {
                         let t = Integer::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Count);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
         } else if let Ok(r) = n.as_str() {
             has_node = true;
             let t = ctx.graph.add_node(Entity::Ref(r.to_string()));
             ctx.graph.add_edge(root, t, Relation::Node);
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map or string"),
-            });
+                error: ParseErrorKind::UnexpectedType("map or string"),
+            }));
             return root;
         }
 
         if !has_node {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("node"),
-            });
+                error: ParseErrorKind::MissingField("node"),
+            }));
         }
 
         root

@@ -2,11 +2,11 @@ mod value;
 
 pub use value::*;
 
-use crate::parse::Error;
+use crate::parse::ParseError;
 
 pub trait FromYaml
 where
     Self: Sized,
 {
-    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, Error>;
+    fn from_yaml(n: &yaml_peg::NodeRc) -> Result<Self, ParseError>;
 }

@@ -1,7 +1,7 @@
 use toto_tosca::{Entity, Relation};
 
 use crate::{
-    parse::{Error, GraphHandle, ParseError},
+    parse::{ParseError, ParseErrorKind},
     tosca::{Parse, ToscaDefinitionsVersion},
 };
 
@@ -12,9 +12,9 @@ pub struct ImportDefinition;
 
 impl Parse for ImportDefinition {
     fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut crate::parse::Context,
+        ctx: &mut toto_ast::AST,
         n: &yaml_peg::NodeRc,
-    ) -> GraphHandle {
+    ) -> toto_ast::GraphHandle {
         let root = ctx.graph.add_node(Entity::Import);
 
         let mut has_url: bool = false;
@@ -24,7 +24,7 @@ impl Parse for ImportDefinition {
                 .for_each(|entry| match entry.0.as_str().unwrap() {
                     "url" => {
                         has_url = true;
-                        let t = Reference::parse::<V>(ctx, entry.1);
+                        let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Url);
                     }
                     "profile" => {
@@ -40,35 +40,35 @@ impl Parse for ImportDefinition {
                         let t = String::parse::<V>(ctx, entry.1);
                         ctx.graph.add_edge(root, t, Relation::Namespace);
                     }
-                    f => ctx.errors.push(Error {
+                    f => ctx.errors.push(Box::new(ParseError {
                         pos: Some(entry.0.pos()),
-                        error: ParseError::UnknownField(f.to_string()),
-                    }),
+                        error: ParseErrorKind::UnknownField(f.to_string()),
+                    })),
                 });
-        } else if let Ok(s) = n.as_str() {
+        } else if let Ok(_) = n.as_str() {
             has_url = true;
-            let t = ctx.graph.add_node(Entity::Ref(s.to_string()));
+            let t = String::parse::<V>(ctx, n);
             ctx.graph.add_edge(root, t, Relation::Url);
         } else {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::UnexpectedType("map or string"),
-            });
+                error: ParseErrorKind::UnexpectedType("map or string"),
+            }));
             return root;
         }
 
         if !has_url && !has_profile {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::MissingField("url or profile"),
-            });
+                error: ParseErrorKind::MissingField("url or profile"),
+            }));
         } else if has_url && has_profile {
-            ctx.errors.push(Error {
+            ctx.errors.push(Box::new(ParseError {
                 pos: Some(n.pos()),
-                error: ParseError::Custom(
+                error: ParseErrorKind::Custom(
                     "url and profile fields are mutually exclusive".to_string(),
                 ),
-            });
+            }));
         }
 
         root

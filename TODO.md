@@ -16,7 +16,6 @@
 - Full support of TOSCA 2.0 grammar schema #feature #syntax
 - Declarative schema definitions, make parse method generic #improvement #syntax
 - Support namespace indexes for name lookup #feature #semantic
-- Support local file imports #feature #semantic
 - Support remote http file imports with local caching #feature #semantic
 - Resolve TOSCA definition type #feature #semantic
 - Support TOSCA inheritance #feature #semantic
@@ -36,3 +35,4 @@
 - Determine grammar from file #feature #syntax
 - Initial LSP server based on https://github.com/rust-lang/rust-analyzer/tree/master/lib/lsp-server #feature #lsp
 - Report parser errors as diagnostics #feature #lsp
+- Support local file imports #feature #semantic
