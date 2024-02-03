@@ -72,7 +72,7 @@ mod tests {
     fn it_works() {
         let doc = include_str!("../../../../../tests/tosca_2_0.yaml");
 
-        let mut ast = toto_ast::AST::new();
+        let mut ast = toto_ast::AST::default();
 
         ToscaGrammar::parse(doc, &mut ast);
         let errors = ast.errors;

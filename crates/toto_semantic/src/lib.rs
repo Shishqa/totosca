@@ -26,7 +26,7 @@ impl Scope {
         Self {
             root,
             files: HashMap::new(),
-            ast: toto_ast::AST::new(),
+            ast: toto_ast::AST::default(),
         }
     }
 
