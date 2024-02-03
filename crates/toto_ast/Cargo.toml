@@ -1,10 +1,8 @@
 [package]
 name = "toto_ast"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-petgraph = { version = "0.6.4", features = ["all", "serde"] }
+petgraph.workspace = true
 toto_tosca = { path = "../toto_tosca" }
