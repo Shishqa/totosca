@@ -42,7 +42,7 @@ impl Scope {
                     return;
                 }
 
-                let doc = std::fs::read_to_string(url.as_str()[7..].to_string())
+                let doc = std::fs::read_to_string(&url.as_str()[7..])
                     .map_err(|err| {
                         self.ast.errors.push(Box::new(SemanticError::new(format!(
                             "{}: {}",
@@ -51,7 +51,7 @@ impl Scope {
                         ))));
                     })
                     .ok();
-                if let None = doc {
+                if doc.is_none() {
                     return;
                 }
                 let doc = doc.unwrap();
@@ -70,11 +70,16 @@ impl Scope {
             Err(error) => {
                 self.ast.errors.push(Box::new(SemanticError::new(format!(
                     "invalid url {}: {}",
-                    path,
-                    error.to_string()
+                    path, error,
                 ))));
             }
         }
+    }
+}
+
+impl Default for Scope {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
