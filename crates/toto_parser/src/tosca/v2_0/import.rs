@@ -45,7 +45,7 @@ impl Parse for ImportDefinition {
                         error: ParseErrorKind::UnknownField(f.to_string()),
                     })),
                 });
-        } else if let Ok(_) = n.as_str() {
+        } else if n.as_str().is_ok() {
             has_url = true;
             let t = String::parse::<V>(ctx, n);
             ctx.graph.add_edge(root, t, Relation::Url);

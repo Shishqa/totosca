@@ -44,7 +44,7 @@ pub fn parse_keyed_list_collection<P: Parse, V: ToscaDefinitionsVersion>(
                         .map_err(|err| ctx.errors.push(Box::new(err)))
                         .unwrap_or_default();
 
-                    let elem = P::parse::<V>(ctx, &value);
+                    let elem = P::parse::<V>(ctx, value);
 
                     ctx.graph.add_edge(root, elem, Relation::Subdef(name));
                     ctx.graph

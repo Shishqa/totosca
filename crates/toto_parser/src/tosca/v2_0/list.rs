@@ -26,7 +26,7 @@ pub fn parse_list<P: Parse, V: ToscaDefinitionsVersion>(
         })
         .map(|seq| {
             for (idx, n) in seq.iter().enumerate() {
-                let elem = P::parse::<V>(ctx, &n);
+                let elem = P::parse::<V>(ctx, n);
                 ctx.graph
                     .add_edge(root, elem, Relation::ListValue(idx as u64));
             }
