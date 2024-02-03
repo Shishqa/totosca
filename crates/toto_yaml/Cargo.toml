@@ -6,6 +6,7 @@ authors.workspace = true
 license.workspace = true
 
 [dependencies]
+anyhow.workspace = true
 yaml-peg.workspace = true
 ordered-float.workspace = true
 toto_ast = { path = "../toto_ast" }

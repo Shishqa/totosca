@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-pub struct Entity(yaml_peg::NodeRc);
+pub struct Entity(pub yaml_peg::NodeRc);
 
 impl Debug for Entity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -25,26 +25,23 @@ impl From<yaml_peg::NodeRc> for Entity {
     }
 }
 
-impl toto_ast::Entity for Entity {}
-impl toto_ast::Relation for Relation {}
-
-impl toto_ast::ToAST for Entity {
-    fn to_ast(self, ast: &mut toto_ast::AST) -> toto_ast::GraphHandle {
-        let self_handle = ast.add_node(Box::new(Entity(self.0.clone())));
+impl<E: From<Entity>, R: From<Relation>> toto_ast::ToAST<E, R> for Entity {
+    fn to_ast(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
+        let self_handle = ast.add_node(Entity(self.0.clone()).into());
         match self.0.yaml() {
             yaml_peg::Yaml::Map(m) => {
                 for (k, v) in m.iter() {
                     let k_handle = Entity::from(k.clone()).to_ast(ast);
-                    ast.add_edge(self_handle, k_handle, Box::new(Relation::MapKey));
+                    ast.add_edge(self_handle, k_handle, Relation::MapKey.into());
 
                     let v_handle = Entity::from(v.clone()).to_ast(ast);
-                    ast.add_edge(k_handle, v_handle, Box::new(Relation::MapValue));
+                    ast.add_edge(k_handle, v_handle, Relation::MapValue.into());
                 }
             }
             yaml_peg::Yaml::Seq(s) => {
                 for (i, v) in s.iter().enumerate() {
                     let v_handle = Entity::from(v.clone()).to_ast(ast);
-                    ast.add_edge(self_handle, v_handle, Box::new(Relation::ListValue(i)));
+                    ast.add_edge(self_handle, v_handle, Relation::ListValue(i).into());
                 }
             }
             _ => {}
@@ -58,7 +55,7 @@ mod tests {
     use petgraph::dot::Dot;
     use toto_ast::ToAST;
 
-    use crate::Entity;
+    use crate::{Entity, Relation};
 
     #[test]
     fn it_works() {
@@ -68,7 +65,7 @@ mod tests {
             .unwrap()
             .remove(0);
 
-        let mut ast = toto_ast::AST::new();
+        let mut ast = toto_ast::AST::<Entity, Relation>::new();
 
         Entity::from(yaml.clone()).to_ast(&mut ast);
 

@@ -5,3 +5,4 @@ edition.workspace = true
 
 [dependencies]
 petgraph.workspace = true
+anyhow.workspace = true
