@@ -681,7 +681,6 @@ name = "toto_ast"
 version = "0.0.1"
 dependencies = [
  "petgraph",
- "toto_tosca",
 ]
 
 [[package]]
@@ -735,6 +734,16 @@ dependencies = [
  "ordered-float",
  "petgraph",
  "url",
+]
+
+[[package]]
+name = "toto_yaml"
+version = "0.0.1"
+dependencies = [
+ "ordered-float",
+ "petgraph",
+ "toto_ast",
+ "yaml-peg",
 ]
 
 [[package]]

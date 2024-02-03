@@ -5,4 +5,3 @@ edition.workspace = true
 
 [dependencies]
 petgraph.workspace = true
-toto_tosca = { path = "../toto_tosca" }

@@ -1,0 +1,14 @@
+[package]
+name = "toto_yaml"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+yaml-peg.workspace = true
+ordered-float.workspace = true
+toto_ast = { path = "../toto_ast" }
+
+[dev-dependencies]
+petgraph.workspace = true

@@ -1,17 +1,12 @@
-use std::collections::HashMap;
-
-use toto_tosca::{Entity, Relation};
+use std::fmt::Debug;
 
 pub type GraphHandle = petgraph::graph::NodeIndex<u32>;
 
-pub trait Error {
-    fn loc(&self) -> u64;
-    fn what(&self) -> String;
-}
+pub trait Entity: Debug {}
+pub trait Relation: Debug {}
 
-#[derive(Default)]
-pub struct AST {
-    pub files: HashMap<String, GraphHandle>,
-    pub graph: petgraph::Graph<Entity, Relation, petgraph::Directed, u32>,
-    pub errors: Vec<Box<dyn Error>>,
+pub type AST = petgraph::Graph<Box<dyn Entity>, Box<dyn Relation>, petgraph::Directed, u32>;
+
+pub trait ToAST {
+    fn to_ast(self, ast: &mut AST) -> GraphHandle;
 }
