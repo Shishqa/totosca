@@ -13,6 +13,7 @@ url.workspace = true
 yaml-peg.workspace = true
 toto_tosca = { path = "../toto_tosca" }
 toto_ast = { path = "../toto_ast" }
+toto_yaml = { path = "../toto_yaml" }
 
 [dev-dependencies]
 ariadne.workspace = true

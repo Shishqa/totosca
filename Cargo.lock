@@ -680,6 +680,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "toto_ast"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "petgraph",
 ]
 
@@ -711,6 +712,7 @@ dependencies = [
  "serde",
  "toto_ast",
  "toto_tosca",
+ "toto_yaml",
  "url",
  "yaml-peg",
 ]
@@ -740,6 +742,7 @@ dependencies = [
 name = "toto_yaml"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
  "ordered-float",
  "petgraph",
  "toto_ast",
