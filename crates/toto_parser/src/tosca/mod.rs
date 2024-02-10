@@ -1,153 +1,96 @@
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use petgraph::{data::Build, visit::EdgeRef};
+use petgraph::{
+    data::{Build, Create, DataMap, DataMapMut},
+    visit::{Data, EdgeRef, GraphBase, IntoEdges},
+};
+use phf::phf_map;
 
-use crate::parse::{ParseError, ParseErrorLoc};
+use crate::parse::{ParseError, ParseLoc};
 
 // use yaml_peg::node;
 //
 // use crate::parse::ParseError;
 //
-// use self::{v1_3::Tosca1_3, v2_0::Tosca2_0};
+use self::{
+    ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
+    v2_0::{Tosca2_0, ToscaFileDefinition},
+};
 
 // pub mod v1_3;
-// pub mod v2_0;
+pub mod ast;
+pub mod v2_0;
 
 pub trait ToscaDefinitionsVersion<E, R> {
-    type AttributeDefinition: toto_ast::TransformAST<E, R>;
-    type AttributeAssignment: toto_ast::TransformAST<E, R>;
-    type PropertyDefinition: toto_ast::TransformAST<E, R>;
-    type PropertyAssignment: toto_ast::TransformAST<E, R>;
-    type ParameterDefinition: toto_ast::TransformAST<E, R>;
-    type DataTypeDefinition: toto_ast::TransformAST<E, R>;
-    type NodeTypeDefinition: toto_ast::TransformAST<E, R>;
-    type NodeTemplateDefinition: toto_ast::TransformAST<E, R>;
-    type RequirementDefinition: toto_ast::TransformAST<E, R>;
-    type RequirementAssignment: toto_ast::TransformAST<E, R>;
-    type SchemaDefinition: toto_ast::TransformAST<E, R>;
-    type ImportDefinition: toto_ast::TransformAST<E, R>;
-    type ServiceTemplateDefinition: toto_ast::TransformAST<E, R>;
-    type FileDefinition: toto_ast::TransformAST<E, R>;
-    type Value: toto_ast::TransformAST<E, R>;
+    //type AttributeDefinition: toto_ast::Parse<E, R>;
+    //type AttributeAssignment: toto_ast::Parse<E, R>;
+    //type PropertyDefinition: toto_ast::Parse<E, R>;
+    //type PropertyAssignment: toto_ast::Parse<E, R>;
+    //type ParameterDefinition: toto_ast::Parse<E, R>;
+    //type DataTypeDefinition: toto_ast::Parse<E, R>;
+    //type NodeTypeDefinition: toto_ast::Parse<E, R>;
+    //type NodeTemplateDefinition: toto_ast::Parse<E, R>;
+    //type RequirementDefinition: toto_ast::Parse<E, R>;
+    //type RequirementAssignment: toto_ast::Parse<E, R>;
+    //type SchemaDefinition: toto_ast::Parse<E, R>;
+    //type ImportDefinition: toto_ast::Parse<A>;
+    //type ServiceTemplateDefinition: toto_ast::Parse<E, R>;
+    type FileDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    //type Value: toto_ast::Parse<E, R>;
 }
 
-pub struct ToscaGrammar;
+pub struct ToscaGrammar(toto_ast::GraphHandle);
 
-#[derive(Debug)]
-pub enum Test {
-    Error(ParseError),
-    Yaml(toto_yaml::Entity),
-}
-
-#[derive(Debug)]
-pub enum TestRel {
-    Error(ParseErrorLoc),
-    Yaml(toto_yaml::Relation),
-}
-
-impl<'a> TryFrom<&'a Test> for &'a toto_yaml::Entity {
-    type Error = String;
-
-    fn try_from(value: &'a Test) -> Result<Self, Self::Error> {
-        match value {
-            Test::Yaml(value) => Ok(value),
-            _ => Err("nothing".to_string()),
-        }
-    }
-}
-
-impl From<ParseError> for Test {
-    fn from(value: ParseError) -> Self {
-        Self::Error(value)
-    }
-}
-
-impl From<toto_yaml::Entity> for Test {
-    fn from(value: toto_yaml::Entity) -> Self {
-        Self::Yaml(value)
-    }
-}
-
-impl From<ParseErrorLoc> for TestRel {
-    fn from(value: ParseErrorLoc) -> Self {
-        Self::Error(value)
-    }
-}
-
-impl From<toto_yaml::Relation> for TestRel {
-    fn from(value: toto_yaml::Relation) -> Self {
-        Self::Yaml(value)
-    }
-}
-
-impl<'a> TryFrom<&'a TestRel> for &'a toto_yaml::Relation {
-    type Error = String;
-
-    fn try_from(value: &'a TestRel) -> Result<Self, Self::Error> {
-        match value {
-            TestRel::Yaml(value) => Ok(value),
-            _ => Err("nothing".to_string()),
-        }
-    }
-}
-
-impl<E, R, D> toto_ast::TransformAST<E, R> for ToscaGrammar
+impl<E, R> toto_ast::Parse<E, R> for ToscaGrammar
 where
-    D: Debug,
-    for<'a> &'a toto_yaml::Entity: TryFrom<&'a E, Error = D>,
-    for<'a> &'a toto_yaml::Relation: TryFrom<&'a R, Error = D>,
-    E: From<ParseError>,
-    R: From<ParseErrorLoc>,
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
 {
-    fn transform_ast(
-        n: toto_ast::GraphHandle,
-        ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle {
-        let t = &ast[n];
-
-        let t: &toto_yaml::Entity = t.try_into().unwrap();
+    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
+        let t = ast.node_weight(self.0).unwrap();
+        let t = t.as_yaml().unwrap();
 
         match t.0.yaml() {
             yaml_peg::Yaml::Map(_) => {
                 let version = ast
-                    .edges(n)
+                    .edges(self.0)
                     .filter(|e| {
-                        matches!(e.weight().try_into().unwrap(), &toto_yaml::Relation::MapKey)
+                        matches!(e.weight().as_yaml().unwrap(), &toto_yaml::Relation::MapKey)
                     })
                     .map(|e| e.target())
                     .find(|n| {
-                        let t: &toto_yaml::Entity = (&ast[*n]).try_into().unwrap();
+                        let t: &toto_yaml::Entity = ast.node_weight(*n).unwrap().as_yaml().unwrap();
                         matches!(t.0.yaml(), yaml_peg::Yaml::Str(key) if key == "tosca_definitions_version")
                     })
                     .map(|n| {
-                        ast.edges(n).find(|e| matches!(e.weight().try_into().unwrap(), &toto_yaml::Relation::MapValue)).unwrap()
+                        ast.edges(n).find(|e| matches!(e.weight().as_yaml().unwrap(), &toto_yaml::Relation::MapValue)).unwrap()
                     }).map(|e| e.target());
 
                 match version {
                     Some(version_node) => {
-                        let t: &toto_yaml::Entity = (&ast[version_node]).try_into().unwrap();
+                        let t: &toto_yaml::Entity =
+                            ast.node_weight(version_node).unwrap().as_yaml().unwrap();
                         match t.0.yaml() {
                             yaml_peg::Yaml::Str(version_str) => match version_str.as_str() {
-                                "tosca_simple_yaml_1_3" => n,
-                                "tosca_2_0" => n,
-                                _ => n,
+                                "tosca_2_0" => <<Tosca2_0 as ToscaDefinitionsVersion<E, R>>::FileDefinition as From<toto_ast::GraphHandle>>::from(self.0).parse(ast),
+                                _ => self.0,
                             },
-                            _ => n,
+                            _ => self.0,
                         }
                     }
                     None => {
                         let e = ast
                             .add_node(ParseError::MissingField("tosca_definitions_version").into());
-                        ast.add_edge(e, n, ParseErrorLoc.into());
-                        n
+                        ast.add_edge(e, self.0, ParseLoc.into());
+                        self.0
                     }
                 }
             }
             _ => {
                 let e = ast.add_node(ParseError::UnexpectedType("map").into());
-                ast.add_edge(e, n, ParseErrorLoc.into());
-                n
+                ast.add_edge(e, self.0, ParseLoc.into());
+                self.0
             }
         }
     }
@@ -155,13 +98,81 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::tosca::Test;
-
     use petgraph::dot::Dot;
-    use toto_ast::{ToAST, TransformAST};
+    use toto_ast::Parse;
     use toto_yaml::Entity;
 
-    use super::{TestRel, ToscaGrammar};
+    use crate::parse::{ParseError, ParseLoc};
+
+    use super::ToscaGrammar;
+
+    #[derive(Debug)]
+    pub enum Test {
+        Parse(ParseError),
+        Yaml(toto_yaml::Entity),
+        Tosca(toto_tosca::Entity),
+    }
+
+    #[derive(Debug)]
+    pub enum TestRel {
+        Parse(ParseLoc),
+        Yaml(toto_yaml::Relation),
+        Tosca(toto_tosca::Relation),
+    }
+
+    impl toto_yaml::AsYamlRelation for TestRel {
+        fn as_yaml(&self) -> Option<&toto_yaml::Relation> {
+            match self {
+                TestRel::Yaml(value) => Some(value),
+                _ => None,
+            }
+        }
+    }
+
+    impl From<ParseError> for Test {
+        fn from(value: ParseError) -> Self {
+            Self::Parse(value)
+        }
+    }
+
+    impl From<toto_yaml::Entity> for Test {
+        fn from(value: toto_yaml::Entity) -> Self {
+            Self::Yaml(value)
+        }
+    }
+
+    impl From<toto_tosca::Entity> for Test {
+        fn from(value: toto_tosca::Entity) -> Self {
+            Self::Tosca(value)
+        }
+    }
+
+    impl From<ParseLoc> for TestRel {
+        fn from(value: ParseLoc) -> Self {
+            Self::Parse(value)
+        }
+    }
+
+    impl From<toto_yaml::Relation> for TestRel {
+        fn from(value: toto_yaml::Relation) -> Self {
+            Self::Yaml(value)
+        }
+    }
+
+    impl From<toto_tosca::Relation> for TestRel {
+        fn from(value: toto_tosca::Relation) -> Self {
+            Self::Tosca(value)
+        }
+    }
+
+    impl toto_yaml::AsYamlEntity for Test {
+        fn as_yaml(&self) -> Option<&toto_yaml::Entity> {
+            match self {
+                Test::Yaml(value) => Some(value),
+                _ => None,
+            }
+        }
+    }
 
     #[test]
     fn it_works() {
@@ -173,9 +184,8 @@ mod tests {
 
         let mut ast = toto_ast::AST::<Test, TestRel>::new();
 
-        let root = Entity::from(yaml.clone()).to_ast(&mut ast);
-
-        ToscaGrammar::transform_ast(root, &mut ast);
+        let root = Entity::from(yaml.clone()).parse(&mut ast);
+        ToscaGrammar(root).parse(&mut ast);
 
         dbg!(Dot::new(&ast));
 

@@ -7,9 +7,7 @@ license.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+petgraph.workspace = true
 yaml-peg.workspace = true
 ordered-float.workspace = true
 toto_ast = { path = "../toto_ast" }
-
-[dev-dependencies]
-petgraph.workspace = true

@@ -1,76 +1,120 @@
+use std::marker::PhantomData;
+
+use petgraph::{
+    data::Build,
+    visit::{GraphBase, IntoEdgeReferences, IntoEdges},
+};
 use toto_tosca::{Entity, Relation};
 
 use crate::{
-    parse::{ParseError, ParseErrorKind},
-    tosca::{Parse, ToscaDefinitionsVersion},
+    parse::{ParseError, ParseLoc},
+    tosca::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion},
 };
 
-use super::Reference;
-
 #[derive(Debug)]
-pub struct ImportDefinition;
+pub struct ImportDefinition<A, V>(pub A::NodeId, PhantomData<V>)
+where
+    A: GraphBase,
+    V: ToscaDefinitionsVersion<A>;
 
-impl Parse for ImportDefinition {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        let root = ctx.graph.add_node(Entity::Import);
+impl<A, V> toto_ast::Parse<A> for ImportDefinition<A, V>
+where
+    A: GraphBase + Build + IntoEdges + IntoEdgeReferences,
+    A::NodeWeight: ToscaCompatibleEntity,
+    A::EdgeWeight: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<A>,
+{
+    fn parse(self, ast: &mut A) -> A::NodeId {
+        let t = &ast[n];
+        let t = t.as_yaml().unwrap();
 
-        let mut has_url: bool = false;
-        let mut has_profile: bool = false;
-        if let Ok(map) = n.as_map() {
-            map.iter()
-                .for_each(|entry| match entry.0.as_str().unwrap() {
+        let mut has_url: Option<A::NodeId> = None;
+        let mut has_profile: Option<A::NodeId> = None;
+        if let Ok(map) = t.0.as_map() {
+            let root = ast.add_node(Entity::Import.into());
+            ast.add_edge(root, n, ParseLoc.into());
+
+            let keys = ast
+                .edges(n)
+                .filter_map(|e| match e.weight().as_yaml().unwrap() {
+                    toto_yaml::Relation::MapKey => Some(e.target()),
+                    _ => None,
+                })
+                .filter_map(|k| match &ast[k].as_yaml().unwrap().0.yaml() {
+                    yaml_peg::Yaml::Str(str_key) => Some((k.clone(), str_key.clone())),
+                    _ => None,
+                })
+                .map(|(k, str_key)| {
+                    let v = ast
+                        .edges(k)
+                        .find_map(|e| match e.weight().as_yaml().unwrap() {
+                            toto_yaml::Relation::MapValue => Some(e.target()),
+                            _ => None,
+                        })
+                        .unwrap();
+
+                    (str_key, k, v)
+                })
+                .collect::<Vec<(String, A::NodeId, A::NodeId)>>();
+
+            keys.iter()
+                .for_each(|str_key, k, v| match str_key.as_str() {
                     "url" => {
-                        has_url = true;
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Url);
+                        let t = ast.add_node(toto_tosca::Entity::Url.into());
+                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
+                        ast.add_edge(t, *v, ParseLoc.into());
+                        has_url = Some(t);
                     }
                     "profile" => {
-                        has_profile = true;
-                        let t = Reference::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Profile);
+                        let t = ast.add_node(toto_tosca::Entity::Profile.into());
+                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
+                        ast.add_edge(t, *v, ParseLoc.into());
+                        has_profile = Some(t);
                     }
                     "repository" => {
-                        let t = Reference::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Repository);
+                        let t = ast.add_node(toto_tosca::Entity::Repository.into());
+                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
+                        ast.add_edge(t, *v, ParseLoc.into());
                     }
                     "namespace" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Namespace);
+                        let t = ast.add_node(toto_tosca::Entity::Namespace.into());
+                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
+                        ast.add_edge(t, *v, ParseLoc.into());
                     }
-                    f => ctx.errors.push(Box::new(ParseError {
-                        pos: Some(entry.0.pos()),
-                        error: ParseErrorKind::UnknownField(f.to_string()),
-                    })),
+                    f => {
+                        let e = ast.add_node(ParseError::UnknownField(f.to_string()).into());
+                        ast.add_edge(e, *k, ParseLoc.into());
+                    }
                 });
+
+            if has_url.is_none() && has_profile.is_none() {
+                let e = ast.add_node(ParseError::MissingField("url or profile").into());
+                ast.add_edge(e, n, ParseLoc.into());
+            } else if has_url.is_some() && has_profile.is_some() {
+                let e = ast.add_node(
+                    ParseError::Custom("url and profile fields are mutually exclusive".to_string())
+                        .into(),
+                );
+                ast.add_edge(e, n, ParseLoc.into());
+            }
+
+            root
         } else if n.as_str().is_ok() {
             has_url = true;
-            let t = String::parse::<V>(ctx, n);
-            ctx.graph.add_edge(root, t, Relation::Url);
+
+            let root = ast.add_node(Entity::Import.into());
+            ast.add_edge(root, n, ParseLoc.into());
+
+            let t = ast.add_node(toto_tosca::Entity::Url.into());
+            ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
+
+            root
         } else {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::UnexpectedType("map or string"),
-            }));
-            return root;
-        }
+            let e = ast.add_node(ParseError::UnexpectedType("map or string").into());
+            ast.add_edge(e, n, ParseLoc.into());
 
-        if !has_url && !has_profile {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::MissingField("url or profile"),
-            }));
-        } else if has_url && has_profile {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::Custom(
-                    "url and profile fields are mutually exclusive".to_string(),
-                ),
-            }));
+            n
         }
-
-        root
     }
 }

@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
 
 use super::{parse_list, List, Map};
@@ -6,13 +8,12 @@ use crate::{
     yaml::FromYaml,
 };
 
-pub struct Value;
+pub struct Value<V: ToscaDefinitionsVersion> {
+    v: PhantomData<V>,
+}
 
-impl Parse for Value {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
+impl<E, R> toto_ast::Parse<E, R> for Value {
+    fn parse(n: toto_ast::GraphHandle, ctx: &mut toto_ast::AST) -> toto_ast::GraphHandle {
         if let Ok(map) = n.as_map() {
             if map.len() == 1 {
                 let elem = map.iter().next().unwrap();
@@ -42,58 +43,6 @@ impl Parse for Value {
             // TODO: handle anchors
             _ => unimplemented!(),
         }
-    }
-}
-
-impl Parse for Float {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        ctx.graph.add_node(Entity::Float(
-            Float::from_yaml(n)
-                .map_err(|err| ctx.errors.push(Box::new(err)))
-                .unwrap_or_default(),
-        ))
-    }
-}
-
-impl Parse for String {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        ctx.graph.add_node(Entity::String(
-            String::from_yaml(n)
-                .map_err(|err| ctx.errors.push(Box::new(err)))
-                .unwrap_or_default(),
-        ))
-    }
-}
-
-impl Parse for Integer {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        ctx.graph.add_node(Entity::Integer(
-            Integer::from_yaml(n)
-                .map_err(|err| ctx.errors.push(Box::new(err)))
-                .unwrap_or_default(),
-        ))
-    }
-}
-
-impl Parse for Boolean {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        ctx.graph.add_node(Entity::Boolean(
-            Boolean::from_yaml(n)
-                .map_err(|err| ctx.errors.push(Box::new(err)))
-                .unwrap_or_default(),
-        ))
     }
 }
 

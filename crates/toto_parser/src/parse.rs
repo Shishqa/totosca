@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum ParseError {
     UnknownField(String),
     MissingField(&'static str),
@@ -6,5 +6,5 @@ pub enum ParseError {
     Custom(String),
 }
 
-#[derive(Debug)]
-pub struct ParseErrorLoc;
+#[derive(Debug, Clone)]
+pub struct ParseLoc;
