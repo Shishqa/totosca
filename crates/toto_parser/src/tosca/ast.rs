@@ -1,3 +1,5 @@
+use petgraph::visit::EdgeRef;
+
 use crate::parse::{ParseError, ParseLoc};
 
 pub trait ToscaCompatibleEntity:

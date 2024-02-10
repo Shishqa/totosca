@@ -51,8 +51,8 @@ where
         let t = ast.node_weight(self.0).unwrap();
         let t = t.as_yaml().unwrap();
 
-        match t.0.yaml() {
-            yaml_peg::Yaml::Map(_) => {
+        match t {
+            toto_yaml::Entity::Map => {
                 let version = ast
                     .edges(self.0)
                     .filter(|e| {
@@ -61,7 +61,7 @@ where
                     .map(|e| e.target())
                     .find(|n| {
                         let t: &toto_yaml::Entity = ast.node_weight(*n).unwrap().as_yaml().unwrap();
-                        matches!(t.0.yaml(), yaml_peg::Yaml::Str(key) if key == "tosca_definitions_version")
+                        matches!(t, toto_yaml::Entity::Str(key) if key == "tosca_definitions_version")
                     })
                     .map(|n| {
                         ast.edges(n).find(|e| matches!(e.weight().as_yaml().unwrap(), &toto_yaml::Relation::MapValue)).unwrap()
@@ -71,8 +71,8 @@ where
                     Some(version_node) => {
                         let t: &toto_yaml::Entity =
                             ast.node_weight(version_node).unwrap().as_yaml().unwrap();
-                        match t.0.yaml() {
-                            yaml_peg::Yaml::Str(version_str) => match version_str.as_str() {
+                        match t {
+                            toto_yaml::Entity::Str(version_str) => match version_str.as_str() {
                                 "tosca_2_0" => <<Tosca2_0 as ToscaDefinitionsVersion<E, R>>::FileDefinition as From<toto_ast::GraphHandle>>::from(self.0).parse(ast),
                                 _ => self.0,
                             },
@@ -100,7 +100,6 @@ where
 mod tests {
     use petgraph::dot::Dot;
     use toto_ast::Parse;
-    use toto_yaml::Entity;
 
     use crate::parse::{ParseError, ParseLoc};
 
@@ -184,7 +183,7 @@ mod tests {
 
         let mut ast = toto_ast::AST::<Test, TestRel>::new();
 
-        let root = Entity::from(yaml.clone()).parse(&mut ast);
+        let root = toto_yaml::Yaml(yaml).parse(&mut ast);
         ToscaGrammar(root).parse(&mut ast);
 
         dbg!(Dot::new(&ast));
