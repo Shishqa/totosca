@@ -1,34 +1,30 @@
-// pub mod attribute;
-//pub mod collection;
-// pub mod data;
+pub mod attribute;
+pub mod collection;
+pub mod data;
 pub mod file;
-//pub mod import;
-// pub mod list;
-// pub mod map;
-//pub mod node;
-// pub mod parameter;
-// pub mod property;
-// pub mod reference;
-// pub mod requirement;
-// pub mod schema;
-//pub mod service_template;
-//pub mod value;
+pub mod import;
+pub mod list;
+pub mod node;
+pub mod parameter;
+pub mod property;
+pub mod requirement;
+pub mod schema;
+pub mod service_template;
+pub mod value;
 
-// pub use attribute::*;
-//pub use collection::*;
-// pub use data::*;
+pub use attribute::*;
+pub use collection::*;
+pub use data::*;
 pub use file::*;
-//pub use import::*;
-// pub use list::*;
-// pub use map::*;
-//pub use node::*;
-// pub use parameter::*;
-// pub use property::*;
-// pub use reference::*;
-// pub use requirement::*;
-// pub use schema::*;
-//pub use service_template::*;
-//pub use value::*;
+pub use import::*;
+pub use list::*;
+pub use node::*;
+pub use parameter::*;
+pub use property::*;
+pub use requirement::*;
+pub use schema::*;
+pub use service_template::*;
+pub use value::*;
 
 use super::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion};
 
@@ -39,19 +35,19 @@ where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
 {
-    //type AttributeDefinition = AttributeDefinition;
-    //type AttributeAssignment = AttributeAssignment;
-    //type PropertyAssignment = PropertyAssignment;
-    //type PropertyDefinition = PropertyDefinition;
-    //type ParameterDefinition = ParameterDefinition;
-    type FileDefinition = ToscaFileDefinition<E, R, Self>;
-    //type ImportDefinition = ImportDefinition<A, Self>;
-    //type SchemaDefinition = SchemaDefinition;
-    //type RequirementDefinition = RequirementDefinition;
-    //type RequirementAssignment = RequirementAssignment;
-    //type DataTypeDefinition = DataType;
-    //type NodeTypeDefinition = NodeType;
-    //type NodeTemplateDefinition = NodeTemplate;
-    //type ServiceTemplateDefinition = ServiceTemplateDefinition;
-    //type Value = Value<Self>;
+    type AttributeDefinition = self::Value<E, R, Self>;
+    type AttributeAssignment = self::Value<E, R, Self>;
+    type PropertyAssignment = self::Value<E, R, Self>;
+    type PropertyDefinition = self::Value<E, R, Self>;
+    type ParameterDefinition = self::Value<E, R, Self>;
+    type FileDefinition = self::ToscaFileDefinition<E, R, Self>;
+    type ImportDefinition = self::ImportDefinition<E, R, Self>;
+    type SchemaDefinition = self::Value<E, R, Self>;
+    type RequirementDefinition = self::Value<E, R, Self>;
+    type RequirementAssignment = self::Value<E, R, Self>;
+    type DataTypeDefinition = self::Value<E, R, Self>;
+    type NodeTypeDefinition = self::Value<E, R, Self>;
+    type NodeTemplateDefinition = self::Value<E, R, Self>;
+    type ServiceTemplateDefinition = self::Value<E, R, Self>;
+    type Value = self::Value<E, R, Self>;
 }

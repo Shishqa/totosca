@@ -1,50 +1,91 @@
 use std::marker::PhantomData;
 
-use toto_tosca::{Boolean, Entity, Float, Integer, Relation};
-
-use super::{parse_list, List, Map};
 use crate::{
-    tosca::{Parse, ToscaDefinitionsVersion},
-    yaml::FromYaml,
+    parse::ParseLoc,
+    tosca::{
+        ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
+        ToscaDefinitionsVersion,
+    },
 };
 
-pub struct Value<V: ToscaDefinitionsVersion> {
-    v: PhantomData<V>,
-}
+pub struct Value<E, R, V>(
+    pub toto_ast::GraphHandle,
+    pub toto_tosca::Entity,
+    PhantomData<(E, R, V)>,
+)
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>;
 
-impl<E, R> toto_ast::Parse<E, R> for Value {
-    fn parse(n: toto_ast::GraphHandle, ctx: &mut toto_ast::AST) -> toto_ast::GraphHandle {
-        if let Ok(map) = n.as_map() {
-            if map.len() == 1 {
-                let elem = map.iter().next().unwrap();
-                if let Ok(s) = elem.0.as_str() {
-                    if s.chars().nth(0).is_some_and(|c| c == '$')
-                        && s.chars().nth(1).is_some_and(|c| c != '$')
-                    {
-                        let root = ctx.graph.add_node(Entity::FunctionCall);
-                        let r = ctx.graph.add_node(Entity::Ref(s.to_string()));
-                        ctx.graph.add_edge(root, r, Relation::Type);
-                        parse_list::<V::Value, V>(ctx, root, elem.1);
-
-                        return root;
-                    }
-                }
-            }
-        }
-
-        match n.rc_ref().as_ref() {
-            yaml_peg::Yaml::Null => ctx.graph.add_node(Entity::Nil),
-            yaml_peg::Yaml::Int(_) => Integer::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Float(_) => Float::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Str(_) => String::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Bool(_) => Boolean::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Seq(_) => List::<Value>::parse::<V>(ctx, n),
-            yaml_peg::Yaml::Map(_) => Map::<Value, Value>::parse::<V>(ctx, n),
-            // TODO: handle anchors
-            _ => unimplemented!(),
-        }
+impl<E, R, V> From<toto_ast::GraphHandle> for Value<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn from(value: toto_ast::GraphHandle) -> Self {
+        Self(value, toto_tosca::Entity::Value, PhantomData::default())
     }
 }
+
+impl<E, R, V> From<(toto_ast::GraphHandle, toto_tosca::Entity)> for Value<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn from(value: (toto_ast::GraphHandle, toto_tosca::Entity)) -> Self {
+        Self(value.0, value.1, PhantomData::default())
+    }
+}
+
+impl<E, R, V> toto_ast::Parse<E, R> for Value<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
+        let v = ast.add_node(self.1.into());
+        ast.add_edge(v, self.0, ParseLoc.into());
+        v
+    }
+}
+
+// impl<E, R> toto_ast::Parse<E, R> for Value {
+//     fn parse(n: toto_ast::GraphHandle, ctx: &mut toto_ast::AST) -> toto_ast::GraphHandle {
+//         if let Ok(map) = n.as_map() {
+//             if map.len() == 1 {
+//                 let elem = map.iter().next().unwrap();
+//                 if let Ok(s) = elem.0.as_str() {
+//                     if s.chars().nth(0).is_some_and(|c| c == '$')
+//                         && s.chars().nth(1).is_some_and(|c| c != '$')
+//                     {
+//                         let root = ctx.graph.add_node(Entity::FunctionCall);
+//                         let r = ctx.graph.add_node(Entity::Ref(s.to_string()));
+//                         ctx.graph.add_edge(root, r, Relation::Type);
+//                         parse_list::<V::Value, V>(ctx, root, elem.1);
+//
+//                         return root;
+//                     }
+//                 }
+//             }
+//         }
+//
+//         match n.rc_ref().as_ref() {
+//             yaml_peg::Yaml::Null => ctx.graph.add_node(Entity::Nil),
+//             yaml_peg::Yaml::Int(_) => Integer::parse::<V>(ctx, n),
+//             yaml_peg::Yaml::Float(_) => Float::parse::<V>(ctx, n),
+//             yaml_peg::Yaml::Str(_) => String::parse::<V>(ctx, n),
+//             yaml_peg::Yaml::Bool(_) => Boolean::parse::<V>(ctx, n),
+//             yaml_peg::Yaml::Seq(_) => List::<Value>::parse::<V>(ctx, n),
+//             yaml_peg::Yaml::Map(_) => Map::<Value, Value>::parse::<V>(ctx, n),
+//             // TODO: handle anchors
+//             _ => unimplemented!(),
+//         }
+//     }
+// }
 
 // #[cfg(test)]
 // mod tests {

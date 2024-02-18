@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, slice::Iter};
 
 use petgraph::visit::EdgeRef;
 
@@ -37,6 +37,7 @@ impl From<&yaml_peg::NodeRc> for Entity {
     fn from(value: &yaml_peg::NodeRc) -> Self {
         match value.yaml() {
             yaml_peg::Yaml::Null => Self::Null,
+            yaml_peg::Yaml::Str(v) => Self::Str(v.to_string()),
             yaml_peg::Yaml::Int(_) => Self::Int(value.as_int().unwrap()),
             yaml_peg::Yaml::Bool(v) => Self::Bool(*v),
             yaml_peg::Yaml::Float(_) => Self::Float(value.as_float().unwrap()),
@@ -103,40 +104,33 @@ where
 pub fn iter_keys<E: AsYamlEntity, R: AsYamlRelation>(
     root: toto_ast::GraphHandle,
     ast: &toto_ast::AST<E, R>,
-) -> Vec<(String, toto_ast::GraphHandle, toto_ast::GraphHandle)> {
+) -> impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)> + '_ {
     ast.edges(root)
-        .filter_map(|e| match e.weight().as_yaml().unwrap() {
-            Relation::MapKey => Some(e.target()),
+        .filter_map(|e| match e.weight().as_yaml() {
+            Some(Relation::MapKey) => Some(e.target()),
             _ => None,
         })
-        .filter_map(|k| match ast.node_weight(k).unwrap().as_yaml().unwrap() {
-            Entity::Str(str_key) => Some((k.clone(), str_key.clone())),
-            _ => None,
-        })
-        .map(|(k, str_key)| {
+        .map(|k| {
             let v = ast
                 .edges(k)
-                .find_map(|e| match e.weight().as_yaml().unwrap() {
-                    Relation::MapValue => Some(e.target()),
+                .find_map(|e| match e.weight().as_yaml() {
+                    Some(Relation::MapValue) => Some(e.target()),
                     _ => None,
                 })
                 .unwrap();
 
-            (str_key, k, v)
+            (k, v)
         })
-        .collect()
 }
 
 pub fn iter_items<E: AsYamlEntity, R: AsYamlRelation>(
     root: toto_ast::GraphHandle,
     ast: &toto_ast::AST<E, R>,
-) -> Vec<(usize, toto_ast::GraphHandle)> {
-    ast.edges(root)
-        .filter_map(|e| match e.weight().as_yaml().unwrap() {
-            Relation::ListValue(i) => Some((*i, e.target())),
-            _ => None,
-        })
-        .collect()
+) -> impl Iterator<Item = (usize, toto_ast::GraphHandle)> + '_ {
+    ast.edges(root).filter_map(|e| match e.weight().as_yaml() {
+        Some(Relation::ListValue(i)) => Some((*i, e.target())),
+        _ => None,
+    })
 }
 
 #[cfg(test)]

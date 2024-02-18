@@ -1,123 +1,170 @@
+use std::marker::PhantomData;
+
 use toto_tosca::{Entity, Relation};
 
 use crate::{
-    parse::{ParseError, ParseErrorKind},
-    tosca::{Parse, ToscaDefinitionsVersion},
+    parse::{ParseError, ParseErrorKind, ParseLoc, StaticSchema},
+    tosca::{
+        ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
+        Parse, ToscaDefinitionsVersion,
+    },
 };
 
 use super::{parse_collection, parse_keyed_list_collection, Reference};
 
 #[derive(Debug)]
-pub struct NodeType;
+pub struct NodeType<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(E, R, V)>)
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>;
 
-#[derive(Debug)]
-pub struct NodeTemplate;
-
-impl Parse for NodeType {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        let root = ctx.graph.add_node(Entity::NodeType);
-
-        if let Ok(map) = n.as_map() {
-            map.iter()
-                .for_each(|entry| match entry.0.as_str().unwrap() {
-                    "derived_from" => {
-                        let t = Reference::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::DerivedFrom);
-                    }
-                    "description" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Description);
-                    }
-                    "metadata" => {
-                        parse_collection::<String, V>(ctx, root, entry.1);
-                    }
-                    "version" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Version);
-                    }
-                    "properties" => {
-                        parse_collection::<V::PropertyDefinition, V>(ctx, root, entry.1);
-                    }
-                    "attributes" => {
-                        parse_collection::<V::AttributeDefinition, V>(ctx, root, entry.1);
-                    }
-                    "requirements" => {
-                        parse_keyed_list_collection::<V::RequirementDefinition, V>(
-                            ctx, root, entry.1,
-                        );
-                    }
-                    f => ctx.errors.push(Box::new(ParseError {
-                        pos: Some(entry.0.pos()),
-                        error: ParseErrorKind::UnknownField(f.to_string()),
-                    })),
-                });
-        } else {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::UnexpectedType("map"),
-            }));
-        }
-
-        root
+impl<E, R, V> From<toto_ast::GraphHandle> for NodeType<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn from(value: toto_ast::GraphHandle) -> Self {
+        Self(value, PhantomData::default())
     }
 }
 
-impl Parse for NodeTemplate {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        let root = ctx.graph.add_node(Entity::NodeType);
+impl<E, R, V> StaticSchema<E, R> for NodeType<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    const ROOT: toto_tosca::Entity = toto_tosca::Entity::NodeType;
+    const SCHEMA: phf::Map<
+        &'static str,
+        fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
+    > = phf::phf_map! {
+        "derived_from" => |r, n, ast| {
+            let t = Reference::parse::<V>(ctx, entry.1);
+            ctx.graph.add_edge(root, t, Relation::DerivedFrom);
+        },
+        "description" => |r, n, ast| {
+            let t = String::parse::<V>(ctx, entry.1);
+            ctx.graph.add_edge(root, t, Relation::Description);
+        },
+        "metadata" => |r, n, ast| {
+            parse_collection::<String, V>(ctx, root, entry.1);
+        },
+        "version" => |r, n, ast| {
+            let t = String::parse::<V>(ctx, entry.1);
+            ctx.graph.add_edge(root, t, Relation::Version);
+        },
+        "properties" => |r, n, ast| {
+            parse_collection::<V::PropertyDefinition, V>(ctx, root, entry.1);
+        },
+        "attributes" => |r, n, ast| {
+            parse_collection::<V::AttributeDefinition, V>(ctx, root, entry.1);
+        },
+        "requirements" => |r, n, ast| {
+            parse_keyed_list_collection::<V::RequirementDefinition, V>(
+                ctx, root, entry.1,
+            );
+        },
+    };
+}
 
-        let mut has_type: bool = false;
-        if let Ok(map) = n.as_map() {
-            map.iter()
-                .for_each(|entry| match entry.0.as_str().unwrap() {
-                    "type" => {
-                        has_type = true;
-                        let t = Reference::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Type);
-                    }
-                    "description" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Description);
-                    }
-                    "metadata" => {
-                        parse_collection::<String, V>(ctx, root, entry.1);
-                    }
-                    "properties" => {
-                        parse_collection::<V::PropertyAssignment, V>(ctx, root, entry.1);
-                    }
-                    "attributes" => {
-                        parse_collection::<V::AttributeAssignment, V>(ctx, root, entry.1);
-                    }
-                    "requirements" => {
-                        parse_keyed_list_collection::<V::RequirementDefinition, V>(
-                            ctx, root, entry.1,
-                        );
-                    }
-                    f => ctx.errors.push(Box::new(ParseError {
-                        pos: Some(entry.0.pos()),
-                        error: ParseErrorKind::UnknownField(f.to_string()),
-                    })),
-                });
-        } else {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::UnexpectedType("map"),
-            }));
+impl<E, R, V> toto_ast::Parse<E, R> for NodeType<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
+        let t = &ast[self.0];
+        let t = t.as_yaml().unwrap();
+
+        match t {
+            toto_yaml::Entity::Map => Self::parse_schema(self.0, ast),
+            _ => {
+                let e = ast.add_node(ParseError::UnexpectedType("map").into());
+                ast.add_edge(e, self.0, ParseLoc.into());
+
+                self.0
+            }
         }
+    }
+}
 
-        if !has_type {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::MissingField("type"),
-            }));
+#[derive(Debug)]
+pub struct NodeTemplate<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(E, R, V)>)
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>;
+
+impl<E, R, V> From<toto_ast::GraphHandle> for NodeTemplate<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn from(value: toto_ast::GraphHandle) -> Self {
+        Self(value, PhantomData::default())
+    }
+}
+
+impl<E, R, V> StaticSchema<E, R> for NodeTemplate<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    const ROOT: toto_tosca::Entity = toto_tosca::Entity::Node;
+    const SCHEMA: phf::Map<
+        &'static str,
+        fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
+    > = phf::phf_map! {
+        "type" => |r, n, ast| {
+            has_type = true;
+            let t = Reference::parse::<V>(ctx, entry.1);
+            ctx.graph.add_edge(root, t, Relation::Type);
+        },
+        "description" => |r, n, ast| {
+            let t = String::parse::<V>(ctx, entry.1);
+            ctx.graph.add_edge(root, t, Relation::Description);
+        },
+        "metadata" => |r, n, ast|{
+            parse_collection::<String, V>(ctx, root, entry.1);
+        },
+        "properties" => |r, n, ast|{
+            parse_collection::<V::PropertyAssignment, V>(ctx, root, entry.1);
+        },
+        "attributes" => |r, n, ast|{
+            parse_collection::<V::AttributeAssignment, V>(ctx, root, entry.1);
+        },
+        "requirements" => |r, n, ast|{
+            parse_keyed_list_collection::<V::RequirementDefinition, V>(
+                ctx, root, entry.1,
+            );
+        },
+    };
+}
+
+impl<E, R, V> toto_ast::Parse<E, R> for NodeTemplate<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
+        let t = &ast[self.0];
+        let t = t.as_yaml().unwrap();
+
+        match t {
+            toto_yaml::Entity::Map => Self::parse_schema(self.0, ast),
+            _ => {
+                let e = ast.add_node(ParseError::UnexpectedType("map").into());
+                ast.add_edge(e, self.0, ParseLoc.into());
+
+                self.0
+            }
         }
-
-        root
     }
 }

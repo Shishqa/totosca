@@ -1,14 +1,16 @@
 use std::marker::PhantomData;
 
+use crate::{
+    parse::{add_error, ParseError, ParseLoc, StaticSchema},
+    tosca::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion},
+};
 use petgraph::{
     data::{Build, Create, DataMap},
     visit::{Data, EdgeRef, GraphBase, IntoEdgeReferences, IntoEdges},
 };
+use toto_ast::Parse;
 
-use crate::{
-    parse::{ParseError, ParseLoc},
-    tosca::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion},
-};
+use super::{Collection, List, Value};
 
 #[derive(Debug)]
 pub struct ToscaFileDefinition<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(V, E, R)>)
@@ -28,6 +30,65 @@ where
     }
 }
 
+impl<E, R, V> StaticSchema<E, R> for ToscaFileDefinition<E, R, V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<E, R>,
+{
+    const ROOT: toto_tosca::Entity = toto_tosca::Entity::File;
+    const SCHEMA: phf::Map<
+        &'static str,
+        fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
+    > = phf::phf_map! {
+        "tosca_definitions_version" => |r, n, ast| {
+            let t =
+                ast.add_node(toto_tosca::Entity::ToscaDefinitionsVersion.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
+        },
+        "profile" => |r, n, ast| {
+            let t = ast.add_node(toto_tosca::Entity::Profile.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
+        },
+        "metadata" => |r, n, ast| {
+            let t = ast.add_node(toto_tosca::Entity::Metadata.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
+        },
+        "description" => |r, n, ast| {
+            let t = ast.add_node(toto_tosca::Entity::Description.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
+        },
+        "imports" => |r, n, ast| {
+            List::<E, R, V::ImportDefinition>(n, r, PhantomData::default())
+                .parse(ast);
+        },
+        "data_types" => |r, n, ast| {
+            Collection::<E, R, V::DataTypeDefinition>(
+                n,
+                r,
+                PhantomData::default(),
+            )
+            .parse(ast);
+        },
+        "node_types" => |r, n, ast| {
+            Collection::<E, R, V::NodeTypeDefinition>(
+                n,
+                r,
+                PhantomData::default(),
+            )
+            .parse(ast);
+        },
+        "service_template" => |r, n, ast| {
+            let t = V::ServiceTemplateDefinition::from(n).parse(ast);
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+        }
+    };
+}
+
 impl<E, R, V> toto_ast::Parse<E, R> for ToscaFileDefinition<E, R, V>
 where
     E: ToscaCompatibleEntity,
@@ -39,56 +100,9 @@ where
         let t = t.as_yaml().unwrap();
 
         if let toto_yaml::Entity::Map = t {
-            let root = ast.add_node(toto_tosca::Entity::File.into());
-            ast.add_edge(root, self.0, ParseLoc.into());
-
-            toto_yaml::iter_keys(self.0, ast)
-                .iter()
-                .for_each(|(str_key, k, v)| match str_key.as_str() {
-                    "tosca_definitions_version" => {
-                        let t = ast.add_node(toto_tosca::Entity::ToscaDefinitionsVersion.into());
-                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                        ast.add_edge(t, *v, ParseLoc.into());
-                    }
-                    "profile" => {
-                        let t = ast.add_node(toto_tosca::Entity::Profile.into());
-                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                        ast.add_edge(t, *v, ParseLoc.into());
-                    }
-                    "metadata" => {
-                        let t = ast.add_node(toto_tosca::Entity::Metadata.into());
-                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                        ast.add_edge(t, *v, ParseLoc.into());
-                    }
-                    "description" => {
-                        let t = ast.add_node(toto_tosca::Entity::Description.into());
-                        ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                        ast.add_edge(t, *v, ParseLoc.into());
-                    }
-                    // "imports" => {
-                    //     parse_list::<V::ImportDefinition, V>(ctx, root, entry.1);
-                    // }
-                    // "data_types" => {
-                    //     parse_collection::<V::DataTypeDefinition, V>(ctx, root, entry.1);
-                    // }
-                    // "node_types" => {
-                    //     parse_collection::<V::NodeTypeDefinition, V>(ctx, root, entry.1);
-                    // }
-                    // "service_template" => {
-                    //     let t = V::ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
-                    //     ctx.graph.add_edge(root, t, Relation::ServiceTemplate);
-                    // }
-                    f => {
-                        let e = ast.add_node(ParseError::UnknownField(f.to_string()).into());
-                        ast.add_edge(e, *k, ParseLoc.into());
-                    }
-                });
-
-            root
+            Self::parse_schema(self.0, ast)
         } else {
-            let e = ast.add_node(ParseError::UnexpectedType("map").into());
-            ast.add_edge(e, self.0, ParseLoc.into());
-
+            add_error(self.0, ast, ParseError::UnexpectedType("map"));
             self.0
         }
     }
@@ -103,21 +117,21 @@ mod tests {
 
     use crate::{
         parse::ParseError,
-        tosca::{tests::Test, tests::TestRel, ToscaGrammar},
+        tosca::{tests::Entity, tests::Relation, ToscaGrammar},
     };
 
     #[test]
     fn it_works() {
         let doc = include_str!("../../../../../tests/tosca_2_0.yaml");
-
         let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
             .unwrap()
             .remove(0);
 
-        let mut ast = petgraph::Graph::<Test, TestRel, Directed, u32>::new();
+        let mut ast = toto_ast::AST::<Entity, Relation>::new();
+        let doc_handle = toto_yaml::FileEntity(doc.to_string()).parse(&mut ast);
 
-        let root = toto_yaml::Yaml(yaml.clone()).parse(&mut ast);
-        ToscaGrammar(root).parse(&mut ast);
+        let root = toto_yaml::Yaml(yaml.clone(), doc_handle).parse(&mut ast);
+        // ToscaGrammar(root).parse(&mut ast);
 
         dbg!(Dot::new(&ast));
 
@@ -125,20 +139,27 @@ mod tests {
             .node_indices()
             .into_iter()
             .filter_map(|node| match &ast[node] {
-                Test::Parse(err) => Some((node, err)),
+                Entity::Parse(err) => Some((node, err)),
                 _ => None,
             })
             .map(|(node, err)| {
-                let pos: usize = ast
+                let yaml = ast
                     .edges(node)
                     .find_map(|e| match e.weight() {
-                        TestRel::Parse(_) => Some(e.target()),
+                        Relation::Parse(_) => Some(e.target()),
                         _ => None,
                     })
-                    .map(|n| ast[n].as_yaml().unwrap().0.pos())
-                    .unwrap_or_default()
-                    .try_into()
-                    .unwrap_or_default();
+                    .unwrap();
+                (yaml, err)
+            })
+            .map(|(yaml, err)| {
+                let pos = ast
+                    .edges(yaml)
+                    .find_map(|e| match e.weight() {
+                        Relation::File(pos) => Some(pos.0),
+                        _ => None,
+                    })
+                    .unwrap();
                 (pos, err)
             })
             .collect::<Vec<(usize, &ParseError)>>();
