@@ -35,19 +35,19 @@ where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
 {
-    type AttributeDefinition = self::Value<E, R, Self>;
-    type AttributeAssignment = self::Value<E, R, Self>;
-    type PropertyAssignment = self::Value<E, R, Self>;
-    type PropertyDefinition = self::Value<E, R, Self>;
-    type ParameterDefinition = self::Value<E, R, Self>;
+    type AttributeDefinition = self::AttributeDefinition<E, R, Self>;
+    type AttributeAssignment = self::AttributeAssignment<E, R, Self>;
+    type PropertyAssignment = self::PropertyAssignment<E, R, Self>;
+    type PropertyDefinition = self::PropertyDefinition<E, R, Self>;
+    type ParameterDefinition = self::ParameterDefinition<E, R, Self>;
     type FileDefinition = self::ToscaFileDefinition<E, R, Self>;
     type ImportDefinition = self::ImportDefinition<E, R, Self>;
-    type SchemaDefinition = self::Value<E, R, Self>;
-    type RequirementDefinition = self::Value<E, R, Self>;
-    type RequirementAssignment = self::Value<E, R, Self>;
-    type DataTypeDefinition = self::Value<E, R, Self>;
-    type NodeTypeDefinition = self::Value<E, R, Self>;
-    type NodeTemplateDefinition = self::Value<E, R, Self>;
-    type ServiceTemplateDefinition = self::Value<E, R, Self>;
+    type SchemaDefinition = self::SchemaDefinition<E, R, Self>;
+    type RequirementDefinition = self::RequirementDefinition<E, R, Self>;
+    type RequirementAssignment = self::RequirementAssignment<E, R, Self>;
+    type DataTypeDefinition = self::DataType<E, R, Self>;
+    type NodeTypeDefinition = self::NodeType<E, R, Self>;
+    type NodeTemplateDefinition = self::NodeTemplate<E, R, Self>;
+    type ServiceTemplateDefinition = self::ServiceTemplateDefinition<E, R, Self>;
     type Value = self::Value<E, R, Self>;
 }

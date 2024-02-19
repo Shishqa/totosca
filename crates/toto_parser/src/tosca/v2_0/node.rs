@@ -1,16 +1,16 @@
 use std::marker::PhantomData;
 
-use toto_tosca::{Entity, Relation};
+use toto_ast::Parse;
 
 use crate::{
-    parse::{ParseError, ParseErrorKind, ParseLoc, StaticSchema},
+    parse::{ParseError, ParseLoc, StaticSchema},
     tosca::{
         ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
-        Parse, ToscaDefinitionsVersion,
+        ToscaDefinitionsVersion,
     },
 };
 
-use super::{parse_collection, parse_keyed_list_collection, Reference};
+use super::{Collection, KeyedList};
 
 #[derive(Debug)]
 pub struct NodeType<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(E, R, V)>)
@@ -42,30 +42,45 @@ where
         fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
     > = phf::phf_map! {
         "derived_from" => |r, n, ast| {
-            let t = Reference::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::DerivedFrom);
+            let t = ast.add_node(toto_tosca::Entity::NodeType.into());
+            ast.add_edge(r, t, toto_tosca::Relation::DerivedFrom.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "description" => |r, n, ast| {
-            let t = String::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Description);
+            let t = ast.add_node(toto_tosca::Entity::Description.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "metadata" => |r, n, ast| {
-            parse_collection::<String, V>(ctx, root, entry.1);
+            let t = ast.add_node(toto_tosca::Entity::Metadata.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "version" => |r, n, ast| {
-            let t = String::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Version);
+            let t = ast.add_node(toto_tosca::Entity::Value.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "properties" => |r, n, ast| {
-            parse_collection::<V::PropertyDefinition, V>(ctx, root, entry.1);
+            Collection::<E, R, V::PropertyDefinition>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
         "attributes" => |r, n, ast| {
-            parse_collection::<V::AttributeDefinition, V>(ctx, root, entry.1);
+            Collection::<E, R, V::AttributeDefinition>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
         "requirements" => |r, n, ast| {
-            parse_keyed_list_collection::<V::RequirementDefinition, V>(
-                ctx, root, entry.1,
-            );
+            KeyedList::<E, R, V::RequirementDefinition>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
     };
 }
@@ -122,27 +137,40 @@ where
         fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
     > = phf::phf_map! {
         "type" => |r, n, ast| {
-            has_type = true;
-            let t = Reference::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Type);
+            let t = ast.add_node(toto_tosca::Entity::NodeType.into());
+            ast.add_edge(r, t, toto_tosca::Relation::HasType.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "description" => |r, n, ast| {
-            let t = String::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Description);
+            let t = ast.add_node(toto_tosca::Entity::Description.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "metadata" => |r, n, ast|{
-            parse_collection::<String, V>(ctx, root, entry.1);
+            let t = ast.add_node(toto_tosca::Entity::Metadata.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "properties" => |r, n, ast|{
-            parse_collection::<V::PropertyAssignment, V>(ctx, root, entry.1);
+            Collection::<E, R, V::PropertyAssignment>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
         "attributes" => |r, n, ast|{
-            parse_collection::<V::AttributeAssignment, V>(ctx, root, entry.1);
+            Collection::<E, R, V::AttributeAssignment>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
         "requirements" => |r, n, ast|{
-            parse_keyed_list_collection::<V::RequirementDefinition, V>(
-                ctx, root, entry.1,
-            );
+            KeyedList::<E, R, V::RequirementAssignment>(
+                n,
+                r,
+                PhantomData::default(),
+            ).parse(ast);
         },
     };
 }

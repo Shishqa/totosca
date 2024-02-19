@@ -28,6 +28,7 @@ pub enum Entity {
     Repository,
     Import,
     Profile,
+    // todo: move to relation
     Description,
     DataType,
     Ref { name: String },
@@ -53,4 +54,7 @@ pub enum Relation {
     NamedSubdef(String),
     HasType,
     DerivedFrom,
+    Validation,
+    KeySchema,
+    EntrySchema,
 }

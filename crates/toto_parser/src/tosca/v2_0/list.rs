@@ -71,14 +71,14 @@ where
                 .collect::<Vec<_>>()
                 .iter()
                 .for_each(|(order, item)| {
-                    let i = ast.node_weight(item).unwrap();
+                    let i = ast.node_weight(*item).unwrap();
                     let i = i.as_yaml().unwrap();
 
                     if let toto_yaml::Entity::Map = i {
                         let keys = toto_yaml::iter_keys(self.0, ast).collect::<Vec<_>>();
                         if keys.len() != 1 {
                             add_error(
-                                item,
+                                *item,
                                 ast,
                                 ParseError::Custom("should have only one key".to_string()),
                             );
@@ -114,7 +114,7 @@ where
                         );
                     } else {
                         let e = ast.add_node(ParseError::UnexpectedType("map").into());
-                        ast.add_edge(e, item, ParseLoc.into());
+                        ast.add_edge(e, *item, ParseLoc.into());
                     }
                 });
         } else {

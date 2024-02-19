@@ -35,7 +35,7 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> toto_ast::GraphHandle {
-        let root = ast.add_node(toto_tosca::Entity::File.into());
+        let root = ast.add_node(Self::ROOT.into());
         ast.add_edge(root, n, ParseLoc.into());
 
         toto_yaml::iter_keys(n, ast)

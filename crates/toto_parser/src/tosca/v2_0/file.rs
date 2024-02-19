@@ -4,13 +4,9 @@ use crate::{
     parse::{add_error, ParseError, ParseLoc, StaticSchema},
     tosca::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion},
 };
-use petgraph::{
-    data::{Build, Create, DataMap},
-    visit::{Data, EdgeRef, GraphBase, IntoEdgeReferences, IntoEdges},
-};
 use toto_ast::Parse;
 
-use super::{Collection, List, Value};
+use super::{Collection, List};
 
 #[derive(Debug)]
 pub struct ToscaFileDefinition<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(V, E, R)>)
@@ -111,9 +107,11 @@ where
 #[cfg(test)]
 mod tests {
     use ariadne::{Label, Report, ReportKind, Source};
-    use petgraph::{dot::Dot, visit::EdgeRef, Directed};
+    use petgraph::{
+        dot::Dot,
+        visit::{EdgeFiltered, EdgeRef, NodeFiltered},
+    };
     use toto_ast::Parse;
-    use toto_yaml::AsYamlEntity;
 
     use crate::{
         parse::ParseError,
@@ -131,9 +129,11 @@ mod tests {
         let doc_handle = toto_yaml::FileEntity(doc.to_string()).parse(&mut ast);
 
         let root = toto_yaml::Yaml(yaml.clone(), doc_handle).parse(&mut ast);
-        // ToscaGrammar(root).parse(&mut ast);
+        ToscaGrammar(root).parse(&mut ast);
 
-        dbg!(Dot::new(&ast));
+        let ast_filtered = NodeFiltered::from_fn(&ast, |n| matches!(ast[n], Entity::Tosca(_)));
+
+        dbg!(Dot::new(&ast_filtered));
 
         let errors = ast
             .node_indices()

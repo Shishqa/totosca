@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use crate::{
-    parse::{add_error, ParseError, ParseLoc, StaticSchema},
+    parse::{ParseError, ParseLoc, StaticSchema},
     tosca::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion},
 };
 

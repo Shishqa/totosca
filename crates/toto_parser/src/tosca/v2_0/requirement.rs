@@ -1,7 +1,5 @@
 use std::marker::PhantomData;
 
-use toto_tosca::{Entity, Relation};
-
 use crate::{
     parse::{ParseError, ParseLoc, StaticSchema},
     tosca::{
@@ -9,8 +7,6 @@ use crate::{
         ToscaDefinitionsVersion,
     },
 };
-
-use super::{List, Reference};
 
 #[derive(Debug)]
 pub struct RequirementDefinition<E, R, V>(pub toto_ast::GraphHandle, PhantomData<(E, R, V)>)
@@ -42,17 +38,20 @@ where
         fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
     > = phf::phf_map! {
         "node" => |r, n, ast| {
-            has_node = true;
-            let t = Reference::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Node);
+            let t = ast.add_node(toto_tosca::Entity::NodeType.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "description" => |r, n, ast| {
-            let t = String::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Description);
+            let t = ast.add_node(toto_tosca::Entity::Description.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "count_range" => |r, n, ast| {
-            let t = List::<V::Value>::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::CountRange);
+            // TODO
+            let t = ast.add_node(toto_tosca::Entity::Value.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
     };
 }
@@ -72,9 +71,6 @@ where
             toto_yaml::Entity::Str(_) => {
                 let root = ast.add_node(toto_tosca::Entity::Node.into());
                 ast.add_edge(root, self.0, ParseLoc.into());
-
-                ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                ast.add_edge(t, self.0, ParseLoc.into());
 
                 root
             }
@@ -118,13 +114,14 @@ where
         fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
     > = phf::phf_map! {
         "node" => |r, n, ast| {
-            has_node = true;
-            let t = Reference::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Node);
+            let t = ast.add_node(toto_tosca::Entity::Node.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
         "count" => |r, n, ast| {
-            let t = Integer::parse::<V>(ctx, entry.1);
-            ctx.graph.add_edge(root, t, Relation::Count);
+            let t = ast.add_node(toto_tosca::Entity::Value.into());
+            ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+            ast.add_edge(t, n, ParseLoc.into());
         },
     };
 }
@@ -144,9 +141,6 @@ where
             toto_yaml::Entity::Str(_) => {
                 let root = ast.add_node(toto_tosca::Entity::Node.into());
                 ast.add_edge(root, self.0, ParseLoc.into());
-
-                ast.add_edge(root, t, toto_tosca::Relation::Subdef.into());
-                ast.add_edge(t, self.0, ParseLoc.into());
 
                 root
             }

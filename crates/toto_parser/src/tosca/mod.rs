@@ -194,7 +194,7 @@ mod tests {
         let doc_handle = toto_yaml::FileEntity(doc.to_string()).parse(&mut ast);
 
         let root = toto_yaml::Yaml(yaml, doc_handle).parse(&mut ast);
-        ToscaGrammar(root).parse(&mut ast);
+        // ToscaGrammar(root).parse(&mut ast);
 
         dbg!(Dot::new(&ast));
 
