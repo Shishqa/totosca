@@ -1,10 +1,18 @@
-use std::{fmt::Debug, slice::Iter};
+use std::fmt::Debug;
 
 use petgraph::visit::EdgeRef;
 
 // TODO: move to a separate crate
-#[derive(Debug)]
 pub struct FileEntity(pub String);
+
+impl Debug for FileEntity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self.0.char_indices().nth(100) {
+            None => f.write_str(&self.0),
+            Some((idx, _)) => f.write_str(&self.0[..idx]),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct FileRelation(pub usize);

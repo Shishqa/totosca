@@ -131,9 +131,9 @@ mod tests {
         let root = toto_yaml::Yaml(yaml.clone(), doc_handle).parse(&mut ast);
         ToscaGrammar(root).parse(&mut ast);
 
-        let ast_filtered = NodeFiltered::from_fn(&ast, |n| matches!(ast[n], Entity::Tosca(_)));
+        // let ast = NodeFiltered::from_fn(&ast, |n| matches!(ast[n], Entity::Tosca(_)));
 
-        dbg!(Dot::new(&ast_filtered));
+        dbg!(Dot::new(&ast));
 
         let errors = ast
             .node_indices()

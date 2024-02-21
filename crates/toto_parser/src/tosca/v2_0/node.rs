@@ -158,7 +158,7 @@ where
                 PhantomData::default(),
             ).parse(ast);
         },
-        "attributes" => |r, n, ast|{
+        "attributes" => |r, n, ast| {
             Collection::<E, R, V::AttributeAssignment>(
                 n,
                 r,
