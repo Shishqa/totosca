@@ -1,57 +1,164 @@
 use std::marker::PhantomData;
 
 use crate::{
-    parse::ParseLoc,
+    parse::{add_error, EntityParser, ParseError, ParseLoc, RelationParser, SubfieldParseFn},
     tosca::{
         ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
         ToscaDefinitionsVersion,
     },
 };
 
-pub struct Value<E, R, V>(
-    pub toto_ast::GraphHandle,
-    pub toto_tosca::Entity,
-    PhantomData<(E, R, V)>,
-)
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-    V: ToscaDefinitionsVersion<E, R>;
-
-impl<E, R, V> From<toto_ast::GraphHandle> for Value<E, R, V>
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-    V: ToscaDefinitionsVersion<E, R>,
-{
-    fn from(value: toto_ast::GraphHandle) -> Self {
-        Self(value, toto_tosca::Entity::Value, PhantomData::default())
+pub struct String;
+impl EntityParser<std::string::String> for String {
+    fn parse<E, R>(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<std::string::String>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        toto_yaml::as_string(n, ast).or_else(|| {
+            add_error(n, ast, ParseError::UnexpectedType("string"));
+            None
+        })
+    }
+}
+impl EntityParser<toto_ast::GraphHandle> for String {
+    fn parse<E, R>(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        toto_yaml::as_string(n, ast)
+            .or_else(|| {
+                add_error(n, ast, ParseError::UnexpectedType("string"));
+                None
+            })
+            .and_then(|_| Some(n))
     }
 }
 
-impl<E, R, V> From<(toto_ast::GraphHandle, toto_tosca::Entity)> for Value<E, R, V>
+pub trait Linker<V> {
+    const L: fn(v: V) -> toto_tosca::Relation;
+}
+
+pub struct Collection<K, V>(PhantomData<(K, V)>);
+
+impl<K, V> RelationParser for Collection<K, V>
 where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-    V: ToscaDefinitionsVersion<E, R>,
+    K: Linker<std::string::String>,
+    V: EntityParser<toto_ast::GraphHandle>,
 {
-    fn from(value: (toto_ast::GraphHandle, toto_tosca::Entity)) -> Self {
-        Self(value.0, value.1, PhantomData::default())
+    fn parse<E, R>(
+        root: toto_ast::GraphHandle,
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        toto_yaml::as_map(n, ast)
+            .or_else(|| {
+                add_error(n, ast, ParseError::UnexpectedType("map"));
+                None
+            })
+            .and_then(|items| {
+                items.for_each(|(k, v)| {
+                    String::parse(k, ast)
+                        .zip(V::parse(v, ast))
+                        .and_then(|(k_str, v_handle)| {
+                            ast.add_edge(root, v_handle, K::L(k_str).into());
+                            Some(v_handle)
+                        });
+                });
+                Some(n)
+            });
     }
 }
 
-impl<E, R, V> toto_ast::Parse<E, R> for Value<E, R, V>
+pub struct List<K, V>(PhantomData<(K, V)>);
+
+impl<K, V> RelationParser for List<K, V>
 where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-    V: ToscaDefinitionsVersion<E, R>,
+    K: Linker<usize>,
+    V: EntityParser<toto_ast::GraphHandle>,
 {
-    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
-        let v = ast.add_node(self.1.into());
-        ast.add_edge(v, self.0, ParseLoc.into());
-        v
+    fn parse<E, R>(
+        root: toto_ast::GraphHandle,
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        toto_yaml::as_list(n, ast)
+            .or_else(|| {
+                add_error(n, ast, ParseError::UnexpectedType("list"));
+                None
+            })
+            .and_then(|items| {
+                items.for_each(|(i, v)| {
+                    V::parse(v, ast).and_then(|v_handle| {
+                        ast.add_edge(root, v_handle, K::L(i).into());
+                        Some(v_handle)
+                    });
+                });
+                Some(n)
+            });
     }
 }
+
+pub struct Metadata;
+impl Linker<std::string::String> for Metadata {
+    const L: fn(v: std::string::String) -> toto_tosca::Relation = toto_tosca::Relation::Metadata;
+}
+
+pub struct Description;
+impl Linker<()> for Description {
+    const L: fn(v: ()) -> toto_tosca::Relation = |_| toto_tosca::Relation::Description;
+}
+
+pub struct Field<C, V>(PhantomData<(C, V)>);
+impl<C, V> RelationParser for Field<C, V>
+where
+    C: Linker<()>,
+    V: EntityParser<toto_ast::GraphHandle>,
+{
+    fn parse<E, R>(
+        root: toto_ast::GraphHandle,
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        V::parse(n, ast).and_then(|n_handle| {
+            ast.add_edge(root, n_handle, C::L(()).into());
+            Some(n_handle)
+        });
+    }
+}
+
+// pub fn validate_metadata<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>)
+// where
+//     E: ToscaCompatibleEntity,
+//     R: ToscaCompatibleRelation,
+// {
+//     match ast[n].as_yaml().unwrap() {
+//         &toto_yaml::Entity::Map(items) => {
+//             items.
+//
+//         }
+//         _ => {
+//             let e = ast.add_node(ParseError::UnexpectedType("string").into());
+//             ast.add_edge(e, n, ParseLoc.into());
+//         }
+//     }
+// }
 
 // impl<E, R> toto_ast::Parse<E, R> for Value {
 //     fn parse(n: toto_ast::GraphHandle, ctx: &mut toto_ast::AST) -> toto_ast::GraphHandle {

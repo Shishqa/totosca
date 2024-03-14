@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use toto_ast::Parse;
 
 use crate::{
-    parse::{ParseError, ParseLoc, StaticSchema},
+    parse::{ParseError, ParseLoc, StaticSchema, StaticSchemaMap},
     tosca::{
         ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
         ToscaDefinitionsVersion,
@@ -39,16 +39,13 @@ where
     V: ToscaDefinitionsVersion<E, R>,
 {
     const ROOT: toto_tosca::Entity = toto_tosca::Entity::Property;
-    const SCHEMA: phf::Map<
-        &'static str,
-        fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
-    > = phf::phf_map! {
-        "type" => |r, n, ast|{
+    const SCHEMA: StaticSchemaMap<E, R> = phf::phf_map! {
+        "type" => |r, n, ast| {
             let t = ast.add_node(toto_tosca::Entity::NodeType.into());
             ast.add_edge(r, t, toto_tosca::Relation::HasType.into());
             ast.add_edge(t, n, ParseLoc.into());
         },
-        "description" => |r, n, ast|{
+        "description" => |r, n, ast| {
             let t = ast.add_node(toto_tosca::Entity::Description.into());
             ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
             ast.add_edge(t, n, ParseLoc.into());
@@ -95,7 +92,7 @@ where
         let t = t.as_yaml().unwrap();
 
         match t {
-            toto_yaml::Entity::Map => Self::parse_schema(self.0, ast),
+            toto_yaml::Entity::Map(_) => Self::parse_schema(self.0, ast),
             _ => {
                 let e = ast.add_node(ParseError::UnexpectedType("map").into());
                 ast.add_edge(e, self.0, ParseLoc.into());

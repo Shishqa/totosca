@@ -1,4 +1,7 @@
-use crate::tosca::ast::{ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::tosca::{
+    ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
+    ToscaDefinitionsVersion,
+};
 
 #[derive(Debug, Clone)]
 pub enum ParseError {
@@ -20,41 +23,62 @@ where
     ast.add_edge(e, n, ParseLoc.into());
 }
 
-pub trait StaticSchema<E, R>
+pub(crate) type SubfieldParseFn<E, R> =
+    fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>);
+
+pub(crate) type StaticSchemaMap<E, R> = phf::Map<&'static str, SubfieldParseFn<E, R>>;
+
+pub fn parse_schema<E, R>(
+    schema: &StaticSchemaMap<E, R>,
+    root: toto_ast::GraphHandle,
+    keys: impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)>,
+    ast: &mut toto_ast::AST<E, R>,
+) -> toto_ast::GraphHandle
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
 {
-    const ROOT: toto_tosca::Entity;
-    const SCHEMA: phf::Map<
-        &'static str,
-        fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>),
-    >;
+    keys.for_each(|(k, v)| {
+        toto_yaml::as_string(k, ast)
+            .or_else(|| {
+                add_error(k, ast, ParseError::UnexpectedType("string"));
+                None
+            })
+            .and_then(|key| {
+                let parser = schema.get(key.as_str());
+                if parser.is_some() {
+                    parser.unwrap()(root, v, ast);
+                } else {
+                    add_error(k, ast, ParseError::UnknownField(key));
+                }
+                Some(k)
+            });
+    });
 
-    fn parse_schema(
+    root
+}
+
+pub trait Schema<E, R>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+{
+    const SCHEMA: StaticSchemaMap<E, R>;
+}
+
+pub trait EntityParser<V> {
+    fn parse<E, R>(n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) -> Option<V>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation;
+}
+
+pub trait RelationParser {
+    fn parse<E, R>(
+        root: toto_ast::GraphHandle,
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle {
-        let root = ast.add_node(Self::ROOT.into());
-        ast.add_edge(root, n, ParseLoc.into());
-
-        toto_yaml::iter_keys(n, ast)
-            .collect::<Vec<_>>()
-            .iter()
-            .for_each(|(k, v)| {
-                let key = ast.node_weight(*k).unwrap().as_yaml().unwrap();
-                if let toto_yaml::Entity::Str(str_key) = key {
-                    let parser = Self::SCHEMA.get(str_key);
-                    if parser.is_some() {
-                        parser.unwrap()(root, *v, ast);
-                    } else {
-                        add_error(*k, ast, ParseError::UnknownField(str_key.to_string()));
-                    }
-                } else {
-                    add_error(*k, ast, ParseError::UnexpectedType("string"));
-                }
-            });
-
-        root
-    }
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation;
 }

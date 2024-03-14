@@ -7,7 +7,7 @@ use petgraph::{
 };
 use phf::phf_map;
 
-use crate::parse::{add_error, ParseError, ParseLoc};
+use crate::parse::{add_error, EntityParser, ParseError, ParseLoc};
 
 // use yaml_peg::node;
 //
@@ -18,88 +18,35 @@ use self::{
     v2_0::{Tosca2_0, ToscaFileDefinition},
 };
 
-// pub mod v1_3;
 pub mod ast;
+pub mod v1_3;
 pub mod v2_0;
 
-pub trait ToscaDefinitionsVersion<E, R> {
-    type AttributeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type AttributeAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type PropertyDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type PropertyAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type ParameterDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type DataTypeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type NodeTypeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type NodeTemplateDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type RequirementDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type RequirementAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type SchemaDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type ImportDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type ServiceTemplateDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type FileDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-    type Value: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
-}
-
-pub struct ToscaGrammar(toto_ast::GraphHandle);
-
-impl<E, R> toto_ast::Parse<E, R> for ToscaGrammar
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-{
-    fn parse(self, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle {
-        let t = ast.node_weight(self.0).unwrap();
-        let t = t.as_yaml().unwrap();
-
-        match t {
-            toto_yaml::Entity::Map => {
-                let version = toto_yaml::iter_keys(self.0, ast).find_map(|(k, v)| {
-                    match ast.node_weight(k).unwrap().as_yaml() {
-                        Some(toto_yaml::Entity::Str(key)) if key == "tosca_definitions_version" => {
-                            Some(v)
-                        }
-                        _ => None,
-                    }
-                });
-
-                match version {
-                    Some(version_node) => {
-                        let t: &toto_yaml::Entity =
-                            ast.node_weight(version_node).unwrap().as_yaml().unwrap();
-                        match t {
-                            toto_yaml::Entity::Str(version_str) => match version_str.as_str() {
-                                "tosca_2_0" => <<Tosca2_0 as ToscaDefinitionsVersion<E, R>>::FileDefinition as From<toto_ast::GraphHandle>>::from(self.0).parse(ast),
-                                _ => self.0,
-                            },
-                            _ => self.0,
-                        }
-                    }
-                    None => {
-                        add_error(
-                            self.0,
-                            ast,
-                            ParseError::MissingField("tosca_definitions_version"),
-                        );
-                        self.0
-                    }
-                }
-            }
-            _ => {
-                add_error(self.0, ast, ParseError::UnexpectedType("map"));
-                self.0
-            }
-        }
-    }
+pub trait ToscaDefinitionsVersion {
+    // type AttributeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type AttributeAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type PropertyDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type PropertyAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type ParameterDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type DataTypeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type NodeTypeDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type NodeTemplateDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type RequirementDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type RequirementAssignment: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type SchemaDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    // type ServiceTemplateDefinition: toto_ast::Parse<E, R> + From<toto_ast::GraphHandle>;
+    type ImportDefinition: EntityParser<toto_ast::GraphHandle>;
+    type FileDefinition: EntityParser<toto_ast::GraphHandle>;
 }
 
 #[cfg(test)]
 mod tests {
     use petgraph::dot::Dot;
-    use toto_ast::Parse;
 
-    use crate::parse::{ParseError, ParseLoc};
-
-    use super::ToscaGrammar;
+    use crate::{
+        parse::{ParseError, ParseLoc},
+        tosca::ast::ToscaParser,
+    };
 
     #[derive(Debug)]
     pub enum Entity {
@@ -186,15 +133,9 @@ mod tests {
     #[test]
     fn it_works() {
         let doc = include_str!("../../../../tests/a.yaml");
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
-            .unwrap()
-            .remove(0);
-
         let mut ast = toto_ast::AST::<Entity, Relation>::new();
-        let doc_handle = toto_yaml::FileEntity(doc.to_string()).parse(&mut ast);
 
-        let root = toto_yaml::Yaml(yaml, doc_handle).parse(&mut ast);
-        // ToscaGrammar(root).parse(&mut ast);
+        ToscaParser::parse(doc, &mut ast);
 
         dbg!(Dot::new(&ast));
 

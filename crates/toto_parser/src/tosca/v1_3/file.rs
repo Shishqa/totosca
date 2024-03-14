@@ -1,106 +1,113 @@
-use toto_tosca::{Entity, Relation};
+use std::marker::PhantomData;
 
 use crate::{
-    parse::{ParseError, ParseErrorKind},
+    parse::{
+        add_error, parse_schema, EntityParser, ParseError, RelationParser, Schema, StaticSchemaMap,
+    },
     tosca::{
-        v2_0::{parse_collection, parse_list},
-        Parse, ToscaDefinitionsVersion,
+        ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
+        v2_0, ToscaDefinitionsVersion,
     },
 };
 
 #[derive(Debug)]
-pub struct ToscaFileDefinition;
+pub struct ToscaFileDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
-impl Parse for ToscaFileDefinition {
-    fn parse<V: ToscaDefinitionsVersion>(
-        ctx: &mut toto_ast::AST,
-        n: &yaml_peg::NodeRc,
-    ) -> toto_ast::GraphHandle {
-        let root = ctx.graph.add_node(Entity::File);
+impl<E, R, V> Schema<E, R> for ToscaFileDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion,
+{
+    const SCHEMA: StaticSchemaMap<E, R> = phf::phf_map! {
+        // "tosca_definitions_version" => |r, n, ast| {
+        //     let t =
+        //         ast.add_node(toto_tosca::Entity::ToscaDefinitionsVersion.into());
+        //     ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+        //     ast.add_edge(t, n, ParseLoc.into());
+        // },
+        // "profile" => |r, n, ast| {
+        //     let t = ast.add_node(toto_tosca::Entity::Profile.into());
+        //     ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+        //     ast.add_edge(t, n, ParseLoc.into());
+        // },
+        // "metadata" => |r, n, ast| {
+        //     let t = ast.add_node(toto_tosca::Entity::Metadata.into());
+        //     ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+        //     ast.add_edge(t, n, ParseLoc.into());
+        // },
+        "description" => v2_0::value::Field::<v2_0::value::Description, v2_0::value::String>::parse::<E, R>,
+        "imports" => v2_0::value::List::<v2_0::import::Import, V::ImportDefinition>::parse::<E, R>,
+        // "imports" => |r, n, ast| {
+        //     List::<E, R, V::ImportDefinition>(n, r, PhantomData::default())
+        //         .parse(ast);
+        // },
+        // "data_types" => |r, n, ast| {
+        //     Collection::<E, R, V::DataTypeDefinition>(
+        //         n,
+        //         r,
+        //         PhantomData::default(),
+        //     )
+        //     .parse(ast);
+        // },
+        // "node_types" => |r, n, ast| {
+        //     Collection::<E, R, V::NodeTypeDefinition>(
+        //         n,
+        //         r,
+        //         PhantomData::default(),
+        //     )
+        //     .parse(ast);
+        // },
+        // "service_template" => |r, n, ast| {
+        //     let t = V::ServiceTemplateDefinition::from(n).parse(ast);
+        //     ast.add_edge(r, t, toto_tosca::Relation::Subdef.into());
+        // }
+    };
+}
 
-        if let Ok(map) = n.as_map() {
-            map.iter()
-                .for_each(|entry| match entry.0.as_str().unwrap() {
-                    "tosca_definitions_version" => {}
-                    "profile" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Profile);
-                    }
-                    "metadata" => {
-                        parse_collection::<String, V>(ctx, root, entry.1);
-                    }
-                    "description" => {
-                        let t = String::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::Description);
-                    }
-                    "imports" => {
-                        parse_list::<V::ImportDefinition, V>(ctx, root, entry.1);
-                    }
-                    "data_types" => {
-                        parse_collection::<V::DataTypeDefinition, V>(ctx, root, entry.1);
-                    }
-                    "node_types" => {
-                        parse_collection::<V::NodeTypeDefinition, V>(ctx, root, entry.1);
-                    }
-                    "topology_template" => {
-                        let t = V::ServiceTemplateDefinition::parse::<V>(ctx, entry.1);
-                        ctx.graph.add_edge(root, t, Relation::ServiceTemplate);
-                    }
-                    f => ctx.errors.push(Box::new(ParseError {
-                        pos: Some(entry.0.pos()),
-                        error: ParseErrorKind::UnknownField(f.to_string()),
-                    })),
-                });
-        } else {
-            ctx.errors.push(Box::new(ParseError {
-                pos: Some(n.pos()),
-                error: ParseErrorKind::UnexpectedType("map"),
-            }));
-            return root;
-        }
-
-        root
+impl<V> EntityParser<toto_ast::GraphHandle> for ToscaFileDefinition<V>
+where
+    V: ToscaDefinitionsVersion,
+{
+    fn parse<E, R>(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let file = ast.add_node(toto_tosca::Entity::File.into());
+        toto_yaml::as_map(n, ast)
+            .or_else(|| {
+                add_error(n, ast, ParseError::UnexpectedType("map"));
+                None
+            })
+            .and_then(|items| {
+                parse_schema(&Self::SCHEMA, file, items, ast);
+                Some(file)
+            });
+        Some(file)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use ariadne::{Label, Report, ReportKind, Source};
     use petgraph::dot::Dot;
 
-    use crate::{grammar::Grammar, tosca::ToscaGrammar};
+    use crate::tosca::{
+        ast::ToscaParser,
+        tests::{Entity, Relation},
+    };
 
     #[test]
     fn it_works() {
         let doc = include_str!("../../../../../tests/tosca_1_3.yaml");
 
-        let mut ast = toto_ast::AST::default();
+        let mut ast = toto_ast::AST::<Entity, Relation>::new();
 
-        ToscaGrammar::parse(doc, &mut ast);
-        let errors = ast.errors;
+        ToscaParser::parse(doc, &mut ast);
 
-        dbg!(Dot::new(&ast.graph));
-
-        if !errors.is_empty() {
-            Report::build(ReportKind::Error, "../../../../../tests/tosca_1_3.yaml", 0)
-                .with_labels(
-                    errors
-                        .iter()
-                        .map(|err| {
-                            let pos: usize = err.loc().try_into().unwrap();
-                            Label::new(("../../../../../tests/tosca_1_3.yaml", pos..pos + 1))
-                                .with_message(err.what())
-                        })
-                        .collect::<Vec<_>>(),
-                )
-                .finish()
-                .eprint((
-                    "../../../../../tests/tosca_1_3.yaml",
-                    Source::from(include_str!("../../../../../tests/tosca_1_3.yaml")),
-                ))
-                .unwrap();
-        }
-
-        assert!(errors.is_empty())
+        dbg!(Dot::new(&ast));
     }
 }
