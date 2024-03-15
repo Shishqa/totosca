@@ -13,4 +13,6 @@ lsp-positions = "0.3.2"
 lsp-server = "0.7.6"
 lsp-types = "0.95.0"
 toto_ast = { path = "../toto_ast" }
-toto_semantic = { path = "../toto_semantic" }
+toto_yaml = { path = "../toto_yaml" }
+toto_parser = { path = "../toto_parser" }
+toto_tosca = { path = "../toto_tosca" }

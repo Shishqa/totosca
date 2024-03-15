@@ -764,7 +764,9 @@ dependencies = [
  "serde",
  "serde_json",
  "toto_ast",
- "toto_semantic",
+ "toto_parser",
+ "toto_tosca",
+ "toto_yaml",
  "url",
 ]
 
@@ -781,7 +783,6 @@ dependencies = [
  "phf",
  "serde",
  "toto_ast",
- "toto_tosca",
  "toto_yaml",
  "url",
  "yaml-peg",
@@ -803,9 +804,18 @@ dependencies = [
 name = "toto_tosca"
 version = "0.0.1"
 dependencies = [
+ "anyhow",
+ "enum-map",
+ "once_cell",
  "ordered-float",
  "petgraph",
+ "phf",
+ "serde",
+ "toto_ast",
+ "toto_parser",
+ "toto_yaml",
  "url",
+ "yaml-peg",
 ]
 
 [[package]]

@@ -1,43 +1,4 @@
 tosca_definitions_version: tosca_simple_yaml_1_3
 
-metadata:
-  template_name: ray-cluster
-  template_author: sadimer
-  template_version: 1.0.0
-
 imports:
-- ../../profiles/ray/1.3/main.yaml
-
-topology_template:
-  inputs:
-    additional_packages:
-      type: list
-      entry_schema:
-        type: string
-      default: []
-    num_slaves:
-      type: integer
-      default: {}
-      validation:
-        - greater_or_equal: 1
-
-  node_templates:
-
-    ray-master:
-      type: hello
-      properties:
-        additional_packages: { get_input: [ additional_packages ] }
-      attributes:
-        test:
-          description: I am description
-          value: I am value
-
-    ray-slave:
-      type: clouni.nodes.ray.slave
-      properties:
-        additional_packages: { get_input: [ additional_packages ] }
-        min_instances: 1
-        max_instances: 10
-        default_instances: { get_input: [ num_slaves ] }
-      requirements:
-        - master: ray-master
+  - ../../profiles/ray/1.3/main.yaml

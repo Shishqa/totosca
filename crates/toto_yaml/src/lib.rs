@@ -73,6 +73,14 @@ pub trait AsYamlRelation {
     fn as_yaml(&self) -> Option<&Relation>;
 }
 
+pub trait AsFileEntity {
+    fn as_file(&self) -> Option<&FileEntity>;
+}
+
+pub trait AsFileRelation {
+    fn as_file(&self) -> Option<&FileRelation>;
+}
+
 pub struct YamlParser {}
 
 impl YamlParser {

@@ -4,7 +4,15 @@ use graphviz_rust::cmd::{CommandArg, Format};
 use graphviz_rust::printer::PrinterContext;
 use lsp_types::notification::Notification;
 
+use petgraph::visit::EdgeRef;
 use serde_json::from_value;
+
+mod models;
+
+use models::*;
+use toto_parser::{get_errors, get_yaml_len, AsParseError, EntityParser};
+use toto_tosca::grammar::parser::ToscaParser;
+use toto_yaml::{AsFileEntity, AsFileRelation};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
@@ -52,53 +60,55 @@ fn refresh_diag(
     uri: &url::Url,
 ) -> Result<(), Box<dyn Error + Sync + Send>> {
     eprintln!("trying read: {uri:?}");
-    let mut scope = toto_semantic::Scope::new();
 
-    scope.add_file(uri.as_str());
+    let path = &uri.as_str()[6..];
 
-    let dot = petgraph::dot::Dot::new(&scope.ast.graph);
-    let dot = graphviz_rust::parse(format!("{:?}", dot).as_str()).unwrap();
-    graphviz_rust::exec(
-        dot,
-        &mut PrinterContext::default(),
-        vec![
-            Format::Svg.into(),
-            CommandArg::Output("graph.svg".to_string()),
-        ],
-    )
-    .unwrap();
+    let doc = std::fs::read_to_string(path).unwrap();
 
-    let contents = &scope.files.get(uri).unwrap().source;
+    let mut ast = toto_ast::AST::<Entity, Relation>::new();
+    let doc_root = toto_yaml::YamlParser::parse(&doc, &mut ast);
+    ToscaParser::parse(doc_root, &mut ast);
 
-    let diagnostics: Vec<lsp_types::Diagnostic> = scope
-        .ast
-        .errors
-        .iter()
-        .map(|err| {
-            let offset: usize = err.loc().try_into().unwrap();
-            let linebreaks = contents[0..offset]
-                .chars()
-                .enumerate()
-                .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
-                .collect::<Vec<_>>();
-            let lineno = linebreaks.len();
-            let charno = offset - linebreaks.iter().next_back().copied().unwrap_or_default() - 1;
+    let diagnostics: Vec<lsp_types::Diagnostic> = get_errors(&ast)
+        .map(|(what, loc)| {
+            let len = get_yaml_len(loc, &ast);
+            let pos = ast
+                .edges(loc)
+                .find_map(|e| match e.weight().as_file() {
+                    Some(pos) => Some(pos.0),
+                    _ => None,
+                })
+                .unwrap();
+
+            let get_lc = |offset| -> (u32, u32) {
+                let linebreaks = doc[0..offset]
+                    .chars()
+                    .enumerate()
+                    .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
+                    .collect::<Vec<_>>();
+                let lineno = linebreaks.len();
+                let charno = pos - linebreaks.iter().next_back().copied().unwrap_or_default() - 1;
+                (lineno as u32, charno as u32)
+            };
+
+            let (lineno_start, charno_start) = get_lc(pos);
+            let (lineno_end, charno_end) = get_lc(pos + len);
 
             lsp_types::Diagnostic::new(
                 lsp_types::Range {
                     start: lsp_types::Position {
-                        line: lineno as u32,
-                        character: charno as u32,
+                        line: lineno_start,
+                        character: charno_start,
                     },
                     end: lsp_types::Position {
-                        line: lineno as u32,
-                        character: charno as u32 + 1,
+                        line: lineno_end,
+                        character: charno_end,
                     },
                 },
                 None,
                 None,
                 None,
-                err.what(),
+                format!("{:?}", ast.node_weight(what).unwrap().as_parse().unwrap()),
                 None,
                 None,
             )

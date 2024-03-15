@@ -5,17 +5,14 @@ edition.workspace = true
 
 [dependencies]
 anyhow.workspace = true
+ariadne.workspace = true
 petgraph.workspace = true
 serde.workspace = true
 ordered-float.workspace = true
 once_cell.workspace = true
 url.workspace = true
 yaml-peg.workspace = true
-toto_tosca = { path = "../toto_tosca" }
 toto_ast = { path = "../toto_ast" }
 toto_yaml = { path = "../toto_yaml" }
 enum-map = "2.7.3"
 phf = { version = "0.11.2", features = ["macros"] }
-
-[dev-dependencies]
-ariadne.workspace = true

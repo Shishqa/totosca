@@ -1,7 +1,4 @@
-use crate::tosca::{
-    ast::{ToscaCompatibleEntity, ToscaCompatibleRelation},
-    ToscaDefinitionsVersion,
-};
+use toto_yaml::{AsFileEntity, AsFileRelation};
 
 #[derive(Debug, Clone)]
 pub enum ParseError {
@@ -14,71 +11,57 @@ pub enum ParseError {
 #[derive(Debug, Clone)]
 pub struct ParseLoc;
 
-pub fn add_error<E, R>(n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>, err: ParseError)
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-{
-    let e = ast.add_node(err.into());
-    ast.add_edge(e, n, ParseLoc.into());
+pub trait AsParseError {
+    fn as_parse(&self) -> Option<&ParseError>;
 }
 
-pub(crate) type SubfieldParseFn<E, R> =
-    fn(toto_ast::GraphHandle, toto_ast::GraphHandle, &mut toto_ast::AST<E, R>);
+pub trait AsParseLoc {
+    fn as_parse_loc(&self) -> Option<&ParseLoc>;
+}
 
-pub(crate) type StaticSchemaMap<E, R> = phf::Map<&'static str, SubfieldParseFn<E, R>>;
+pub trait ParseCompatibleEntity:
+    toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + 'static
+{
+}
+pub trait ParseCompatibleRelation:
+    toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + 'static
+{
+}
 
-pub fn parse_schema<E, R>(
-    schema: &StaticSchemaMap<E, R>,
-    root: toto_ast::GraphHandle,
-    keys: impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)>,
+impl<T> ParseCompatibleEntity for T where
+    T: toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + 'static
+{
+}
+impl<T> ParseCompatibleRelation for T where
+    T: toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + 'static
+{
+}
+
+pub fn add_with_loc<E, R>(
+    e: impl Into<E>,
+    loc: toto_ast::GraphHandle,
     ast: &mut toto_ast::AST<E, R>,
 ) -> toto_ast::GraphHandle
 where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
+    E: ParseCompatibleEntity,
+    R: ParseCompatibleRelation,
 {
-    keys.for_each(|(k, v)| {
-        toto_yaml::as_string(k, ast)
-            .or_else(|| {
-                add_error(k, ast, ParseError::UnexpectedType("string"));
-                None
-            })
-            .and_then(|key| {
-                let parser = schema.get(key.as_str());
-                if parser.is_some() {
-                    parser.unwrap()(root, v, ast);
-                } else {
-                    add_error(k, ast, ParseError::UnknownField(key));
-                }
-                Some(k)
-            });
-    });
-
-    root
+    let n = ast.add_node(e.into());
+    ast.add_edge(n, loc, ParseLoc.into());
+    n
 }
 
-pub trait Schema<E, R>
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-{
-    const SCHEMA: StaticSchemaMap<E, R>;
-}
-
-pub trait EntityParser<V> {
-    fn parse<E, R>(n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) -> Option<V>
-    where
-        E: ToscaCompatibleEntity,
-        R: ToscaCompatibleRelation;
-}
-
-pub trait RelationParser {
-    fn parse<E, R>(
-        root: toto_ast::GraphHandle,
+pub trait EntityParser<E, R> {
+    fn parse(
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) where
-        E: ToscaCompatibleEntity,
-        R: ToscaCompatibleRelation;
+    ) -> Option<toto_ast::GraphHandle>;
+}
+
+pub trait RelationParser<E, R> {
+    fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>);
+}
+
+pub trait Linker<V, R> {
+    const L: fn(v: V) -> R;
 }
