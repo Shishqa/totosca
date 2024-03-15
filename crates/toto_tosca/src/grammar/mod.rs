@@ -1,5 +1,3 @@
-use toto_parser::EntityParser;
-
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 pub mod parser;
@@ -10,8 +8,8 @@ pub trait ToscaDefinitionsVersion {
     type Entity: ToscaCompatibleEntity;
     type Relation: ToscaCompatibleRelation;
 
-    type ImportDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
-    type FileDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ImportDefinition: toto_ast::EntityParser<Self::Entity, Self::Relation>;
+    type FileDefinition: toto_ast::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

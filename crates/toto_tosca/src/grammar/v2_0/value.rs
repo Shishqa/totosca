@@ -3,7 +3,7 @@ use toto_parser::add_with_loc;
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 pub struct String;
-impl<E, R> toto_parser::EntityParser<E, R> for String
+impl<E, R> toto_ast::EntityParser<E, R> for String
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -23,7 +23,7 @@ where {
 }
 
 pub struct Metadata;
-impl<R> toto_parser::Linker<std::string::String, R> for Metadata
+impl<R> toto_ast::Linker<std::string::String, R> for Metadata
 where
     R: ToscaCompatibleRelation,
 {
@@ -31,7 +31,7 @@ where
 }
 
 pub struct Description;
-impl<R> toto_parser::Linker<(), R> for Description
+impl<R> toto_ast::Linker<(), R> for Description
 where
     R: ToscaCompatibleRelation,
 {
@@ -39,7 +39,7 @@ where
 }
 
 pub struct Profile;
-impl<R> toto_parser::Linker<(), R> for Profile
+impl<R> toto_ast::Linker<(), R> for Profile
 where
     R: ToscaCompatibleRelation,
 {

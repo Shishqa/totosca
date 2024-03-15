@@ -7,7 +7,7 @@ use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompat
 #[derive(Debug)]
 pub struct ImportDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for ImportDefinition<V>
+impl<E, R, V> toto_ast::EntityParser<E, R> for ImportDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,

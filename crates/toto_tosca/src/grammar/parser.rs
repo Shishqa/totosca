@@ -6,7 +6,7 @@ use super::{v1_3::Tosca1_3, v2_0::Tosca2_0};
 
 pub struct ToscaParser;
 
-impl<E, R> toto_parser::EntityParser<E, R> for ToscaParser
+impl<E, R> toto_ast::EntityParser<E, R> for ToscaParser
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,

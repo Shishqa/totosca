@@ -1,13 +1,14 @@
 use std::marker::PhantomData;
 
-use toto_parser::{add_with_loc, RelationParser, Schema};
+use toto_ast::RelationParser;
+use toto_parser::{add_with_loc, Schema};
 
 use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 use super::value::{self};
 
 pub struct Import;
-impl<R> toto_parser::Linker<usize, R> for Import
+impl<R> toto_ast::Linker<usize, R> for Import
 where
     R: ToscaCompatibleRelation,
 {
@@ -15,7 +16,7 @@ where
 }
 
 pub struct ImportUrl;
-impl<R> toto_parser::Linker<(), R> for ImportUrl
+impl<R> toto_ast::Linker<(), R> for ImportUrl
 where
     R: ToscaCompatibleRelation,
 {
@@ -23,7 +24,7 @@ where
 }
 
 pub struct ImportProfile;
-impl<R> toto_parser::Linker<(), R> for ImportProfile
+impl<R> toto_ast::Linker<(), R> for ImportProfile
 where
     R: ToscaCompatibleRelation,
 {
@@ -31,7 +32,7 @@ where
 }
 
 pub struct ImportNamespace;
-impl<R> toto_parser::Linker<(), R> for ImportNamespace
+impl<R> toto_ast::Linker<(), R> for ImportNamespace
 where
     R: ToscaCompatibleRelation,
 {
@@ -39,7 +40,7 @@ where
 }
 
 pub struct ImportRepository;
-impl<R> toto_parser::Linker<(), R> for ImportRepository
+impl<R> toto_ast::Linker<(), R> for ImportRepository
 where
     R: ToscaCompatibleRelation,
 {
@@ -63,7 +64,7 @@ where
     };
 }
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for ImportDefinition<V>
+impl<E, R, V> toto_ast::EntityParser<E, R> for ImportDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,

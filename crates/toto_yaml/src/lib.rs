@@ -87,25 +87,9 @@ pub trait AsFileRelation {
     fn as_file(&self) -> Option<&FileRelation>;
 }
 
-pub struct YamlParser {}
+pub struct YamlParser;
 
 impl YamlParser {
-    pub fn parse<E, R>(
-        doc_handle: toto_ast::GraphHandle,
-        ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle
-    where
-        E: AsFileEntity + From<Entity>,
-        R: From<Relation> + From<FileRelation>,
-    {
-        let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content)
-            .unwrap()
-            .remove(0);
-
-        Self::parse_node(yaml, doc_handle, ast)
-    }
-
     fn parse_node<E, R>(
         n: yaml_peg::NodeRc,
         doc_handle: toto_ast::GraphHandle,
@@ -140,6 +124,24 @@ impl YamlParser {
             _ => {}
         }
         node_handle
+    }
+}
+
+impl<E, R> toto_ast::EntityParser<E, R> for YamlParser
+where
+    E: AsFileEntity + From<Entity>,
+    R: From<Relation> + From<FileRelation>,
+{
+    fn parse(
+        doc_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
+        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content)
+            .unwrap()
+            .remove(0);
+
+        Some(Self::parse_node(yaml, doc_handle, ast))
     }
 }
 
@@ -234,6 +236,7 @@ mod tests {
     use std::mem::size_of;
 
     use petgraph::dot::Dot;
+    use toto_ast::EntityParser;
 
     use crate::{AsFileEntity, FileEntity, FileRelation, YamlParser};
 

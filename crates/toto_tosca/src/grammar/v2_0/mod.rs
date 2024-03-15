@@ -23,7 +23,7 @@ where
     type ImportDefinition = self::ImportDefinition<Self>;
 }
 
-impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>
+impl<E, R> toto_ast::EntityParser<E, R> for Tosca2_0<E, R>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -38,7 +38,8 @@ where
 
 #[cfg(test)]
 mod tests {
-    use toto_parser::{get_errors, report_error, EntityParser};
+    use toto_ast::EntityParser;
+    use toto_parser::{get_errors, report_error};
     use toto_yaml::YamlParser;
 
     use crate::grammar::{
@@ -56,7 +57,7 @@ mod tests {
 
         let doc_handle = ast.add_node(toto_yaml::FileEntity::from_url(doc_path).into());
 
-        let doc_root = YamlParser::parse(doc_handle, &mut ast);
+        let doc_root = YamlParser::parse(doc_handle, &mut ast).unwrap();
         Tosca2_0::parse(doc_root, &mut ast);
 
         // dbg!(Dot::new(&ast));

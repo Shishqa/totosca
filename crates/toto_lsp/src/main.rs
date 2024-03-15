@@ -10,7 +10,8 @@ use serde_json::from_value;
 mod models;
 
 use models::*;
-use toto_parser::{get_errors, get_yaml_len, AsParseError, EntityParser};
+use toto_ast::EntityParser;
+use toto_parser::{get_errors, get_yaml_len, AsParseError};
 use toto_tosca::grammar::parser::ToscaParser;
 use toto_yaml::{AsFileEntity, AsFileRelation};
 
@@ -64,7 +65,7 @@ fn refresh_diag(
     let mut ast = toto_ast::AST::<Entity, Relation>::new();
 
     let doc_handle = ast.add_node(toto_yaml::FileEntity::from_url(uri.clone()).into());
-    let doc_root = toto_yaml::YamlParser::parse(doc_handle, &mut ast);
+    let doc_root = toto_yaml::YamlParser::parse(doc_handle, &mut ast).unwrap();
     ToscaParser::parse(doc_root, &mut ast);
 
     let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();

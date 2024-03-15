@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 
-use toto_parser::{add_with_loc, RelationParser, Schema};
+use toto_ast::RelationParser;
+use toto_parser::{add_with_loc, Schema};
 
 use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
@@ -24,7 +25,7 @@ where
     };
 }
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for ToscaFileDefinition<V>
+impl<E, R, V> toto_ast::EntityParser<E, R> for ToscaFileDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
