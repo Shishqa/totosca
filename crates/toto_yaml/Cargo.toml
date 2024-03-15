@@ -10,4 +10,5 @@ anyhow.workspace = true
 petgraph.workspace = true
 yaml-peg.workspace = true
 ordered-float.workspace = true
+url.workspace = true
 toto_ast = { path = "../toto_ast" }

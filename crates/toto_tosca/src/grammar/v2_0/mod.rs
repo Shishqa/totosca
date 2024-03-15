@@ -48,11 +48,15 @@ mod tests {
 
     #[test]
     fn tosca_2_0() {
-        let doc = include_str!("../../../../../tests/tosca_2_0.yaml");
-
         let mut ast = toto_ast::AST::<Entity, Relation>::new();
 
-        let doc_root = YamlParser::parse(doc, &mut ast);
+        let doc_path = "file://".to_string() + env!("CARGO_MANIFEST_DIR");
+        let doc_path = url::Url::parse(&doc_path).unwrap();
+        let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
+
+        let doc_handle = ast.add_node(toto_yaml::FileEntity::from_url(doc_path).into());
+
+        let doc_root = YamlParser::parse(doc_handle, &mut ast);
         Tosca2_0::parse(doc_root, &mut ast);
 
         // dbg!(Dot::new(&ast));

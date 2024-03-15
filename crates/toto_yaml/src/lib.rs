@@ -3,13 +3,25 @@ use std::fmt::Debug;
 use petgraph::visit::EdgeRef;
 
 // TODO: move to a separate crate
-pub struct FileEntity(pub String);
+pub struct FileEntity {
+    pub url: url::Url,
+    pub content: String,
+}
+
+impl FileEntity {
+    pub fn from_url(url: url::Url) -> Self {
+        let path = &url.to_file_path().unwrap();
+        dbg!(&path);
+        let content = std::fs::read_to_string(path).unwrap();
+        Self { url, content }
+    }
+}
 
 impl Debug for FileEntity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.0.char_indices().nth(100) {
-            None => f.write_str(&self.0),
-            Some((idx, _)) => f.write_str(&self.0[..idx]),
+        match self.content.char_indices().nth(100) {
+            None => f.write_str(&self.content),
+            Some((idx, _)) => f.write_str(&self.content[..idx]),
         }
     }
 }
@@ -42,12 +54,6 @@ pub enum Relation {
     MapKey,
     MapValue,
     ListValue(usize),
-}
-
-impl From<String> for FileEntity {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
 }
 
 impl From<&yaml_peg::NodeRc> for Entity {
@@ -84,16 +90,19 @@ pub trait AsFileRelation {
 pub struct YamlParser {}
 
 impl YamlParser {
-    pub fn parse<E, R>(doc: &str, ast: &mut toto_ast::AST<E, R>) -> toto_ast::GraphHandle
+    pub fn parse<E, R>(
+        doc_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> toto_ast::GraphHandle
     where
-        E: From<Entity> + From<FileEntity>,
+        E: AsFileEntity + From<Entity>,
         R: From<Relation> + From<FileRelation>,
     {
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc)
+        let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
+        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content)
             .unwrap()
             .remove(0);
 
-        let doc_handle = ast.add_node(FileEntity(doc.to_string()).into());
         Self::parse_node(yaml, doc_handle, ast)
     }
 
@@ -226,7 +235,7 @@ mod tests {
 
     use petgraph::dot::Dot;
 
-    use crate::{FileEntity, FileRelation, YamlParser};
+    use crate::{AsFileEntity, FileEntity, FileRelation, YamlParser};
 
     #[derive(Debug)]
     pub enum Entity {
@@ -252,6 +261,15 @@ mod tests {
         }
     }
 
+    impl AsFileEntity for Entity {
+        fn as_file(&self) -> Option<&FileEntity> {
+            match self {
+                Entity::File(f) => Some(f),
+                _ => None,
+            }
+        }
+    }
+
     impl From<crate::Relation> for Relation {
         fn from(value: crate::Relation) -> Self {
             Self::Yaml(value)
@@ -266,11 +284,17 @@ mod tests {
 
     #[test]
     fn it_works() {
-        let doc = include_str!("../../../tests/a.yaml");
-
         let mut ast = petgraph::Graph::<Entity, Relation, petgraph::Directed, u32>::new();
 
-        YamlParser::parse(doc, &mut ast);
+        let doc_path = "file://".to_string() + env!("CARGO_MANIFEST_DIR");
+        let doc_path = url::Url::parse(&doc_path).unwrap();
+        let doc_path = doc_path.join("../tests/a.yaml").unwrap();
+
+        dbg!(&doc_path);
+
+        let doc_handle = ast.add_node(FileEntity::from_url(doc_path).into());
+
+        YamlParser::parse(doc_handle, &mut ast);
 
         dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
         dbg!(Dot::new(&ast));

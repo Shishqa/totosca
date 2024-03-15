@@ -55,7 +55,7 @@ pub fn report_error<E, R>(
             Label::new(("todo:filename", pos..pos + len)).with_message(format!("{:?}", err)),
         )
         .finish()
-        .eprint(("todo:filename", Source::from(file.0.as_str())))
+        .eprint(("todo:filename", Source::from(file.content.as_str())))
         .unwrap();
 }
 

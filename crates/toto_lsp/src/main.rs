@@ -61,14 +61,13 @@ fn refresh_diag(
 ) -> Result<(), Box<dyn Error + Sync + Send>> {
     eprintln!("trying read: {uri:?}");
 
-    let path = &uri.as_str()[6..];
-
-    let doc = std::fs::read_to_string(path).unwrap();
-
     let mut ast = toto_ast::AST::<Entity, Relation>::new();
-    let doc_root = toto_yaml::YamlParser::parse(&doc, &mut ast);
+
+    let doc_handle = ast.add_node(toto_yaml::FileEntity::from_url(uri.clone()).into());
+    let doc_root = toto_yaml::YamlParser::parse(doc_handle, &mut ast);
     ToscaParser::parse(doc_root, &mut ast);
 
+    let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
     let diagnostics: Vec<lsp_types::Diagnostic> = get_errors(&ast)
         .map(|(what, loc)| {
             let len = get_yaml_len(loc, &ast);
@@ -81,7 +80,7 @@ fn refresh_diag(
                 .unwrap();
 
             let get_lc = |offset| -> (u32, u32) {
-                let linebreaks = doc[0..offset]
+                let linebreaks = doc.content[0..offset]
                     .chars()
                     .enumerate()
                     .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })

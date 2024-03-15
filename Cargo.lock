@@ -789,18 +789,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "toto_semantic"
-version = "0.0.1"
-dependencies = [
- "ariadne",
- "petgraph",
- "toto_ast",
- "toto_parser",
- "toto_tosca",
- "url",
-]
-
-[[package]]
 name = "toto_tosca"
 version = "0.0.1"
 dependencies = [
@@ -826,6 +814,7 @@ dependencies = [
  "ordered-float",
  "petgraph",
  "toto_ast",
+ "url",
  "yaml-peg",
 ]
 
