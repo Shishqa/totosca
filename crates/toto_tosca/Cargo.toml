@@ -4,6 +4,15 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-ordered-float.workspace = true
+anyhow.workspace = true
 petgraph.workspace = true
+serde.workspace = true
+ordered-float.workspace = true
+once_cell.workspace = true
 url.workspace = true
+yaml-peg.workspace = true
+toto_parser = { path = "../toto_parser" }
+toto_ast = { path = "../toto_ast" }
+toto_yaml = { path = "../toto_yaml" }
+enum-map = "2.7.3"
+phf = { version = "0.11.2", features = ["macros"] }
