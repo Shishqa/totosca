@@ -9,7 +9,10 @@ use crate::{grammar::parser::ToscaParser, ToscaCompatibleEntity, ToscaCompatible
 pub struct Importer;
 
 impl Importer {
-    fn deduce_url<E, R>(file_handle: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> url::Url
+    pub fn deduce_url<E, R>(
+        file_handle: toto_ast::GraphHandle,
+        ast: &toto_ast::AST<E, R>,
+    ) -> url::Url
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
@@ -33,7 +36,7 @@ impl Importer {
         file.url.clone()
     }
 
-    fn find_urls<E, R>(ast: &toto_ast::AST<E, R>) -> HashMap<url::Url, toto_ast::GraphHandle>
+    pub fn find_urls<E, R>(ast: &toto_ast::AST<E, R>) -> HashMap<url::Url, toto_ast::GraphHandle>
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
