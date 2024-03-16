@@ -38,13 +38,14 @@ where
 
 #[cfg(test)]
 mod tests {
+    use petgraph::dot::Dot;
     use toto_ast::EntityParser;
     use toto_parser::{get_errors, report_error};
     use toto_yaml::YamlParser;
 
     use crate::grammar::{
+        parser::ToscaParser,
         tests::{Entity, Relation},
-        v2_0::Tosca2_0,
     };
 
     #[test]
@@ -55,12 +56,14 @@ mod tests {
         let doc_path = url::Url::parse(&doc_path).unwrap();
         let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
 
-        let doc_handle = ast.add_node(toto_yaml::FileEntity::from_url(doc_path).into());
+        let mut doc = toto_yaml::FileEntity::from_url(doc_path);
+        doc.fetch().unwrap();
+        let doc_handle = ast.add_node(doc.into());
 
         let doc_root = YamlParser::parse(doc_handle, &mut ast).unwrap();
-        Tosca2_0::parse(doc_root, &mut ast);
+        ToscaParser::parse(doc_root, &mut ast);
 
-        // dbg!(Dot::new(&ast));
+        dbg!(Dot::new(&ast));
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
         assert!(false)

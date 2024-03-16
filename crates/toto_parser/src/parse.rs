@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use toto_yaml::{AsFileEntity, AsFileRelation};
 
 #[derive(Debug, Clone)]
@@ -20,20 +22,20 @@ pub trait AsParseLoc {
 }
 
 pub trait ParseCompatibleEntity:
-    toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + 'static
+    toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + Debug + 'static
 {
 }
 pub trait ParseCompatibleRelation:
-    toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + 'static
+    toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + Debug + 'static
 {
 }
 
 impl<T> ParseCompatibleEntity for T where
-    T: toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + 'static
+    T: toto_yaml::AsYamlEntity + AsFileEntity + AsParseError + From<ParseError> + Debug + 'static
 {
 }
 impl<T> ParseCompatibleRelation for T where
-    T: toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + 'static
+    T: toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + Debug + 'static
 {
 }
 

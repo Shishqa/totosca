@@ -1,27 +1,37 @@
 use std::fmt::Debug;
 
+use anyhow::anyhow;
 use petgraph::visit::EdgeRef;
 
 // TODO: move to a separate crate
 pub struct FileEntity {
     pub url: url::Url,
-    pub content: String,
+    pub content: Option<String>,
 }
 
 impl FileEntity {
     pub fn from_url(url: url::Url) -> Self {
-        let path = &url.to_file_path().unwrap();
-        dbg!(&path);
-        let content = std::fs::read_to_string(path).unwrap();
-        Self { url, content }
+        Self { url, content: None }
+    }
+
+    pub fn fetch(&mut self) -> anyhow::Result<()> {
+        let path = self.url.to_file_path();
+        if let Err(_) = path {
+            return Err(anyhow!("only local paths are supported"));
+        }
+        self.content = Some(std::fs::read_to_string(&path.unwrap())?);
+        Ok(())
     }
 }
 
 impl Debug for FileEntity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self.content.char_indices().nth(100) {
-            None => f.write_str(&self.content),
-            Some((idx, _)) => f.write_str(&self.content[..idx]),
+        match &self.content {
+            Some(content) => match content.char_indices().nth(100) {
+                None => f.write_str(&content),
+                Some((idx, _)) => f.write_str(&content[..idx]),
+            },
+            None => f.write_str("not loaded"),
         }
     }
 }
@@ -137,7 +147,7 @@ where
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
         let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content)
+        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content.as_ref().unwrap())
             .unwrap()
             .remove(0);
 
@@ -295,12 +305,14 @@ mod tests {
 
         dbg!(&doc_path);
 
-        let doc_handle = ast.add_node(FileEntity::from_url(doc_path).into());
+        let mut doc = FileEntity::from_url(doc_path);
+        doc.fetch().unwrap();
+        let doc_handle = ast.add_node(doc.into());
 
         YamlParser::parse(doc_handle, &mut ast);
 
         dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
-        dbg!(Dot::new(&ast));
+        // dbg!(Dot::new(&ast));
 
         assert!(false);
     }

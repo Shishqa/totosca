@@ -41,6 +41,15 @@ impl toto_yaml::AsFileRelation for Relation {
     }
 }
 
+impl toto_tosca::AsToscaRelation for Relation {
+    fn as_tosca(&self) -> Option<&toto_tosca::Relation> {
+        match self {
+            Relation::Tosca(value) => Some(value),
+            _ => None,
+        }
+    }
+}
+
 impl From<toto_parser::ParseError> for Entity {
     fn from(value: toto_parser::ParseError) -> Self {
         Self::Parse(value)
@@ -111,6 +120,15 @@ impl toto_yaml::AsFileEntity for Entity {
     fn as_file(&self) -> Option<&toto_yaml::FileEntity> {
         match self {
             Entity::File(value) => Some(value),
+            _ => None,
+        }
+    }
+}
+
+impl toto_tosca::AsToscaEntity for Entity {
+    fn as_tosca(&self) -> Option<&toto_tosca::Entity> {
+        match self {
+            Entity::Tosca(value) => Some(value),
             _ => None,
         }
     }

@@ -1,150 +1,111 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use petgraph::visit::EdgeRef;
+use toto_parser::add_with_loc;
+use toto_yaml::{FileEntity, YamlParser};
 
-mod errors;
+use crate::{grammar::parser::ToscaParser, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-pub use errors::*;
-use toto_parser::{grammar::Grammar, tosca::ToscaGrammar};
+pub struct Importer;
 
-pub struct File {
-    pub source: String,
-    pub root: Option<toto_ast::GraphHandle>,
-}
+impl Importer {
+    fn deduce_url<E, R>(file_handle: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> url::Url
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let yaml = ast
+            .edges(file_handle)
+            .find_map(|e| match e.weight().as_parse_loc() {
+                Some(_) => Some(e.target()),
+                _ => None,
+            })
+            .unwrap();
+        let file = ast
+            .edges(yaml)
+            .find_map(|e| match e.weight().as_file() {
+                Some(_) => Some(e.target()),
+                _ => None,
+            })
+            .unwrap();
+        let file = ast.node_weight(file).unwrap().as_file().unwrap();
 
-pub struct Scope {
-    pub root: url::Url,
-    pub files: HashMap<url::Url, File>,
-    pub ast: toto_ast::AST,
-}
-
-impl Scope {
-    pub fn new() -> Self {
-        let pwd = std::env::current_dir().unwrap();
-        let root = url::Url::parse(&("file://".to_string() + pwd.to_str().unwrap())).unwrap();
-
-        Self {
-            root,
-            files: HashMap::new(),
-            ast: toto_ast::AST::default(),
-        }
+        file.url.clone()
     }
 
-    pub fn add_file(&mut self, path: &str) {
-        self.add_file_relative(path, self.root.clone());
-    }
-
-    pub fn add_file_relative(&mut self, path: &str, root: url::Url) {
-        let url = url::Url::parse(path).or(root.join(path));
-        match url {
-            Ok(url) => {
-                if self.files.contains_key(&url) {
-                    return;
-                }
-
-                let doc = std::fs::read_to_string(&url.as_str()[7..])
-                    .map_err(|err| {
-                        self.ast.errors.push(Box::new(SemanticError::new(format!(
-                            "{}: {}",
-                            url.as_str(),
-                            err.to_string()
-                        ))));
-                    })
-                    .ok();
-                if doc.is_none() {
-                    return;
-                }
-                let doc = doc.unwrap();
-
-                let root = ToscaGrammar::parse(&doc, &mut self.ast);
-                let file = File { source: doc, root };
-                self.files.insert(url.clone(), file);
-
-                if self.files[&url].root.is_some() {
-                    let imports = self.files[&url].get_imports(&self.ast);
-                    for import in imports {
-                        self.add_file_relative(&import, url.clone());
-                    }
-                }
-            }
-            Err(error) => {
-                self.ast.errors.push(Box::new(SemanticError::new(format!(
-                    "invalid url {}: {}",
-                    path, error,
-                ))));
-            }
-        }
+    fn find_urls<E, R>(ast: &toto_ast::AST<E, R>) -> HashMap<url::Url, toto_ast::GraphHandle>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        ast.node_indices()
+            .filter_map(|n| match ast.node_weight(n).unwrap().as_file() {
+                Some(file) => Some((file.url.clone(), n)),
+                _ => None,
+            })
+            .collect::<HashMap<_, _>>()
     }
 }
 
-impl Default for Scope {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+impl<E, R> toto_ast::EntityParser<E, R> for Importer
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+{
+    fn parse(
+        file_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        dbg!(ast.node_weight(file_handle));
 
-impl File {
-    pub fn get_imports(&self, ast: &toto_ast::AST) -> Vec<String> {
-        ast.graph
-            .neighbors(self.root.unwrap())
-            .filter(|n| matches!(ast.graph[*n], toto_tosca::Entity::Import))
-            .filter_map(|import| {
-                ast.graph
-                    .edges(import)
-                    .filter_map(|e| match &e.weight() {
-                        toto_tosca::Relation::Url => Some(e.target()),
-                        _ => None,
-                    })
-                    .find_map(|url| match &ast.graph[url] {
-                        toto_tosca::Entity::String(url) => Some(url.to_string()),
-                        _ => None,
-                    })
+        let root_url = Self::deduce_url(file_handle, ast);
+
+        let existing_urls = Self::find_urls(ast);
+
+        dbg!(&existing_urls);
+        dbg!(&root_url);
+
+        ast.edges(file_handle)
+            .filter_map(|e| match e.weight().as_tosca() {
+                Some(crate::Relation::Import(_)) => Some(ast.edges(e.target())),
+                _ => None,
+            })
+            .flatten()
+            .filter_map(|e| match e.weight().as_tosca() {
+                Some(crate::Relation::Url) => Some(e.target()),
+                _ => None,
+            })
+            .filter_map(|n| match toto_yaml::as_string(n, ast) {
+                Some(import_url) => Some((n, import_url.to_owned())),
+                _ => None,
             })
             .collect::<Vec<_>>()
-    }
-}
+            .into_iter()
+            .for_each(|(n, import_url)| {
+                let import_url = url::Url::parse(&import_url)
+                    .or(root_url.join(&import_url))
+                    .unwrap();
 
-#[cfg(test)]
-mod tests {
-    use std::path::PathBuf;
+                dbg!(&import_url);
 
-    use ariadne::{Label, Report, ReportKind, Source};
-    use petgraph::dot::Dot;
+                if let Some(existing_handle) = existing_urls.get(&import_url) {
+                    ast.add_edge(n, *existing_handle, crate::Relation::ImportFile.into());
+                    return;
+                }
 
-    use crate::Scope;
+                let mut doc = toto_yaml::FileEntity::from_url(import_url);
+                if let Err(err) = doc.fetch() {
+                    add_with_loc(toto_parser::ParseError::Custom(err.to_string()), n, ast);
+                    return;
+                }
 
-    #[test]
-    fn it_works() {
-        let mut scope = Scope::new();
+                let doc_handle = ast.add_node(doc.into());
+                let doc_root = YamlParser::parse(doc_handle, ast).unwrap();
+                let imported_handle = ToscaParser::parse(doc_root, ast).unwrap();
 
-        let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        d.push("../../tests/a.yaml");
+                ast.add_edge(n, imported_handle, crate::Relation::ImportFile.into());
+            });
 
-        scope.add_file(d.to_str().unwrap());
-        let errors = scope.ast.errors;
-
-        dbg!(Dot::new(&scope.ast.graph));
-
-        if !errors.is_empty() {
-            Report::build(ReportKind::Error, d.to_str().unwrap(), 0)
-                .with_labels(
-                    errors
-                        .iter()
-                        .map(|err| {
-                            let pos: usize = err.loc().try_into().unwrap();
-                            Label::new((d.to_str().unwrap(), pos..pos + 1)).with_message(err.what())
-                        })
-                        .collect::<Vec<_>>(),
-                )
-                .finish()
-                .eprint((
-                    d.to_str().unwrap(),
-                    Source::from(include_str!("../../../tests/a.yaml")),
-                ))
-                .unwrap();
-        }
-
-        assert!(errors.is_empty());
-        assert!(scope.files.len() == 2);
+        Some(file_handle)
     }
 }

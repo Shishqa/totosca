@@ -57,6 +57,15 @@ mod tests {
         }
     }
 
+    impl crate::AsToscaRelation for Relation {
+        fn as_tosca(&self) -> Option<&crate::Relation> {
+            match self {
+                Relation::Tosca(value) => Some(value),
+                _ => None,
+            }
+        }
+    }
+
     impl From<toto_parser::ParseError> for Entity {
         fn from(value: toto_parser::ParseError) -> Self {
             Self::Parse(value)
@@ -127,6 +136,15 @@ mod tests {
         fn as_file(&self) -> Option<&toto_yaml::FileEntity> {
             match self {
                 Entity::File(value) => Some(value),
+                _ => None,
+            }
+        }
+    }
+
+    impl crate::AsToscaEntity for Entity {
+        fn as_tosca(&self) -> Option<&crate::Entity> {
+            match self {
+                Entity::Tosca(value) => Some(value),
                 _ => None,
             }
         }

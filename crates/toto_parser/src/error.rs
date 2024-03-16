@@ -50,12 +50,15 @@ pub fn report_error<E, R>(
     let err = ast.node_weight(what).unwrap().as_parse().unwrap();
     let file = ast.node_weight(file).unwrap().as_file().unwrap();
 
-    Report::build(ReportKind::Error, "todo:filename", pos)
+    Report::build(ReportKind::Error, file.url.as_str(), pos)
         .with_label(
-            Label::new(("todo:filename", pos..pos + len)).with_message(format!("{:?}", err)),
+            Label::new((file.url.as_str(), pos..pos + len)).with_message(format!("{:?}", err)),
         )
         .finish()
-        .eprint(("todo:filename", Source::from(file.content.as_str())))
+        .eprint((
+            file.url.as_str(),
+            Source::from(file.content.as_ref().unwrap().as_str()),
+        ))
         .unwrap();
 }
 

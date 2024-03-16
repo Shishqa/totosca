@@ -36,7 +36,7 @@ pub enum Relation {
     Url,
     Namespace,
     Import(usize),
-    ImportUrl,
+    ImportFile,
     ImportProfile,
     ImportRepository,
     ImportNamespace,
@@ -62,11 +62,20 @@ pub enum Relation {
     EntrySchema,
 }
 
+pub trait AsToscaEntity {
+    fn as_tosca(&self) -> Option<&Entity>;
+}
+
+pub trait AsToscaRelation {
+    fn as_tosca(&self) -> Option<&Relation>;
+}
+
 pub trait ToscaCompatibleEntity:
     toto_parser::ParseCompatibleEntity
     + From<toto_yaml::FileEntity>
     + From<toto_yaml::Entity>
     + From<crate::Entity>
+    + AsToscaEntity
     + Sized
     + 'static
 {
@@ -77,6 +86,7 @@ impl<T> ToscaCompatibleEntity for T where
         + From<toto_yaml::FileEntity>
         + From<toto_yaml::Entity>
         + From<crate::Entity>
+        + AsToscaEntity
         + Sized
         + 'static
 {
@@ -87,6 +97,7 @@ pub trait ToscaCompatibleRelation:
     + From<toto_yaml::FileRelation>
     + From<toto_yaml::Relation>
     + From<crate::Relation>
+    + AsToscaRelation
     + Sized
     + 'static
 {
@@ -97,6 +108,7 @@ impl<T> ToscaCompatibleRelation for T where
         + From<toto_yaml::FileRelation>
         + From<toto_yaml::Relation>
         + From<crate::Relation>
+        + AsToscaRelation
         + Sized
         + 'static
 {
