@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use petgraph::visit::EdgeRef;
+use petgraph::{visit::EdgeRef, Direction::Incoming};
 use toto_parser::add_with_loc;
 use toto_yaml::{FileEntity, YamlParser};
 
@@ -17,15 +17,8 @@ impl Importer {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let yaml = ast
-            .edges(file_handle)
-            .find_map(|e| match e.weight().as_parse_loc() {
-                Some(_) => Some(e.target()),
-                _ => None,
-            })
-            .unwrap();
         let file = ast
-            .edges(yaml)
+            .edges(file_handle)
             .find_map(|e| match e.weight().as_file() {
                 Some(_) => Some(e.target()),
                 _ => None,
@@ -70,21 +63,23 @@ where
 
         ast.edges(file_handle)
             .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::Import(_)) => Some(ast.edges(e.target())),
+                Some(crate::Relation::Import(_)) => {
+                    Some(ast.edges(e.target()).map(move |ed| (e.target(), ed)))
+                }
                 _ => None,
             })
             .flatten()
-            .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::Url) => Some(e.target()),
+            .filter_map(|(import_handle, e)| match e.weight().as_tosca() {
+                Some(crate::Relation::Url) => Some((import_handle, e.target())),
                 _ => None,
             })
-            .filter_map(|n| match toto_yaml::as_string(n, ast) {
-                Some(import_url) => Some((n, import_url.to_owned())),
+            .filter_map(|(import_handle, n)| match toto_yaml::as_string(n, ast) {
+                Some(import_url) => Some((import_handle, import_url.to_owned())),
                 _ => None,
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .for_each(|(n, import_url)| {
+            .for_each(|(import_handle, import_url)| {
                 let import_url = url::Url::parse(&import_url)
                     .or(root_url.join(&import_url))
                     .unwrap();
@@ -92,13 +87,32 @@ where
                 dbg!(&import_url);
 
                 if let Some(existing_handle) = existing_urls.get(&import_url) {
-                    ast.add_edge(n, *existing_handle, crate::Relation::ImportFile.into());
+                    let existing_file = ast
+                        .edges_directed(*existing_handle, Incoming)
+                        .find_map(|e| match e.weight().as_file() {
+                            Some(_) => match ast.node_weight(e.source()).unwrap().as_tosca() {
+                                Some(crate::Entity::File) => Some(e.source()),
+                                _ => None,
+                            },
+                            _ => None,
+                        })
+                        .unwrap();
+
+                    ast.add_edge(
+                        import_handle,
+                        existing_file,
+                        crate::Relation::ImportFile.into(),
+                    );
                     return;
                 }
 
                 let mut doc = toto_yaml::FileEntity::from_url(import_url);
                 if let Err(err) = doc.fetch() {
-                    add_with_loc(toto_parser::ParseError::Custom(err.to_string()), n, ast);
+                    add_with_loc(
+                        toto_parser::ParseError::Custom(err.to_string()),
+                        import_handle,
+                        ast,
+                    );
                     return;
                 }
 
@@ -106,7 +120,11 @@ where
                 let doc_root = YamlParser::parse(doc_handle, ast).unwrap();
                 let imported_handle = ToscaParser::parse(doc_root, ast).unwrap();
 
-                ast.add_edge(n, imported_handle, crate::Relation::ImportFile.into());
+                ast.add_edge(
+                    import_handle,
+                    imported_handle,
+                    crate::Relation::ImportFile.into(),
+                );
             });
 
         Some(file_handle)

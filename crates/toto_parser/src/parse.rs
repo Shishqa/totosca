@@ -1,6 +1,7 @@
 use std::fmt::Debug;
 
-use toto_yaml::{AsFileEntity, AsFileRelation};
+use petgraph::{visit::EdgeRef, Direction::Outgoing};
+use toto_yaml::{AsFileEntity, AsFileRelation, FileRelation};
 
 #[derive(Debug, Clone)]
 pub enum ParseError {
@@ -26,7 +27,13 @@ pub trait ParseCompatibleEntity:
 {
 }
 pub trait ParseCompatibleRelation:
-    toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + Debug + 'static
+    toto_yaml::AsYamlRelation
+    + AsFileRelation
+    + AsParseLoc
+    + From<ParseLoc>
+    + From<FileRelation>
+    + Debug
+    + 'static
 {
 }
 
@@ -35,7 +42,13 @@ impl<T> ParseCompatibleEntity for T where
 {
 }
 impl<T> ParseCompatibleRelation for T where
-    T: toto_yaml::AsYamlRelation + AsFileRelation + AsParseLoc + From<ParseLoc> + Debug + 'static
+    T: toto_yaml::AsYamlRelation
+        + AsFileRelation
+        + AsParseLoc
+        + From<ParseLoc>
+        + From<FileRelation>
+        + Debug
+        + 'static
 {
 }
 
@@ -49,6 +62,16 @@ where
     R: ParseCompatibleRelation,
 {
     let n = ast.add_node(e.into());
+
+    let (pos, file) = ast
+        .edges_directed(loc, Outgoing)
+        .find_map(|e| match e.weight().as_file() {
+            Some(pos) => Some((pos.0, e.target())),
+            _ => None,
+        })
+        .unwrap();
+
     ast.add_edge(n, loc, ParseLoc.into());
+    ast.add_edge(n, file, toto_yaml::FileRelation(pos).into());
     n
 }

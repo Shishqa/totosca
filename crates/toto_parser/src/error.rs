@@ -5,7 +5,7 @@ use crate::{ParseCompatibleEntity, ParseCompatibleRelation};
 
 pub fn get_errors<E, R>(
     ast: &toto_ast::AST<E, R>,
-) -> impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)>
+) -> impl Iterator<Item = (toto_ast::GraphHandle, Option<toto_ast::GraphHandle>)>
 where
     E: ParseCompatibleEntity,
     R: ParseCompatibleRelation,
@@ -22,8 +22,7 @@ where
                 .find_map(|e| match e.weight().as_parse_loc() {
                     Some(_) => Some(e.target()),
                     _ => None,
-                })
-                .unwrap();
+                });
             (node, yaml)
         })
         .collect::<Vec<_>>()
@@ -32,15 +31,15 @@ where
 
 pub fn report_error<E, R>(
     what: toto_ast::GraphHandle,
-    loc: toto_ast::GraphHandle,
+    loc: Option<toto_ast::GraphHandle>,
     ast: &toto_ast::AST<E, R>,
 ) where
     E: ParseCompatibleEntity,
     R: ParseCompatibleRelation,
 {
-    let len = get_yaml_len(loc, ast);
+    let len = loc.map(|l| get_yaml_len(l, ast)).unwrap_or(1);
     let (pos, file) = ast
-        .edges(loc)
+        .edges(what)
         .find_map(|e| match e.weight().as_file() {
             Some(pos) => Some((pos.0, e.target())),
             _ => None,

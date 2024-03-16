@@ -18,7 +18,7 @@ use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
 use toto_tosca::grammar::parser::ToscaParser;
 use toto_tosca::semantic::Importer;
 use toto_tosca::{AsToscaEntity, AsToscaRelation};
-use toto_yaml::{AsFileEntity, AsFileRelation};
+use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
@@ -167,10 +167,10 @@ impl Server {
         let doc = self.ast.node_weight(doc_handle).unwrap().as_file().unwrap();
         let diagnostics: Vec<lsp_types::Diagnostic> = get_errors(&self.ast)
             .filter_map(|(what, loc)| {
-                let len = get_yaml_len(loc, &self.ast);
+                let len = loc.map(|l| get_yaml_len(l, &self.ast)).unwrap_or(1);
                 let (pos, file) = self
                     .ast
-                    .edges(loc)
+                    .edges(what)
                     .find_map(|e| match e.weight().as_file() {
                         Some(pos) => Some((pos.0, e.target())),
                         _ => None,
@@ -254,19 +254,19 @@ impl Server {
         let target_file = self
             .ast
             .edges_directed(*file_handle, Incoming)
-            .filter_map(|e| {
-                let pos = match e.weight().as_file() {
-                    Some(pos) => Some((pos.0, e.source())),
+            .filter_map(|e| match e.weight().as_file() {
+                Some(pos) => Some((pos.0, e.source())),
+                _ => None,
+            })
+            .filter_map(
+                |(pos, source)| match self.ast.node_weight(source).unwrap().as_yaml() {
+                    Some(_) => Some((pos, get_yaml_len(source, &self.ast), source)),
                     _ => None,
-                };
-                if pos.is_none() {
-                    return None;
-                }
-                let (pos, yaml_handle) = pos.unwrap();
-                let len = get_yaml_len(yaml_handle, &self.ast);
-
+                },
+            )
+            .filter_map(|(pos, len, source)| {
                 if pos <= params_pos && params_pos <= pos + len {
-                    Some(self.ast.edges_directed(yaml_handle, Incoming))
+                    Some(self.ast.edges_directed(source, Incoming))
                 } else {
                     None
                 }

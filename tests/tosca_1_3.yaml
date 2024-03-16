@@ -3,4 +3,4 @@ tosca_definitions_version: tosca_simple_yaml_1_3
 imports:
   - ./tosca_1_3_b.yaml
 
-dodo: ?
+description: test
