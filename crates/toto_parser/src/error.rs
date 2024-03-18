@@ -11,11 +11,7 @@ where
     R: ParseCompatibleRelation,
 {
     ast.node_indices()
-        .into_iter()
-        .filter_map(|node| match ast[node].as_parse() {
-            Some(_) => Some(node),
-            _ => None,
-        })
+        .filter(|node| ast[*node].as_parse().is_some())
         .map(|node| {
             let yaml = ast
                 .edges(node)
@@ -40,10 +36,7 @@ pub fn report_error<E, R>(
     let len = loc.map(|l| get_yaml_len(l, ast)).unwrap_or(1);
     let (pos, file) = ast
         .edges(what)
-        .find_map(|e| match e.weight().as_file() {
-            Some(pos) => Some((pos.0, e.target())),
-            _ => None,
-        })
+        .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
         .unwrap();
 
     let err = ast.node_weight(what).unwrap().as_parse().unwrap();
@@ -70,6 +63,6 @@ where
         Some(toto_yaml::Entity::Int(n)) => (n.checked_ilog10().unwrap_or(0) + 1) as usize,
         Some(toto_yaml::Entity::Float(n)) => n.to_string().chars().count(),
         Some(toto_yaml::Entity::Str(s)) => s.len(),
-        _ => 1 as usize,
+        _ => 1_usize,
     }
 }

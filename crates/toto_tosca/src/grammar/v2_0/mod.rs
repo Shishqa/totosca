@@ -66,6 +66,5 @@ mod tests {
         dbg!(Dot::new(&ast));
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
-        assert!(false)
     }
 }

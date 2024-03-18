@@ -19,9 +19,8 @@ where
     ) -> Option<toto_ast::GraphHandle> {
         let import = add_with_loc(crate::Entity::Definition, n, ast);
         toto_yaml::as_string(n, ast)
-            .and_then(|_| {
+            .map(|_| {
                 ast.add_edge(import, n, crate::Relation::Url.into());
-                Some(import)
             })
             .or_else(|| {
                 add_with_loc(toto_parser::ParseError::UnexpectedType("string"), n, ast);

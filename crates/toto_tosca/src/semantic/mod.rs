@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use petgraph::{visit::EdgeRef, Direction::Incoming};
 use toto_parser::add_with_loc;
-use toto_yaml::{FileEntity, YamlParser};
+use toto_yaml::YamlParser;
 
 use crate::{grammar::parser::ToscaParser, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
@@ -35,9 +35,11 @@ impl Importer {
         R: ToscaCompatibleRelation,
     {
         ast.node_indices()
-            .filter_map(|n| match ast.node_weight(n).unwrap().as_file() {
-                Some(file) => Some((file.url.clone(), n)),
-                _ => None,
+            .filter_map(|n| {
+                ast.node_weight(n)
+                    .unwrap()
+                    .as_file()
+                    .map(|file| (file.url.clone(), n))
             })
             .collect::<HashMap<_, _>>()
     }
@@ -73,9 +75,9 @@ where
                 Some(crate::Relation::Url) => Some((import_handle, e.target())),
                 _ => None,
             })
-            .filter_map(|(import_handle, n)| match toto_yaml::as_string(n, ast) {
-                Some(import_url) => Some((import_handle, import_url.to_owned())),
-                _ => None,
+            .filter_map(|(import_handle, n)| {
+                toto_yaml::as_string(n, ast)
+                    .map(|import_url| (import_handle, import_url.to_owned()))
             })
             .collect::<Vec<_>>()
             .into_iter()

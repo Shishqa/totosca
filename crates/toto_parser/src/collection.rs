@@ -12,25 +12,21 @@ where
     V: toto_ast::EntityParser<E, R>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
-        toto_yaml::as_map(n, ast)
-            .or_else(|| {
-                add_with_loc(ParseError::UnexpectedType("map"), n, ast);
-                None
-            })
-            .and_then(|items| {
-                items.for_each(|(k, v)| {
-                    toto_yaml::as_string(k, ast)
-                        .or_else(|| {
-                            add_with_loc(ParseError::UnexpectedType("string"), k, ast);
-                            None
-                        })
-                        .zip(V::parse(v, ast))
-                        .and_then(|(k_str, v_handle)| {
-                            ast.add_edge(root, v_handle, K::L(k_str));
-                            Some(v_handle)
-                        });
-                });
-                Some(n)
+        if let Some(items) = toto_yaml::as_map(n, ast).or_else(|| {
+            add_with_loc(ParseError::UnexpectedType("map"), n, ast);
+            None
+        }) {
+            items.for_each(|(k, v)| {
+                if let Some((k_str, v_handle)) = toto_yaml::as_string(k, ast)
+                    .or_else(|| {
+                        add_with_loc(ParseError::UnexpectedType("string"), k, ast);
+                        None
+                    })
+                    .zip(V::parse(v, ast))
+                {
+                    ast.add_edge(root, v_handle, K::L(k_str));
+                }
             });
+        }
     }
 }

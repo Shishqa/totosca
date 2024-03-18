@@ -16,10 +16,10 @@ impl FileEntity {
 
     pub fn fetch(&mut self) -> anyhow::Result<()> {
         let path = self.url.to_file_path();
-        if let Err(_) = path {
+        if path.is_err() {
             return Err(anyhow!("only local paths are supported"));
         }
-        self.content = Some(std::fs::read_to_string(&path.unwrap())?);
+        self.content = Some(std::fs::read_to_string(path.unwrap())?);
         Ok(())
     }
 }
@@ -28,7 +28,7 @@ impl Debug for FileEntity {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.content {
             Some(content) => match content.char_indices().nth(100) {
-                None => f.write_str(&content),
+                None => f.write_str(content),
                 Some((idx, _)) => f.write_str(&content[..idx]),
             },
             None => f.write_str("not loaded"),
@@ -147,11 +147,12 @@ where
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
         let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(&doc.content.as_ref().unwrap())
-            .unwrap()
-            .remove(0);
+        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc.content.as_ref().unwrap());
+        if yaml.is_err() {
+            return None;
+        }
 
-        Some(Self::parse_node(yaml, doc_handle, ast))
+        Some(Self::parse_node(yaml.unwrap().remove(0), doc_handle, ast))
     }
 }
 
@@ -236,7 +237,7 @@ where
     let t = &ast[n];
     let t = t.as_yaml().unwrap();
     match t {
-        Entity::Bool(v) => Some(v.clone()),
+        Entity::Bool(v) => Some(*v),
         _ => None,
     }
 }
@@ -277,8 +278,8 @@ mod tests {
     impl AsFileEntity for Entity {
         fn as_file(&self) -> Option<&FileEntity> {
             match self {
-                Entity::File(f) => Some(f),
-                _ => None,
+                Self::File(f) => Some(f),
+                Self::Yaml(_) => None,
             }
         }
     }
@@ -309,11 +310,9 @@ mod tests {
         doc.fetch().unwrap();
         let doc_handle = ast.add_node(doc.into());
 
-        YamlParser::parse(doc_handle, &mut ast);
+        YamlParser::parse(doc_handle, &mut ast).unwrap();
 
         dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
-        // dbg!(Dot::new(&ast));
-
-        assert!(false);
+        dbg!(Dot::new(&ast));
     }
 }

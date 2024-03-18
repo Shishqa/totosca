@@ -30,28 +30,23 @@ where
     {
         let mut parsed_fields = HashSet::<String>::new();
         keys.for_each(|(k, v)| {
-            toto_yaml::as_string(k, ast)
-                .or_else(|| {
-                    add_with_loc(ParseError::UnexpectedType("string"), k, ast);
-                    None
-                })
-                .and_then(|key| {
-                    parsed_fields.insert(key.clone());
-                    let parser = Self::SCHEMA.get(key.as_str());
-                    if parser.is_some() {
-                        parser.unwrap()(root, v, ast);
-                    } else {
-                        add_with_loc(ParseError::UnknownField(key), k, ast);
-                    }
-                    Some(k)
-                });
+            if let Some(key) = toto_yaml::as_string(k, ast).or_else(|| {
+                add_with_loc(ParseError::UnexpectedType("string"), k, ast);
+                None
+            }) {
+                parsed_fields.insert(key.clone());
+                if let Some(parser) = Self::SCHEMA.get(key.as_str()) {
+                    parser(root, v, ast);
+                } else {
+                    add_with_loc(ParseError::UnknownField(key), k, ast);
+                }
+            }
         });
 
-        Self::VALIDATION.into_iter().for_each(|checker| {
-            checker(&parsed_fields).and_then(|err| {
+        Self::VALIDATION.iter().for_each(|checker| {
+            if let Some(err) = checker(&parsed_fields) {
                 add_with_loc(err, root, ast);
-                Some(())
-            });
+            };
         });
 
         root

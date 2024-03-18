@@ -104,10 +104,10 @@ where
     ) -> Option<toto_ast::GraphHandle> {
         let import = add_with_loc(crate::Entity::Definition, n, ast);
         toto_yaml::as_map(n, ast)
-            .and_then(|items| Some(Self::parse_schema(import, items, ast)))
-            .or(toto_yaml::as_string(n, ast).and_then(|_| {
+            .map(|items| Self::parse_schema(import, items, ast))
+            .or(toto_yaml::as_string(n, ast).map(|_| {
                 ast.add_edge(import, n, crate::Relation::Url.into());
-                Some(import)
+                import
             }))
             .or_else(|| {
                 add_with_loc(
