@@ -65,10 +65,7 @@ where
 
     let (pos, file) = ast
         .edges_directed(loc, Outgoing)
-        .find_map(|e| match e.weight().as_file() {
-            Some(pos) => Some((pos.0, e.target())),
-            _ => None,
-        })
+        .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
         .unwrap();
 
     ast.add_edge(n, loc, ParseLoc.into());

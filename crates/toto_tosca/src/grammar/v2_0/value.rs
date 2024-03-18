@@ -18,7 +18,7 @@ where {
                 add_with_loc(toto_parser::ParseError::UnexpectedType("string"), n, ast);
                 None
             })
-            .and_then(|_| Some(n))
+            .map(|_| n)
     }
 }
 

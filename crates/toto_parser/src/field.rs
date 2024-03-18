@@ -12,9 +12,8 @@ where
     V: toto_ast::EntityParser<E, R>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
-        V::parse(n, ast).and_then(|n_handle| {
+        if let Some(n_handle) = V::parse(n, ast) {
             ast.add_edge(root, n_handle, C::L(()));
-            Some(n_handle)
-        });
+        }
     }
 }

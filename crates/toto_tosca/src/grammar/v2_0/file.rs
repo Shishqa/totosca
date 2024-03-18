@@ -37,15 +37,12 @@ where
     ) -> Option<toto_ast::GraphHandle>
 where {
         let file = add_with_loc(crate::Entity::File, n, ast);
-        toto_yaml::as_map(n, ast)
-            .or_else(|| {
-                add_with_loc(toto_parser::ParseError::UnexpectedType("map"), n, ast);
-                None
-            })
-            .and_then(|items| {
-                toto_parser::parse_schema(&Self::SCHEMA, file, items, ast);
-                Some(file)
-            });
+        if let Some(items) = toto_yaml::as_map(n, ast).or_else(|| {
+            add_with_loc(toto_parser::ParseError::UnexpectedType("map"), n, ast);
+            None
+        }) {
+            Self::parse_schema(file, items, ast);
+        }
         Some(file)
     }
 }

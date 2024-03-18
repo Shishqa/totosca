@@ -1,9 +1,7 @@
 use std::error::Error;
 
-use graphviz_rust::cmd::{CommandArg, Format};
-use graphviz_rust::printer::PrinterContext;
 use lsp_types::notification::Notification;
-use lsp_types::{CodeLensOptions, Location};
+use lsp_types::Location;
 
 use lsp_types::request::Request;
 use petgraph::visit::EdgeRef;
@@ -171,19 +169,15 @@ impl Server {
                 let (pos, file) = self
                     .ast
                     .edges(what)
-                    .find_map(|e| match e.weight().as_file() {
-                        Some(pos) => Some((pos.0, e.target())),
-                        _ => None,
-                    })
+                    .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
                     .unwrap();
                 if file != doc_handle {
                     return None;
                 }
 
-                let (lineno_start, charno_start) =
-                    Self::get_lc(&doc.content.as_ref().unwrap(), pos);
+                let (lineno_start, charno_start) = Self::get_lc(doc.content.as_ref().unwrap(), pos);
                 let (lineno_end, charno_end) =
-                    Self::get_lc(&doc.content.as_ref().unwrap(), pos + len);
+                    Self::get_lc(doc.content.as_ref().unwrap(), pos + len);
 
                 Some(lsp_types::Diagnostic::new(
                     lsp_types::Range {
@@ -238,8 +232,7 @@ impl Server {
         let file_handle = existing_urls.get(&params.text_document.uri).unwrap();
 
         let params_pos = Self::from_lc(
-            &self
-                .ast
+            self.ast
                 .node_weight(*file_handle)
                 .unwrap()
                 .as_file()
@@ -254,10 +247,7 @@ impl Server {
         let target_file = self
             .ast
             .edges_directed(*file_handle, Incoming)
-            .filter_map(|e| match e.weight().as_file() {
-                Some(pos) => Some((pos.0, e.source())),
-                _ => None,
-            })
+            .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
             .filter_map(
                 |(pos, source)| match self.ast.node_weight(source).unwrap().as_yaml() {
                     Some(_) => Some((pos, get_yaml_len(source, &self.ast), source)),

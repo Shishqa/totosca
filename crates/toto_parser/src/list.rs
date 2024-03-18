@@ -17,14 +17,14 @@ where
                 add_with_loc(ParseError::UnexpectedType("list"), n, ast);
                 None
             })
-            .and_then(|items| {
+            .map(|items| {
                 items.for_each(|(i, v)| {
-                    V::parse(v, ast).and_then(|v_handle| {
+                    V::parse(v, ast).map(|v_handle| {
                         ast.add_edge(root, v_handle, K::L(i));
-                        Some(v_handle)
+                        v_handle
                     });
                 });
-                Some(n)
+                n
             });
     }
 }
