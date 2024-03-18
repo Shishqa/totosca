@@ -41,7 +41,7 @@ where
                 None
             })
             .and_then(|items| {
-                toto_parser::parse_schema(&Self::SCHEMA, file, items, ast);
+                Self::parse_schema(file, items, ast);
                 Some(file)
             });
         Some(file)

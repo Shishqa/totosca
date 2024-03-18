@@ -66,10 +66,10 @@ where
     E: ParseCompatibleEntity,
     R: ParseCompatibleRelation,
 {
-    match ast.node_weight(n).unwrap().as_yaml().unwrap() {
-        toto_yaml::Entity::Int(n) => (n.checked_ilog10().unwrap_or(0) + 1) as usize,
-        toto_yaml::Entity::Float(n) => n.to_string().chars().count(),
-        toto_yaml::Entity::Str(s) => s.len(),
+    match ast.node_weight(n).unwrap().as_yaml() {
+        Some(toto_yaml::Entity::Int(n)) => (n.checked_ilog10().unwrap_or(0) + 1) as usize,
+        Some(toto_yaml::Entity::Float(n)) => n.to_string().chars().count(),
+        Some(toto_yaml::Entity::Str(s)) => s.len(),
         _ => 1 as usize,
     }
 }

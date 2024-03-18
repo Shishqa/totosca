@@ -1,4 +1,4 @@
-use std::marker::PhantomData;
+use std::{collections::HashSet, marker::PhantomData};
 
 use toto_ast::RelationParser;
 use toto_parser::{add_with_loc, Schema};
@@ -62,6 +62,34 @@ where
         "repository" => toto_parser::Field::<ImportRepository, value::String>::parse,
         "namespace" => toto_parser::Field::<ImportNamespace, value::String>::parse,
     };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] = &[
+        |fields: &HashSet<String>| {
+            if fields.contains("url") && fields.contains("profile") {
+                Some(toto_parser::ParseError::Custom(
+                    "url and profile are mutually exclusive".to_string(),
+                ))
+            } else {
+                None
+            }
+        },
+        |fields: &HashSet<String>| {
+            if !fields.contains("url") && !fields.contains("profile") {
+                Some(toto_parser::ParseError::MissingField("url or profile"))
+            } else {
+                None
+            }
+        },
+        |fields: &HashSet<String>| {
+            if fields.contains("repository") && !fields.contains("url") {
+                Some(toto_parser::ParseError::Custom(
+                    "can only be used when a url is specified".to_string(),
+                ))
+            } else {
+                None
+            }
+        },
+    ];
 }
 
 impl<E, R, V> toto_ast::EntityParser<E, R> for ImportDefinition<V>
@@ -76,7 +104,7 @@ where
     ) -> Option<toto_ast::GraphHandle> {
         let import = add_with_loc(crate::Entity::Definition, n, ast);
         toto_yaml::as_map(n, ast)
-            .and_then(|items| Some(toto_parser::parse_schema(&Self::SCHEMA, import, items, ast)))
+            .and_then(|items| Some(Self::parse_schema(import, items, ast)))
             .or(toto_yaml::as_string(n, ast).and_then(|_| {
                 ast.add_edge(import, n, crate::Relation::Url.into());
                 Some(import)
