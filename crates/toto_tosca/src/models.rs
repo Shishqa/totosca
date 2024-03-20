@@ -57,6 +57,7 @@ pub enum Relation {
 
     HasType,
     DerivedFrom,
+    RefType,
     Validation,
     KeySchema,
     EntrySchema,

@@ -1,6 +1,9 @@
 use toto_parser::add_with_loc;
 
-use crate::{semantic::Importer, ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::{
+    semantic::{Importer, TypeResolver},
+    ToscaCompatibleEntity, ToscaCompatibleRelation,
+};
 
 use super::{v1_3::Tosca1_3, v2_0::Tosca2_0};
 
@@ -57,5 +60,6 @@ where
                 _ => None,
             })
             .and_then(|file_handle| Importer::parse(file_handle, ast))
+            .and_then(|file_handle| TypeResolver::parse(file_handle, ast))
     }
 }

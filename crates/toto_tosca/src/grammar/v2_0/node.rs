@@ -27,12 +27,12 @@ where
     const L: fn(String) -> R = |v| crate::Relation::NodeType(v).into();
 }
 
-pub struct HasType;
-impl<R> toto_parser::Linker<(), R> for HasType
+pub struct RefType;
+impl<R> toto_parser::Linker<(), R> for RefType
 where
     R: ToscaCompatibleRelation,
 {
-    const L: fn(()) -> R = |_| crate::Relation::HasType.into();
+    const L: fn(()) -> R = |_| crate::Relation::RefType.into();
 }
 
 pub struct DerivedFrom;
@@ -51,7 +51,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::Definition.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => toto_parser::Field::<HasType, value::String>::parse,
+        "type" => toto_parser::Field::<RefType, value::String>::parse,
     };
 }
 
@@ -77,7 +77,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::Definition.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => toto_parser::Field::<DerivedFrom, value::String>::parse,
+        "derived_from" => toto_parser::Field::<RefType, value::String>::parse,
     };
 }
 

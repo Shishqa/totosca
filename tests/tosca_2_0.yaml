@@ -27,10 +27,10 @@ node_types:
 service_template:
   node_templates:
     a:
-      type: test1
+      type: test2
 
     b:
-      type: test2
+      type: test1
 
     wrong:
       type: 1
