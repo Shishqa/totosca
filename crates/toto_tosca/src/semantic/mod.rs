@@ -45,7 +45,7 @@ impl Importer {
     }
 }
 
-impl<E, R> toto_ast::EntityParser<E, R> for Importer
+impl<E, R> toto_parser::EntityParser<E, R> for Importer
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,

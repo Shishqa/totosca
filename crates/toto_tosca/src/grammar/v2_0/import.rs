@@ -1,14 +1,13 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_ast::RelationParser;
-use toto_parser::{add_with_loc, Schema};
+use toto_parser::{add_with_loc, RelationParser};
 
 use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 use super::value::{self};
 
 pub struct Import;
-impl<R> toto_ast::Linker<usize, R> for Import
+impl<R> toto_parser::Linker<usize, R> for Import
 where
     R: ToscaCompatibleRelation,
 {
@@ -16,7 +15,7 @@ where
 }
 
 pub struct ImportUrl;
-impl<R> toto_ast::Linker<(), R> for ImportUrl
+impl<R> toto_parser::Linker<(), R> for ImportUrl
 where
     R: ToscaCompatibleRelation,
 {
@@ -24,7 +23,7 @@ where
 }
 
 pub struct ImportProfile;
-impl<R> toto_ast::Linker<(), R> for ImportProfile
+impl<R> toto_parser::Linker<(), R> for ImportProfile
 where
     R: ToscaCompatibleRelation,
 {
@@ -32,7 +31,7 @@ where
 }
 
 pub struct ImportNamespace;
-impl<R> toto_ast::Linker<(), R> for ImportNamespace
+impl<R> toto_parser::Linker<(), R> for ImportNamespace
 where
     R: ToscaCompatibleRelation,
 {
@@ -40,7 +39,7 @@ where
 }
 
 pub struct ImportRepository;
-impl<R> toto_ast::Linker<(), R> for ImportRepository
+impl<R> toto_parser::Linker<(), R> for ImportRepository
 where
     R: ToscaCompatibleRelation,
 {
@@ -50,12 +49,13 @@ where
 #[derive(Debug)]
 pub struct ImportDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
-impl<E, R, V> Schema<E, R> for ImportDefinition<V>
+impl<E, R, V> toto_parser::Schema<E, R> for ImportDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
+    const SELF: fn() -> E = || crate::Entity::Definition.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "url" => toto_parser::Field::<ImportUrl, value::String>::parse,
         "profile" => toto_parser::Field::<ImportProfile, value::String>::parse,
@@ -92,7 +92,7 @@ where
     ];
 }
 
-impl<E, R, V> toto_ast::EntityParser<E, R> for ImportDefinition<V>
+impl<E, R, V> toto_parser::EntityParser<E, R> for ImportDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -104,7 +104,7 @@ where
     ) -> Option<toto_ast::GraphHandle> {
         let import = add_with_loc(crate::Entity::Definition, n, ast);
         toto_yaml::as_map(n, ast)
-            .map(|items| Self::parse_schema(import, items, ast))
+            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(import, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| {
                 ast.add_edge(import, n, crate::Relation::Url.into());
                 import

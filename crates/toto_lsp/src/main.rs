@@ -11,7 +11,7 @@ use serde_json::from_value;
 mod models;
 
 use models::*;
-use toto_ast::EntityParser;
+use toto_parser::EntityParser;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
 use toto_tosca::grammar::parser::ToscaParser;
 use toto_tosca::semantic::Importer;

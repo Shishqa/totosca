@@ -23,7 +23,7 @@ where
     type ImportDefinition = self::import::ImportDefinition<Self>;
 }
 
-impl<E, R> toto_ast::EntityParser<E, R> for Tosca1_3<E, R>
+impl<E, R> toto_parser::EntityParser<E, R> for Tosca1_3<E, R>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -39,7 +39,7 @@ where
 #[cfg(test)]
 mod tests {
     use petgraph::dot::Dot;
-    use toto_ast::EntityParser;
+    use toto_parser::EntityParser;
     use toto_parser::{get_errors, report_error};
     use toto_yaml::YamlParser;
 
