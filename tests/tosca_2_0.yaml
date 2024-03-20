@@ -13,3 +13,24 @@ imports:
   - url: ../../profiles/ray/1.3/main.yaml
     profile: test
     namespace: test
+
+node_types:
+
+  test1: {}
+
+  test2:
+    derived_from: test1
+
+  wrong:
+    derivd_from: test2
+
+service_template:
+  node_templates:
+    a:
+      type: test1
+
+    b:
+      type: test2
+
+    wrong:
+      type: 1

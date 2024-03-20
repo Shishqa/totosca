@@ -2,7 +2,7 @@ use std::marker::PhantomData;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-use super::ToscaDefinitionsVersion;
+use super::{v2_0, ToscaDefinitionsVersion};
 
 pub struct Tosca1_3<E, R>(PhantomData<(E, R)>);
 
@@ -21,6 +21,9 @@ where
     type Relation = R;
     type FileDefinition = self::file::ToscaFileDefinition<Self>;
     type ImportDefinition = self::import::ImportDefinition<Self>;
+    type ServiceTemplateDefinition = v2_0::ServiceTemplateDefinition<Self>;
+    type NodeTypeDefinition = v2_0::NodeTypeDefinition<Self>;
+    type NodeTemplateDefinition = v2_0::NodeTemplateDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca1_3<E, R>
