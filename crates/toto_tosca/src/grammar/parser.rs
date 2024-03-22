@@ -1,15 +1,12 @@
 use toto_parser::add_with_loc;
 
-use crate::{
-    semantic::{Importer, TypeResolver},
-    ToscaCompatibleEntity, ToscaCompatibleRelation,
-};
+use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 use super::{v1_3::Tosca1_3, v2_0::Tosca2_0};
 
-pub struct ToscaParser;
+pub struct ToscaGrammar;
 
-impl<E, R> toto_parser::EntityParser<E, R> for ToscaParser
+impl<E, R> toto_parser::EntityParser<E, R> for ToscaGrammar
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -59,7 +56,5 @@ where
                 "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
                 _ => None,
             })
-            .and_then(|file_handle| Importer::parse(file_handle, ast))
-            .and_then(|file_handle| TypeResolver::parse(file_handle, ast))
     }
 }

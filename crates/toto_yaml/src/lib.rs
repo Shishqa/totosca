@@ -111,6 +111,7 @@ impl YamlParser {
         let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
         let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc.content.as_ref().unwrap());
         if yaml.is_err() {
+            dbg!(yaml.err());
             return None;
         }
 

@@ -46,10 +46,8 @@ mod tests {
     use toto_parser::{get_errors, report_error};
     use toto_yaml::YamlParser;
 
-    use crate::grammar::{
-        parser::ToscaParser,
-        tests::{Entity, Relation},
-    };
+    use crate::grammar::tests::{Entity, Relation};
+    use crate::ToscaParser;
 
     #[test]
     fn tosca_1_3() {
