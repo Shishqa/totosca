@@ -8,8 +8,26 @@ metadata:
 description: test
 
 imports:
-  - test
-  - namespace: test
-  - url: ../../profiles/ray/1.3/main.yaml
-    profile: test
-    namespace: test
+  - url: ./profiles/profile/types_1.yaml
+    namespace: a
+  - url: ./profiles/profile/types_2.yaml
+    namespace: b
+
+node_types:
+
+  wrong:
+    derived_from: b:base
+
+service_template:
+  node_templates:
+    a:
+      type: a:b:base
+
+    b:
+      type: a:test2
+
+    c:
+      type: a:b:base
+
+    wrong:
+      type: a:test1

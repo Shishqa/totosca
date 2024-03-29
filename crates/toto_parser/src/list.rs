@@ -4,12 +4,12 @@ use crate::{add_with_loc, ParseCompatibleEntity, ParseCompatibleRelation, ParseE
 
 pub struct List<K, V>(PhantomData<(K, V)>);
 
-impl<K, V, E, R> toto_ast::RelationParser<E, R> for List<K, V>
+impl<K, V, E, R> crate::RelationParser<E, R> for List<K, V>
 where
     E: ParseCompatibleEntity,
     R: ParseCompatibleRelation,
-    K: toto_ast::Linker<usize, R>,
-    V: toto_ast::EntityParser<E, R>,
+    K: crate::Linker<usize, R>,
+    V: crate::EntityParser<E, R>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
         toto_yaml::as_list(n, ast)

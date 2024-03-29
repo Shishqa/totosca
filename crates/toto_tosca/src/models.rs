@@ -20,13 +20,18 @@ pub enum UnitSize {
     TiB,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum Entity {
+    Import,
     File,
-    Definition,
+    Profile,
+    ServiceTemplate,
+    Repository,
+    Node,
+    Data,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq, Hash)]
 pub enum Relation {
     ToscaDefinitionsVersion,
     ServiceTemplate,
@@ -36,16 +41,19 @@ pub enum Relation {
     Url,
     Namespace,
     Import(usize),
+
+    ImportTarget,
     ImportFile,
     ImportProfile,
     ImportRepository,
     ImportNamespace,
 
-    DataType(String),
+    Type(String),
+    Definition(String),
+    Assignment(String),
+
     Metadata(String),
     Schema,
-    NodeTemplate(String),
-    NodeType(String),
     Attribute(String),
     Property(String),
     Parameter(String),
@@ -55,8 +63,12 @@ pub enum Relation {
     FunctionCall,
     Value,
 
+    RefRoot,
+    RefSelf,
+
     HasType,
     DerivedFrom,
+    RefType,
     Validation,
     KeySchema,
     EntrySchema,

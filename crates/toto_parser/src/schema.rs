@@ -16,6 +16,7 @@ where
     E: ParseCompatibleEntity,
     R: ParseCompatibleRelation,
 {
+    const SELF: fn() -> E;
     const SCHEMA: StaticSchemaMap<E, R> = phf_map!();
     const VALIDATION: &'static [ValidationFieldFn] = &[];
 
@@ -50,5 +51,19 @@ where
         });
 
         root
+    }
+
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        let node_template = add_with_loc(Self::SELF(), n, ast);
+        toto_yaml::as_map(n, ast)
+            .map(|items| Self::parse_schema(node_template, items, ast))
+            .or_else(|| {
+                add_with_loc(ParseError::UnexpectedType("map"), n, ast);
+                None
+            });
+        Some(node_template)
     }
 }

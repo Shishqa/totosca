@@ -8,8 +8,11 @@ pub trait ToscaDefinitionsVersion {
     type Entity: ToscaCompatibleEntity;
     type Relation: ToscaCompatibleRelation;
 
-    type ImportDefinition: toto_ast::EntityParser<Self::Entity, Self::Relation>;
-    type FileDefinition: toto_ast::EntityParser<Self::Entity, Self::Relation>;
+    type ImportDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type FileDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ServiceTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NodeTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NodeTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]
