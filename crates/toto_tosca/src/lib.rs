@@ -4,7 +4,7 @@ pub mod semantic;
 
 use grammar::parser::ToscaGrammar;
 pub use models::*;
-use semantic::{Importer, TypeResolver};
+use semantic::{Hierarchy, Importer, Lookup};
 use toto_parser::EntityParser;
 
 pub struct ToscaParser;
@@ -16,17 +16,15 @@ impl ToscaParser {
         R: ToscaCompatibleRelation,
     {
         ToscaGrammar::parse(doc_root, ast)
+            .map(|file_handle| Hierarchy::link(file_handle, ast))
             .into_iter()
-            .map(|file_handle| Importer::import_files(file_handle, ast))
-            .flatten()
+            .flat_map(|file_handle| Importer::import_files(file_handle, ast))
             .collect::<Vec<_>>()
             .into_iter()
-            .for_each(|file_handle| Importer::import_types(file_handle, ast));
-        // .map(|file_handle| {
-        //     for _ in 1..10 {
-        //         TypeResolver::parse(file_handle, ast);
-        //     }
-        //     file_handle
-        // })
+            .for_each(|file_handle| {
+                Importer::import_types(file_handle, ast);
+            });
+
+        Lookup::lookup(ast);
     }
 }

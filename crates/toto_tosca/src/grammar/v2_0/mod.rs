@@ -45,8 +45,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use petgraph::dot::Dot;
-    use toto_parser::EntityParser;
     use toto_parser::{get_errors, report_error};
     use toto_yaml::YamlParser;
 
@@ -68,9 +66,6 @@ mod tests {
         let doc_root = YamlParser::parse(doc_handle, &mut ast).unwrap();
         ToscaParser::parse(doc_root, &mut ast);
 
-        dbg!(Dot::new(&ast));
-        assert!(false);
-
-        // get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
+        get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
     }
 }

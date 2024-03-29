@@ -11,20 +11,20 @@ pub struct NodeTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 #[derive(Debug)]
 pub struct NodeTemplateDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
-pub struct NodeTemplate;
-impl<R> toto_parser::Linker<String, R> for NodeTemplate
+pub struct Definition;
+impl<R> toto_parser::Linker<String, R> for Definition
 where
     R: ToscaCompatibleRelation,
 {
-    const L: fn(String) -> R = |v| crate::Relation::NodeTemplate(v).into();
+    const L: fn(String) -> R = |v| crate::Relation::Definition(v).into();
 }
 
-pub struct NodeType;
-impl<R> toto_parser::Linker<String, R> for NodeType
+pub struct TypeDefinition;
+impl<R> toto_parser::Linker<String, R> for TypeDefinition
 where
     R: ToscaCompatibleRelation,
 {
-    const L: fn(String) -> R = |v| crate::Relation::NodeType(v).into();
+    const L: fn(String) -> R = |v| crate::Relation::Type(v).into();
 }
 
 pub struct RefType;
@@ -49,7 +49,7 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::Definition.into();
+    const SELF: fn() -> E = || crate::Entity::Node.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => toto_parser::Field::<RefType, value::String>::parse,
     };
@@ -75,7 +75,7 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::Definition.into();
+    const SELF: fn() -> E = || crate::Entity::Node.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "derived_from" => toto_parser::Field::<RefType, value::String>::parse,
     };

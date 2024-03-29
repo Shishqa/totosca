@@ -55,7 +55,7 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::Definition.into();
+    const SELF: fn() -> E = || crate::Entity::Import.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "url" => toto_parser::Field::<ImportUrl, value::String>::parse,
         "profile" => toto_parser::Field::<ImportProfile, value::String>::parse,
@@ -102,7 +102,7 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let import = add_with_loc(crate::Entity::Definition, n, ast);
+        let import = add_with_loc(crate::Entity::Import, n, ast);
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(import, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| {

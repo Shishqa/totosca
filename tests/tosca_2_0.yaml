@@ -16,12 +16,12 @@ imports:
 node_types:
 
   wrong:
-    derivd_from: test2
+    derived_from: b:base
 
 service_template:
   node_templates:
     a:
-      type: a:test1
+      type: a:b:base
 
     b:
       type: a:test2
@@ -30,4 +30,4 @@ service_template:
       type: a:b:base
 
     wrong:
-      type: 1
+      type: a:test1

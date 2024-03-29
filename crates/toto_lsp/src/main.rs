@@ -11,10 +11,8 @@ use serde_json::from_value;
 mod models;
 
 use models::*;
-use toto_parser::EntityParser;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::grammar::parser::ToscaParser;
-use toto_tosca::semantic::Importer;
+use toto_tosca::ToscaParser;
 use toto_tosca::{AsToscaEntity, AsToscaRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
@@ -228,12 +226,16 @@ impl Server {
         let params = from_value::<lsp_types::GotoDefinitionParams>(req.params.clone())?
             .text_document_position_params;
 
-        let existing_urls = Importer::find_urls(&self.ast);
-        let file_handle = existing_urls.get(&params.text_document.uri).unwrap();
+        eprintln!("looking for {}", params.text_document.uri);
+        let file_handle = self
+            .ast
+            .node_indices()
+            .find(|n| matches!(self.ast.node_weight(*n).unwrap().as_file(), Some(f) if f.url == params.text_document.uri))
+            .unwrap();
 
         let params_pos = Self::from_lc(
             self.ast
-                .node_weight(*file_handle)
+                .node_weight(file_handle)
                 .unwrap()
                 .as_file()
                 .unwrap()
@@ -246,7 +248,7 @@ impl Server {
 
         let target_file = self
             .ast
-            .edges_directed(*file_handle, Incoming)
+            .edges_directed(file_handle, Incoming)
             .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
             .filter_map(
                 |(pos, source)| match self.ast.node_weight(source).unwrap().as_yaml() {
@@ -262,17 +264,19 @@ impl Server {
                 }
             })
             .flatten()
-            .filter_map(|e| match e.weight().as_parse_loc() {
-                Some(_) => Some(e.source()),
+            .filter_map(|e| match e.weight().as_tosca() {
+                Some(toto_tosca::Relation::Url) => Some(e.source()),
                 _ => None,
             })
             .filter_map(|n| match self.ast.node_weight(n).unwrap().as_tosca() {
-                Some(toto_tosca::Entity::Definition) => Some(self.ast.edges_directed(n, Outgoing)),
+                Some(toto_tosca::Entity::Import) => {
+                    Some(dbg!(self.ast.edges_directed(n, Outgoing)))
+                }
                 _ => None,
             })
             .flatten()
             .find_map(|e| match dbg!(e.weight()).as_tosca() {
-                Some(toto_tosca::Relation::ImportFile) => Some(e.target()),
+                Some(toto_tosca::Relation::ImportTarget) => Some(e.target()),
                 _ => None,
             });
 

@@ -9,7 +9,7 @@ imports:
 node_types:
 
   test1:
-    derived_from: b:base
+    derived_from: test2
 
   test2:
     derived_from: b:base

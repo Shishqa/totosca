@@ -1,18 +1,17 @@
-use std::{
-    collections::{HashMap, VecDeque},
-    fmt::format,
-};
+use std::collections::{HashMap, VecDeque};
 
 use petgraph::{
     algo::toposort,
-    data::Build,
-    visit::{EdgeFiltered, EdgeRef, IntoEdgesDirected, NodeFiltered, NodeRef},
-    Direction::{Incoming, Outgoing},
+    visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef},
+    Direction::Outgoing,
 };
 use toto_parser::{add_with_loc, EntityParser};
 use toto_yaml::YamlParser;
 
-use crate::{grammar::parser::ToscaGrammar, ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::{
+    grammar::parser::ToscaGrammar, semantic::Hierarchy, ToscaCompatibleEntity,
+    ToscaCompatibleRelation,
+};
 
 pub struct Importer;
 
@@ -45,7 +44,7 @@ impl Importer {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        dbg!(ast.node_weight(file_handle));
+        ast.node_weight(file_handle);
 
         let root_url = Self::deduce_url(file_handle, ast);
 
@@ -94,6 +93,7 @@ impl Importer {
                             let doc_handle = ast.add_node(doc.into());
                             let doc_root = YamlParser::parse(doc_handle, ast).unwrap();
                             let imported_file = ToscaGrammar::parse(doc_root, ast).unwrap();
+                            Hierarchy::link(imported_file, ast);
 
                             to_import.push_back((url.clone(), imported_file));
                             existing_urls.insert(url, imported_file);
@@ -102,9 +102,14 @@ impl Importer {
                         })
                         .map(|imported_file| {
                             ast.add_edge(
-                                import_def,
+                                file_handle,
                                 imported_file,
                                 crate::Relation::ImportFile.into(),
+                            );
+                            ast.add_edge(
+                                import_def,
+                                imported_file,
+                                crate::Relation::ImportTarget.into(),
                             );
                             imported_file
                         });
@@ -112,15 +117,12 @@ impl Importer {
         }
 
         let file_graph = EdgeFiltered::from_fn(&*ast, |e| {
-            matches!(
-                e.weight().as_tosca(),
-                Some(crate::Relation::ImportFile | crate::Relation::Import(_))
-            )
+            matches!(e.weight().as_tosca(), Some(crate::Relation::ImportFile))
         });
         let file_graph = NodeFiltered::from_fn(&file_graph, |n| {
             matches!(
                 ast.node_weight(n.id()).unwrap().as_tosca(),
-                Some(crate::Entity::File | crate::Entity::Definition)
+                Some(crate::Entity::File)
             )
         });
 
@@ -133,14 +135,8 @@ impl Importer {
                 );
             })
             .ok()
-            .unwrap_or(vec![file_handle])
+            .unwrap_or(existing_urls.values().cloned().collect())
             .into_iter()
-            .filter(|n| {
-                matches!(
-                    ast.node_weight(*n).unwrap().as_tosca(),
-                    Some(crate::Entity::File)
-                )
-            })
             .rev()
             .collect()
     }
@@ -158,7 +154,7 @@ impl Importer {
             .filter_map(|import_def| {
                 ast.edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::ImportFile) => Some((import_def, e.target())),
+                        Some(crate::Relation::ImportTarget) => Some((import_def, e.target())),
                         _ => None,
                     })
             })
@@ -181,11 +177,9 @@ impl Importer {
                         e.weight()
                             .as_tosca()
                             .and_then(|n| match n {
-                                crate::Relation::NodeType(type_name) => {
-                                    Some(crate::Relation::NodeType(
-                                        [ns.as_slice(), &[type_name.clone()]].concat().join(":"),
-                                    ))
-                                }
+                                crate::Relation::Type(type_name) => Some(crate::Relation::Type(
+                                    [ns.as_slice(), &[type_name.clone()]].concat().join(":"),
+                                )),
                                 _ => None,
                             })
                             .map(|rel| (e.target(), rel))

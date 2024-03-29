@@ -22,9 +22,9 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::Definition.into();
+    const SELF: fn() -> E = || crate::Entity::ServiceTemplate.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node_templates" => toto_parser::Collection::<node::NodeTemplate, V::NodeTemplateDefinition>::parse,
+        "node_templates" => toto_parser::Collection::<node::Definition, V::NodeTemplateDefinition>::parse,
     };
 }
 
