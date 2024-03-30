@@ -67,8 +67,11 @@ pub enum Relation {
     RefSelf,
 
     HasType,
+    RefHasType,
+
     DerivedFrom,
-    RefType,
+    RefDerivedFrom,
+
     Validation,
     KeySchema,
     EntrySchema,

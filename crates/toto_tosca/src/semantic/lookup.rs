@@ -1,3 +1,5 @@
+// note: this code is garbage, but works
+
 use std::collections::HashMap;
 
 use petgraph::visit::EdgeRef;
@@ -55,13 +57,22 @@ impl Lookup {
     {
         ast.edge_references()
             .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::RefType) => Some((
+                Some(crate::Relation::RefHasType) => Some((
                     e.source(),
                     (
                         crate::Relation::Type(toto_yaml::as_string(e.target(), ast).unwrap()),
                         *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
                     ),
                     crate::Relation::HasType,
+                    e.target(),
+                )),
+                Some(crate::Relation::RefDerivedFrom) => Some((
+                    e.source(),
+                    (
+                        crate::Relation::Type(toto_yaml::as_string(e.target(), ast).unwrap()),
+                        *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
+                    ),
+                    crate::Relation::DerivedFrom,
                     e.target(),
                 )),
                 _ => None,
@@ -78,7 +89,11 @@ impl Lookup {
                     .unwrap();
 
                 if let Some(target_type) = self.ns.get(&root).and_then(|n_ns| n_ns.get(&rel_ref)) {
-                    if ast.edges_connecting(n, *target_type).count() > 0 {
+                    if ast
+                        .edges_connecting(n, *target_type)
+                        .find(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == new_rel))
+                        .is_some()
+                    {
                         return;
                     }
 
