@@ -14,6 +14,7 @@ pub trait ToscaDefinitionsVersion {
     type ServiceTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NodeTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NodeTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type DataTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

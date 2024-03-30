@@ -24,6 +24,7 @@ where
     type ServiceTemplateDefinition = v2_0::ServiceTemplateDefinition<Self>;
     type NodeTypeDefinition = v2_0::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = v2_0::NodeTemplateDefinition<Self>;
+    type DataTypeDefinition = v2_0::DataTypeDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca1_3<E, R>

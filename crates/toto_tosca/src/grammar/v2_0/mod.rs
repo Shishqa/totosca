@@ -1,3 +1,4 @@
+pub mod data;
 pub mod file;
 pub mod import;
 pub mod node;
@@ -6,6 +7,7 @@ pub mod value;
 
 use std::marker::PhantomData;
 
+pub use data::*;
 pub use file::*;
 pub use import::*;
 pub use node::*;
@@ -28,6 +30,7 @@ where
     type ServiceTemplateDefinition = self::ServiceTemplateDefinition<Self>;
     type NodeTypeDefinition = self::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = self::NodeTemplateDefinition<Self>;
+    type DataTypeDefinition = self::DataTypeDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

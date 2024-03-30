@@ -40,6 +40,7 @@ pub enum Relation {
     Description,
     Url,
     Namespace,
+    Version,
     Import(usize),
 
     ImportTarget,

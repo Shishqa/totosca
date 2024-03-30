@@ -24,6 +24,7 @@ where
         "imports" => toto_parser::List::<import::Import, V::ImportDefinition>::parse,
         "service_template" => toto_parser::Field::<service_template::ServiceTemplate, V::ServiceTemplateDefinition>::parse,
         "node_types" => toto_parser::Collection::<node::TypeDefinition, V::NodeTypeDefinition>::parse,
+        "data_types" => toto_parser::Collection::<node::TypeDefinition, V::DataTypeDefinition>::parse,
     };
 }
 
