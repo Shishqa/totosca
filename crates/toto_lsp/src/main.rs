@@ -4,7 +4,7 @@ use lsp_types::notification::Notification;
 use lsp_types::Location;
 
 use lsp_types::request::Request;
-use petgraph::visit::{EdgeRef, NodeRef};
+use petgraph::visit::{EdgeRef, IntoEdgesDirected, NodeRef};
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -248,7 +248,7 @@ impl Server {
             params.position.character,
         );
 
-        let target_file = self
+        let semantic_token = self
             .ast
             .edges_directed(file_handle, Incoming)
             .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
@@ -266,53 +266,77 @@ impl Server {
                 }
             })
             .flatten()
-            .filter_map(|e| match e.weight().as_tosca() {
-                Some(toto_tosca::Relation::Url) => Some(e.source()),
-                _ => None,
-            })
-            .filter_map(|n| match self.ast.node_weight(n).unwrap().as_tosca() {
-                Some(toto_tosca::Entity::Import) => {
-                    Some(dbg!(self.ast.edges_directed(n, Outgoing)))
-                }
-                _ => None,
-            })
-            .flatten()
-            .find_map(|e| match dbg!(e.weight()).as_tosca() {
-                Some(toto_tosca::Relation::ImportTarget) => Some(e.target()),
+            .find_map(|e| match e.weight().as_tosca() {
+                Some(
+                    toto_tosca::Relation::Url
+                    | toto_tosca::Relation::RefHasType
+                    | toto_tosca::Relation::RefDerivedFrom,
+                ) => Some(e.source()),
                 _ => None,
             });
 
-        if target_file.is_none() {
-            eprintln!("couldn't find target file");
+        if semantic_token.is_none() {
+            eprintln!("can't go to definition (no semantic)");
             return Ok(());
         }
+        let semantic_token = semantic_token.unwrap();
 
-        let file = self
+        let goto_target = match self.ast[semantic_token].as_tosca() {
+            Some(toto_tosca::Entity::Import) => self
+                .ast
+                .edges_directed(semantic_token, Outgoing)
+                .find_map(|e| match e.weight().as_tosca() {
+                    Some(toto_tosca::Relation::ImportTarget) => Some(e.target()),
+                    _ => None,
+                }),
+            Some(toto_tosca::Entity::Node | toto_tosca::Entity::Data) => self
+                .ast
+                .edges_directed(semantic_token, Outgoing)
+                .find_map(|e| match e.weight().as_tosca() {
+                    Some(toto_tosca::Relation::HasType | toto_tosca::Relation::DerivedFrom) => {
+                        Some(e.target())
+                    }
+                    _ => None,
+                }),
+            _ => None,
+        };
+
+        if goto_target.is_none() {
+            eprintln!("can't go to definition (no target)");
+            return Ok(());
+        }
+        let goto_target = goto_target.unwrap();
+
+        let (target_file, target_pos) = self
             .ast
-            .edges_directed(target_file.unwrap(), Outgoing)
+            .edges_directed(goto_target, Outgoing)
             .filter_map(|e| match e.weight().as_parse_loc() {
                 Some(_) => Some(self.ast.edges_directed(e.target(), Outgoing)),
                 _ => None,
             })
             .flatten()
             .find_map(|e| match e.weight().as_file() {
-                Some(_) => Some(e.target()),
+                Some(loc) => Some((e.target(), loc.0)),
                 _ => None,
             })
-            .map(|file_handle| {
-                self.ast
+            .map(|(file_handle, pos)| {
+                let file = self
+                    .ast
                     .node_weight(file_handle)
                     .unwrap()
                     .as_file()
-                    .unwrap()
+                    .unwrap();
+                (file, pos)
             })
             .unwrap();
 
+        let (target_l, target_c) = Self::get_lc(target_file.content.as_ref().unwrap(), target_pos);
+
         let response = lsp_types::GotoDefinitionResponse::from(Location::new(
-            file.url.clone(),
+            target_file.url.clone(),
             lsp_types::Range::new(
-                lsp_types::Position::new(0, 0),
-                lsp_types::Position::new(0, 1),
+                lsp_types::Position::new(target_l, target_c),
+                lsp_types::Position::new(target_l, target_c + 1),
             ),
         ));
         let response = serde_json::to_value(response)?;
