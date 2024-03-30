@@ -2,7 +2,7 @@ use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-use super::{v1_3::Tosca1_3, v2_0::Tosca2_0};
+use super::{hierarchy::Hierarchy, v1_3::Tosca1_3, v2_0::Tosca2_0};
 
 pub struct ToscaGrammar;
 
@@ -56,5 +56,6 @@ where
                 "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
                 _ => None,
             })
+            .map(|file_handle| Hierarchy::link(file_handle, ast))
     }
 }

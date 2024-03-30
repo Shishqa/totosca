@@ -42,7 +42,6 @@ where
 #[cfg(test)]
 mod tests {
     use toto_parser::{get_errors, report_error};
-    use toto_yaml::YamlParser;
 
     use crate::grammar::tests::{Entity, Relation};
     use crate::ToscaParser;
@@ -55,12 +54,8 @@ mod tests {
         let doc_path = url::Url::parse(&doc_path).unwrap();
         let doc_path = doc_path.join("../tests/tosca_1_3.yaml").unwrap();
 
-        let mut doc = toto_yaml::FileEntity::from_url(doc_path);
-        doc.fetch().unwrap();
-        let doc_handle = ast.add_node(doc.into());
-
-        let doc_root = YamlParser::parse(doc_handle, &mut ast).unwrap();
-        ToscaParser::parse(doc_root, &mut ast);
+        let mut parser = ToscaParser::new();
+        parser.parse(&doc_path, &mut ast);
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
     }

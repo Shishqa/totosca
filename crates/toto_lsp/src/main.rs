@@ -4,7 +4,7 @@ use lsp_types::notification::Notification;
 use lsp_types::Location;
 
 use lsp_types::request::Request;
-use petgraph::visit::EdgeRef;
+use petgraph::visit::{EdgeRef, NodeRef};
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -32,6 +32,7 @@ struct Server {
     connection: lsp_server::Connection,
     io_threads: lsp_server::IoThreads,
     ast: toto_ast::AST<Entity, Relation>,
+    parser: toto_tosca::ToscaParser,
 }
 
 impl Server {
@@ -43,6 +44,7 @@ impl Server {
             connection,
             io_threads,
             ast: toto_ast::AST::<Entity, Relation>::new(),
+            parser: toto_tosca::ToscaParser::new(),
         }
     }
 
@@ -151,16 +153,16 @@ impl Server {
     fn refresh_diag(&mut self, uri: &url::Url) -> Result<(), Box<dyn Error + Sync + Send>> {
         eprintln!("trying read: {uri:?}");
 
-        self.ast.clear();
+        let file_handle = self.parser.parse(uri, &mut self.ast);
 
-        let mut doc = toto_yaml::FileEntity::from_url(uri.clone());
-        doc.fetch().unwrap();
+        let doc_handle = self
+            .ast
+            .neighbors_directed(file_handle, Outgoing)
+            .find(|n| self.ast[n.id()].as_file().is_some())
+            .unwrap();
 
-        let doc_handle = self.ast.add_node(doc.into());
-        let doc_root = toto_yaml::YamlParser::parse(doc_handle, &mut self.ast).unwrap();
-        ToscaParser::parse(doc_root, &mut self.ast);
+        let doc = self.ast[doc_handle].as_file().unwrap();
 
-        let doc = self.ast.node_weight(doc_handle).unwrap().as_file().unwrap();
         let diagnostics: Vec<lsp_types::Diagnostic> = get_errors(&self.ast)
             .filter_map(|(what, loc)| {
                 let len = loc.map(|l| get_yaml_len(l, &self.ast)).unwrap_or(1);

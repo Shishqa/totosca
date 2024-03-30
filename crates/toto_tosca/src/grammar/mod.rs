@@ -1,5 +1,6 @@
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
+pub mod hierarchy;
 pub mod parser;
 pub mod v1_3;
 pub mod v2_0;

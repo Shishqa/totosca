@@ -5,20 +5,22 @@ use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-pub struct Lookup;
-
 type Namespace = HashMap<
     toto_ast::GraphHandle,
     HashMap<(crate::Relation, crate::Entity), toto_ast::GraphHandle>,
 >;
 
+pub struct Lookup {
+    ns: Namespace,
+}
+
 impl Lookup {
-    fn collect_namespace<E, R>(ast: &mut toto_ast::AST<E, R>) -> Namespace
+    pub fn from_ast<E, R>(ast: &toto_ast::AST<E, R>) -> Self
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let mut res = Namespace::new();
+        let mut ns = Namespace::new();
 
         ast.edge_references()
             .filter_map(|e| match e.weight().as_tosca() {
@@ -33,26 +35,24 @@ impl Lookup {
                 _ => None,
             })
             .for_each(|(n, rel, t)| {
-                if let Some(n_ns) = res.get_mut(&n) {
+                if let Some(n_ns) = ns.get_mut(&n) {
                     n_ns.insert(rel, t);
                 } else {
                     let mut n_ns =
                         HashMap::<(crate::Relation, crate::Entity), toto_ast::GraphHandle>::new();
                     n_ns.insert(rel, t);
-                    res.insert(n, n_ns);
+                    ns.insert(n, n_ns);
                 }
             });
 
-        res
+        Self { ns }
     }
 
-    pub fn lookup<E, R>(ast: &mut toto_ast::AST<E, R>)
+    pub fn lookup<E, R>(&self, ast: &mut toto_ast::AST<E, R>)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let ns = Self::collect_namespace(ast);
-
         ast.edge_references()
             .filter_map(|e| match e.weight().as_tosca() {
                 Some(crate::Relation::RefType) => Some((
@@ -77,8 +77,11 @@ impl Lookup {
                     })
                     .unwrap();
 
-                let n_ns = ns.get(&root).unwrap(); // TODO: handle no types in root
-                if let Some(target_type) = n_ns.get(&rel_ref) {
+                if let Some(target_type) = self.ns.get(&root).and_then(|n_ns| n_ns.get(&rel_ref)) {
+                    if ast.edges_connecting(n, *target_type).count() > 0 {
+                        return;
+                    }
+
                     ast.add_edge(n, *target_type, new_rel.into());
                 } else {
                     add_with_loc(
