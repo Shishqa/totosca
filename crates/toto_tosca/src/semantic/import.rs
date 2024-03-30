@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use petgraph::{
     algo::toposort,
+    data::DataMap,
     visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef},
     Direction::Outgoing,
 };
@@ -29,8 +30,8 @@ impl Importer {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(file_handle) = self.existing_urls.get(&uri) {
-            return *file_handle;
+        if let Some(file_handle) = self.get_file(&uri) {
+            return file_handle;
         }
 
         let mut doc = toto_yaml::FileEntity::from_url(uri.clone());
@@ -44,6 +45,52 @@ impl Importer {
         self.import_files(uri, file_handle, ast);
 
         file_handle
+    }
+
+    pub fn reimport<E, R>(&mut self, ast: &mut toto_ast::AST<E, R>)
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let uris = self.existing_urls.keys().cloned().collect::<Vec<_>>();
+
+        ast.clear();
+        self.existing_urls.clear();
+
+        for uri in uris {
+            self.add_file(&uri, ast);
+        }
+    }
+
+    pub fn get_files(&self) -> impl Iterator<Item = &url::Url> {
+        self.existing_urls.keys()
+    }
+
+    pub fn get_file(&self, uri: &url::Url) -> Option<toto_ast::GraphHandle> {
+        self.existing_urls.get(uri).copied()
+    }
+
+    pub fn is_file_changed<E, R>(
+        &self,
+        file_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> bool
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let file = ast
+            .neighbors_directed(file_handle, Outgoing)
+            .find_map(|n| match ast.node_weight(n.id()).unwrap().as_file() {
+                Some(f) => Some(f),
+                _ => None,
+            })
+            .unwrap();
+
+        let path = file.url.to_file_path().unwrap();
+        let new_content = std::fs::read_to_string(path).ok();
+
+        return file.content != new_content;
     }
 
     fn import_files<E, R>(
