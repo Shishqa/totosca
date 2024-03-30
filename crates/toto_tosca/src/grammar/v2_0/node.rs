@@ -27,20 +27,20 @@ where
     const L: fn(String) -> R = |v| crate::Relation::Type(v).into();
 }
 
-pub struct RefType;
-impl<R> toto_parser::Linker<(), R> for RefType
+pub struct RefHasType;
+impl<R> toto_parser::Linker<(), R> for RefHasType
 where
     R: ToscaCompatibleRelation,
 {
-    const L: fn(()) -> R = |_| crate::Relation::RefType.into();
+    const L: fn(()) -> R = |_| crate::Relation::RefHasType.into();
 }
 
-pub struct DerivedFrom;
-impl<R> toto_parser::Linker<(), R> for DerivedFrom
+pub struct RefDerivedFrom;
+impl<R> toto_parser::Linker<(), R> for RefDerivedFrom
 where
     R: ToscaCompatibleRelation,
 {
-    const L: fn(()) -> R = |_| crate::Relation::DerivedFrom.into();
+    const L: fn(()) -> R = |_| crate::Relation::RefDerivedFrom.into();
 }
 
 impl<E, R, V> toto_parser::Schema<E, R> for NodeTemplateDefinition<V>
@@ -51,7 +51,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::Node.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => toto_parser::Field::<RefType, value::String>::parse,
+        "type" => toto_parser::Field::<RefHasType, value::String>::parse,
     };
 }
 
@@ -77,7 +77,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::Node.into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => toto_parser::Field::<RefType, value::String>::parse,
+        "derived_from" => toto_parser::Field::<RefDerivedFrom, value::String>::parse,
     };
 }
 

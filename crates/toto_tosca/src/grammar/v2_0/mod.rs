@@ -45,11 +45,12 @@ where
 
 #[cfg(test)]
 mod tests {
+    use petgraph::dot::Dot;
+    use petgraph::visit::{EdgeFiltered, NodeFiltered, NodeRef};
     use toto_parser::{get_errors, report_error};
-    use toto_yaml::YamlParser;
 
     use crate::grammar::tests::{Entity, Relation};
-    use crate::ToscaParser;
+    use crate::{AsToscaEntity, AsToscaRelation, ToscaParser};
 
     #[test]
     fn tosca_2_0() {
@@ -59,13 +60,18 @@ mod tests {
         let doc_path = url::Url::parse(&doc_path).unwrap();
         let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
 
-        let mut doc = toto_yaml::FileEntity::from_url(doc_path);
-        doc.fetch().unwrap();
-        let doc_handle = ast.add_node(doc.into());
+        let mut parser = ToscaParser::new();
+        parser.parse(&doc_path, &mut ast);
 
-        let doc_root = YamlParser::parse(doc_handle, &mut ast).unwrap();
-        ToscaParser::parse(doc_root, &mut ast);
+        let tosca_graph =
+            NodeFiltered::from_fn(&ast, |n| matches!(ast[n.id()].as_tosca(), Some(_)));
+        let tosca_graph =
+            EdgeFiltered::from_fn(&tosca_graph, |e| matches!(e.weight().as_tosca(), Some(_)));
+
+        dbg!(Dot::new(&tosca_graph));
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
+
+        assert!(false);
     }
 }
