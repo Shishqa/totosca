@@ -19,3 +19,4 @@ ordered-float = "4.2.0"
 once_cell = "1.19.0"
 url = "2.5.0"
 yaml-peg = { version = "1.0.5", features = ["serde"] }
+derive_more = "0.99.17"

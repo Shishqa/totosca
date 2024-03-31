@@ -1,4 +1,8 @@
-#[derive(Debug)]
+extern crate derive_more;
+use derive_more::{From, TryInto};
+
+#[derive(Debug, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Entity {
     File(toto_yaml::FileEntity),
     Parse(toto_parser::ParseError),
@@ -6,7 +10,8 @@ pub enum Entity {
     Tosca(toto_tosca::Entity),
 }
 
-#[derive(Debug)]
+#[derive(Debug, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Relation {
     File(toto_yaml::FileRelation),
     Parse(toto_parser::ParseLoc),
@@ -47,54 +52,6 @@ impl toto_tosca::AsToscaRelation for Relation {
             Relation::Tosca(value) => Some(value),
             _ => None,
         }
-    }
-}
-
-impl From<toto_parser::ParseError> for Entity {
-    fn from(value: toto_parser::ParseError) -> Self {
-        Self::Parse(value)
-    }
-}
-
-impl From<toto_yaml::Entity> for Entity {
-    fn from(value: toto_yaml::Entity) -> Self {
-        Self::Yaml(value)
-    }
-}
-
-impl From<toto_tosca::Entity> for Entity {
-    fn from(value: toto_tosca::Entity) -> Self {
-        Self::Tosca(value)
-    }
-}
-
-impl From<toto_parser::ParseLoc> for Relation {
-    fn from(value: toto_parser::ParseLoc) -> Self {
-        Self::Parse(value)
-    }
-}
-
-impl From<toto_yaml::Relation> for Relation {
-    fn from(value: toto_yaml::Relation) -> Self {
-        Self::Yaml(value)
-    }
-}
-
-impl From<toto_tosca::Relation> for Relation {
-    fn from(value: toto_tosca::Relation) -> Self {
-        Self::Tosca(value)
-    }
-}
-
-impl From<toto_yaml::FileRelation> for Relation {
-    fn from(value: toto_yaml::FileRelation) -> Self {
-        Self::File(value)
-    }
-}
-
-impl From<toto_yaml::FileEntity> for Entity {
-    fn from(value: toto_yaml::FileEntity) -> Self {
-        Self::File(value)
     }
 }
 

@@ -1,10 +1,14 @@
+use std::collections::HashMap;
 use std::error::Error;
+use std::fs::File;
+use std::io::Write;
 
 use lsp_types::notification::Notification;
 use lsp_types::Location;
 
 use lsp_types::request::Request;
-use petgraph::visit::{EdgeRef, IntoEdgesDirected, NodeRef};
+use petgraph::dot::Dot;
+use petgraph::visit::EdgeRef;
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -12,7 +16,6 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::ToscaParser;
 use toto_tosca::{AsToscaEntity, AsToscaRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
@@ -153,33 +156,35 @@ impl Server {
     fn refresh_diag(&mut self, uri: &url::Url) -> Result<(), Box<dyn Error + Sync + Send>> {
         eprintln!("trying read: {uri:?}");
 
-        let file_handle = self.parser.parse(uri, &mut self.ast);
+        self.parser.parse(uri, &mut self.ast);
 
-        let doc_handle = self
-            .ast
-            .neighbors_directed(file_handle, Outgoing)
-            .find(|n| self.ast[n.id()].as_file().is_some())
-            .unwrap();
+        let mut diagnostics = HashMap::<url::Url, Vec<lsp_types::Diagnostic>>::new();
 
-        let doc = self.ast[doc_handle].as_file().unwrap();
+        let dot = Dot::new(&self.ast);
+        let mut file = File::create(".toto-ast.dot")?;
+        file.write_all(format!("{:?}", dot).as_bytes())?;
 
-        let diagnostics: Vec<lsp_types::Diagnostic> = get_errors(&self.ast)
-            .filter_map(|(what, loc)| {
-                let len = loc.map(|l| get_yaml_len(l, &self.ast)).unwrap_or(1);
-                let (pos, file) = self
-                    .ast
-                    .edges(what)
-                    .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
-                    .unwrap();
-                if file != doc_handle {
-                    return None;
-                }
+        get_errors(&self.ast).into_iter().for_each(|(what, loc)| {
+            let len = loc.map(|l| get_yaml_len(l, &self.ast)).unwrap_or(1);
+            let (pos, file) = self
+                .ast
+                .edges(what)
+                .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
+                .unwrap();
 
-                let (lineno_start, charno_start) = Self::get_lc(doc.content.as_ref().unwrap(), pos);
-                let (lineno_end, charno_end) =
-                    Self::get_lc(doc.content.as_ref().unwrap(), pos + len);
+            let doc = self.ast[file].as_file().unwrap();
 
-                Some(lsp_types::Diagnostic::new(
+            let (lineno_start, charno_start) = Self::get_lc(doc.content.as_ref().unwrap(), pos);
+            let (lineno_end, charno_end) = Self::get_lc(doc.content.as_ref().unwrap(), pos + len);
+
+            if !diagnostics.contains_key(&doc.url) {
+                diagnostics.insert(doc.url.clone(), vec![]);
+            }
+
+            diagnostics
+                .get_mut(&doc.url)
+                .unwrap()
+                .push(lsp_types::Diagnostic::new(
                     lsp_types::Range {
                         start: lsp_types::Position {
                             line: lineno_start,
@@ -199,24 +204,25 @@ impl Server {
                     ),
                     None,
                     None,
-                ))
-            })
-            .collect();
-
-        let notif_params = Some(lsp_types::PublishDiagnosticsParams {
-            uri: uri.clone(),
-            version: None,
-            diagnostics,
-        });
-        let notif_params = serde_json::to_value(notif_params)?;
-
-        let notif = lsp_server::Message::Notification(lsp_server::Notification {
-            method: lsp_types::notification::PublishDiagnostics::METHOD.into(),
-            params: notif_params,
+                ));
         });
 
-        eprintln!("sending: {notif:?}");
-        self.connection.sender.send(notif)?;
+        for uri in self.parser.get_files() {
+            let notif_params = Some(lsp_types::PublishDiagnosticsParams {
+                uri: uri.clone(),
+                version: None,
+                diagnostics: diagnostics.remove(uri).unwrap_or(vec![]),
+            });
+            let notif_params = serde_json::to_value(notif_params)?;
+
+            let notif = lsp_server::Message::Notification(lsp_server::Notification {
+                method: lsp_types::notification::PublishDiagnostics::METHOD.into(),
+                params: notif_params,
+            });
+
+            eprintln!("sending: {notif:?}");
+            self.connection.sender.send(notif)?;
+        }
 
         Ok(())
     }
@@ -268,9 +274,9 @@ impl Server {
             .flatten()
             .find_map(|e| match e.weight().as_tosca() {
                 Some(
-                    toto_tosca::Relation::Url
-                    | toto_tosca::Relation::RefHasType
-                    | toto_tosca::Relation::RefDerivedFrom,
+                    toto_tosca::Relation::ImportUrl(_)
+                    | toto_tosca::Relation::RefHasType(_)
+                    | toto_tosca::Relation::RefDerivedFrom(_),
                 ) => Some(e.source()),
                 _ => None,
             });
@@ -282,20 +288,20 @@ impl Server {
         let semantic_token = semantic_token.unwrap();
 
         let goto_target = match self.ast[semantic_token].as_tosca() {
-            Some(toto_tosca::Entity::Import) => self
+            Some(toto_tosca::Entity::Import(_)) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {
-                    Some(toto_tosca::Relation::ImportTarget) => Some(e.target()),
+                    Some(toto_tosca::Relation::ImportTarget(_)) => Some(e.target()),
                     _ => None,
                 }),
-            Some(toto_tosca::Entity::Node | toto_tosca::Entity::Data) => self
+            Some(toto_tosca::Entity::Node(_) | toto_tosca::Entity::Data(_)) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {
-                    Some(toto_tosca::Relation::HasType | toto_tosca::Relation::DerivedFrom) => {
-                        Some(e.target())
-                    }
+                    Some(
+                        toto_tosca::Relation::HasType(_) | toto_tosca::Relation::DerivedFrom(_),
+                    ) => Some(e.target()),
                     _ => None,
                 }),
             _ => None,

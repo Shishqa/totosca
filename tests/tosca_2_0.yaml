@@ -13,6 +13,18 @@ imports:
   - url: ./profiles/profile/types_2.yaml
     namespace: b
 
+data_types:
+
+  a:
+    derived_from: a:b:base
+
+  b:
+    derived_from: a:test2
+    hah: hehe
+
+  c:
+    derived_from: a:test1
+
 node_types:
 
   wrong:

@@ -6,6 +6,15 @@ imports:
   - url: ./types_2.yaml
     namespace: b
 
+data_types:
+
+  test1:
+    derived_from: test2
+    vs: hell
+
+  test2:
+    derived_from: b:base
+
 node_types:
 
   test1:

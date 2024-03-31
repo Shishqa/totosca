@@ -17,6 +17,10 @@ impl ToscaParser {
         }
     }
 
+    pub fn get_files(&self) -> impl Iterator<Item = &url::Url> {
+        self.importer.get_files()
+    }
+
     pub fn parse<E, R>(
         &mut self,
         uri: &url::Url,
@@ -26,6 +30,14 @@ impl ToscaParser {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
+        if let Some(file_handle) = self.importer.get_file(&uri) {
+            if !self.importer.is_file_changed(file_handle, ast) {
+                return file_handle;
+            }
+            self.importer.reimport(ast);
+            dbg!("REIMPORT!");
+        }
+
         let file_handle = self.importer.add_file(uri, ast);
 
         let _ = Importer::topo_iter_imports(ast)

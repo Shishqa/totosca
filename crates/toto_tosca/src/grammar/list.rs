@@ -1,15 +1,18 @@
 use std::marker::PhantomData;
 
-use crate::{add_with_loc, ParseCompatibleEntity, ParseCompatibleRelation, ParseError};
+use toto_parser::{add_with_loc, ParseError};
+
+use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 pub struct List<K, V>(PhantomData<(K, V)>);
 
-impl<K, V, E, R> crate::RelationParser<E, R> for List<K, V>
+impl<K, V, E, R> toto_parser::RelationParser<E, R> for List<K, V>
 where
-    E: ParseCompatibleEntity,
-    R: ParseCompatibleRelation,
-    K: crate::Linker<usize, R>,
-    V: crate::EntityParser<E, R>,
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    K: From<usize>,
+    V: toto_parser::EntityParser<E, R>,
+    crate::Relation: From<K>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
         toto_yaml::as_list(n, ast)
@@ -20,7 +23,7 @@ where
             .map(|items| {
                 items.for_each(|(i, v)| {
                     V::parse(v, ast).map(|v_handle| {
-                        ast.add_edge(root, v_handle, K::L(i));
+                        ast.add_edge(root, v_handle, crate::Relation::from(K::from(i)).into());
                         v_handle
                     });
                 });

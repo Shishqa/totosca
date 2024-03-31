@@ -2,9 +2,13 @@ use std::marker::PhantomData;
 
 use toto_parser::RelationParser;
 
-use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::{
+    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
+    DescriptionRelation, ImportRelation, MetadataRelation, ProfileRelation,
+    ServiceTemplateRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
+};
 
-use super::{import, node, service_template, value};
+use super::value;
 
 #[derive(Debug)]
 pub struct ToscaFileDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
@@ -15,15 +19,16 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::File.into();
+    const SELF: fn() -> E = || crate::Entity::from(crate::FileEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "tosca_definitions_version" => |_, _, _| {},
-        "profile" => toto_parser::Field::<value::Profile, value::String>::parse,
-        "metadata" => toto_parser::Collection::<value::Metadata, value::String>::parse,
-        "description" => toto_parser::Field::<value::Description, value::String>::parse,
-        "imports" => toto_parser::List::<import::Import, V::ImportDefinition>::parse,
-        "service_template" => toto_parser::Field::<service_template::ServiceTemplate, V::ServiceTemplateDefinition>::parse,
-        "node_types" => toto_parser::Collection::<node::TypeDefinition, V::NodeTypeDefinition>::parse,
+        "profile" => Field::<ProfileRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
+        "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "imports" => List::<ImportRelation, V::ImportDefinition>::parse,
+        "service_template" => Field::<ServiceTemplateRelation, V::ServiceTemplateDefinition>::parse,
+        "node_types" => Collection::<TypeRelation, V::NodeTypeDefinition>::parse,
+        "data_types" => Collection::<TypeRelation, V::DataTypeDefinition>::parse,
     };
 }
 

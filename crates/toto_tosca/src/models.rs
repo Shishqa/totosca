@@ -1,3 +1,7 @@
+extern crate derive_more;
+
+use derive_more::{From, TryInto};
+
 #[derive(Debug)]
 pub struct Version {
     pub minor: u64,
@@ -20,61 +24,188 @@ pub enum UnitSize {
     TiB,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
-pub enum Entity {
-    Import,
-    File,
-    Profile,
-    ServiceTemplate,
-    Repository,
-    Node,
-    Data,
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ImportEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FileEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ServiceTemplateEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RepositoryEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct NodeEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct DataEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum StatusEntity {
+    #[default]
+    Supported,
+    Unsupported,
+    Experimental,
+    Deprecated,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
+pub enum Entity {
+    Import(ImportEntity),
+    File(FileEntity),
+    ServiceTemplate(ServiceTemplateEntity),
+    Repository(RepositoryEntity),
+    Node(NodeEntity),
+    Data(DataEntity),
+    Status(StatusEntity),
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ToscaDefinitionsVersionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ServiceTemplateRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RepositoryRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ProfileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DescriptionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct NamespaceRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct VersionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct ImportRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportUrlRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportTargetRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportFileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportProfileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportRepositoryRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportNamespaceRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct TypeRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct DefinitionRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct AssignmentRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct MetadataRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct SchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RequiredRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ValidationRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ValueRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MappingRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DefaultRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct StatusRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ExternalSchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct KeySchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct EntrySchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefRootRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct HasTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefHasTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DerivedFromRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefDerivedFromRelation;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Relation {
-    ToscaDefinitionsVersion,
-    ServiceTemplate,
-    Repository,
-    Profile,
-    Description,
-    Url,
-    Namespace,
-    Import(usize),
+    ToscaDefinitionsVersion(ToscaDefinitionsVersionRelation),
+    ServiceTemplate(ServiceTemplateRelation),
+    Repository(RepositoryRelation),
+    Profile(ProfileRelation),
+    Description(DescriptionRelation),
+    Namespace(NamespaceRelation),
+    Version(VersionRelation),
+    Import(ImportRelation),
 
-    ImportTarget,
-    ImportFile,
-    ImportProfile,
-    ImportRepository,
-    ImportNamespace,
+    ImportTarget(ImportTargetRelation),
+    ImportUrl(ImportUrlRelation),
+    ImportFile(ImportFileRelation),
+    ImportProfile(ImportProfileRelation),
+    ImportRepository(ImportRepositoryRelation),
+    ImportNamespace(ImportNamespaceRelation),
 
-    Type(String),
-    Definition(String),
-    Assignment(String),
+    Type(TypeRelation),
+    Definition(DefinitionRelation),
+    Assignment(AssignmentRelation),
 
-    Metadata(String),
-    Schema,
-    Attribute(String),
-    Property(String),
-    Parameter(String),
-    Requirement(usize, String),
+    Validation(ValidationRelation),
+    Value(ValueRelation),
+    Mapping(MappingRelation),
+    Required(RequiredRelation),
+    Status(StatusRelation),
+    Default(DefaultRelation),
+    ExternalSchema(ExternalSchemaRelation),
 
-    Function,
-    FunctionCall,
-    Value,
+    Metadata(MetadataRelation),
 
-    RefRoot,
-    RefSelf,
+    Schema(SchemaRelation),
+    KeySchema(KeySchemaRelation),
+    EntrySchema(EntrySchemaRelation),
 
-    HasType,
-    RefHasType,
+    RefRoot(RefRootRelation),
 
-    DerivedFrom,
-    RefDerivedFrom,
+    HasType(HasTypeRelation),
+    RefHasType(RefHasTypeRelation),
 
-    Validation,
-    KeySchema,
-    EntrySchema,
+    DerivedFrom(DerivedFromRelation),
+    RefDerivedFrom(RefDerivedFromRelation),
 }
 
 pub trait AsToscaEntity {

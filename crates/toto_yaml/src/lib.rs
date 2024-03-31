@@ -1,7 +1,10 @@
+extern crate derive_more;
+use derive_more::{From, TryInto};
+
 use std::fmt::Debug;
 
 use anyhow::anyhow;
-use petgraph::visit::EdgeRef;
+use petgraph::{data::DataMap, visit::EdgeRef};
 
 // TODO: move to a separate crate
 pub struct FileEntity {
@@ -43,37 +46,60 @@ pub struct FileRelation(pub usize);
 pub struct YamlNull;
 
 #[derive(Debug, Clone)]
+pub struct YamlBool(pub bool);
+
+#[derive(Debug, Clone)]
+pub struct YamlInt(pub i64);
+
+#[derive(Debug, Clone)]
+pub struct YamlFloat(pub f64);
+
+#[derive(Debug, Clone)]
+pub struct YamlString(pub String);
+
+#[derive(Debug, Clone)]
 pub struct YamlList;
 
 #[derive(Debug, Clone)]
 pub struct YamlMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Entity {
     Null(YamlNull),
-    Bool(bool),
-    Int(i64),
-    Float(f64),
-    Str(String),
+    Bool(YamlBool),
+    Int(YamlInt),
+    Float(YamlFloat),
+    Str(YamlString),
     List(YamlList),
     Map(YamlMap),
 }
 
 #[derive(Debug, Clone)]
+pub struct YamlMapKey;
+
+#[derive(Debug, Clone)]
+pub struct YamlMapValue;
+
+#[derive(Debug, Clone)]
+pub struct YamlListValue(usize);
+
+#[derive(Debug, Clone, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Relation {
-    MapKey,
-    MapValue,
-    ListValue(usize),
+    MapKey(YamlMapKey),
+    MapValue(YamlMapValue),
+    ListValue(YamlListValue),
 }
 
 impl From<&yaml_peg::NodeRc> for Entity {
     fn from(value: &yaml_peg::NodeRc) -> Self {
         match value.yaml() {
             yaml_peg::Yaml::Null => Self::Null(YamlNull),
-            yaml_peg::Yaml::Str(v) => Self::Str(v.to_string()),
-            yaml_peg::Yaml::Int(_) => Self::Int(value.as_int().unwrap()),
-            yaml_peg::Yaml::Bool(v) => Self::Bool(*v),
-            yaml_peg::Yaml::Float(_) => Self::Float(value.as_float().unwrap()),
+            yaml_peg::Yaml::Str(v) => Self::Str(YamlString(v.to_string())),
+            yaml_peg::Yaml::Int(_) => Self::Int(YamlInt(value.as_int().unwrap())),
+            yaml_peg::Yaml::Bool(v) => Self::Bool(YamlBool(*v)),
+            yaml_peg::Yaml::Float(_) => Self::Float(YamlFloat(value.as_float().unwrap())),
             yaml_peg::Yaml::Seq(_) => Self::List(YamlList),
             yaml_peg::Yaml::Map(_) => Self::Map(YamlMap),
             _ => Self::Null(YamlNull),
@@ -137,16 +163,20 @@ impl YamlParser {
             yaml_peg::Yaml::Map(m) => {
                 for (k, v) in m.iter() {
                     let k_handle = Self::parse_node(k.clone(), doc_handle, ast);
-                    ast.add_edge(node_handle, k_handle, Relation::MapKey.into());
+                    ast.add_edge(node_handle, k_handle, Relation::from(YamlMapKey).into());
 
                     let v_handle = Self::parse_node(v.clone(), doc_handle, ast);
-                    ast.add_edge(k_handle, v_handle, Relation::MapValue.into());
+                    ast.add_edge(k_handle, v_handle, Relation::from(YamlMapValue).into());
                 }
             }
             yaml_peg::Yaml::Seq(s) => {
                 for (i, v) in s.iter().enumerate() {
                     let v_handle = Self::parse_node(v.clone(), doc_handle, ast);
-                    ast.add_edge(node_handle, v_handle, Relation::ListValue(i).into());
+                    ast.add_edge(
+                        node_handle,
+                        v_handle,
+                        Relation::from(YamlListValue(i)).into(),
+                    );
                 }
             }
             _ => {}
@@ -155,22 +185,26 @@ impl YamlParser {
     }
 }
 
-pub fn as_map<E: AsYamlEntity, R: AsYamlRelation>(
+pub fn as_map<E, R>(
     n: toto_ast::GraphHandle,
     ast: &toto_ast::AST<E, R>,
-) -> Option<impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)>> {
-    match ast[n].as_yaml().unwrap() {
-        &Entity::Map(_) => Some(
+) -> Option<impl Iterator<Item = (toto_ast::GraphHandle, toto_ast::GraphHandle)>>
+where
+    E: AsYamlEntity,
+    R: AsYamlRelation,
+{
+    match ast.node_weight(n).unwrap().as_yaml() {
+        Some(Entity::Map(_)) => Some(
             ast.edges(n)
                 .filter_map(|e| match e.weight().as_yaml() {
-                    Some(Relation::MapKey) => Some(e.target()),
+                    Some(Relation::MapKey(_)) => Some(e.target()),
                     _ => None,
                 })
                 .map(|k| {
                     let v = ast
                         .edges(k)
                         .find_map(|e| match e.weight().as_yaml() {
-                            Some(Relation::MapValue) => Some(e.target()),
+                            Some(Relation::MapValue(_)) => Some(e.target()),
                             _ => None,
                         })
                         .unwrap();
@@ -184,15 +218,19 @@ pub fn as_map<E: AsYamlEntity, R: AsYamlRelation>(
     }
 }
 
-pub fn as_list<E: AsYamlEntity, R: AsYamlRelation>(
+pub fn as_list<E, R>(
     n: toto_ast::GraphHandle,
     ast: &toto_ast::AST<E, R>,
-) -> Option<impl Iterator<Item = (usize, toto_ast::GraphHandle)>> {
-    match ast[n].as_yaml().unwrap() {
-        Entity::List(_) => Some(
+) -> Option<impl Iterator<Item = (usize, toto_ast::GraphHandle)>>
+where
+    E: AsYamlEntity,
+    R: AsYamlRelation,
+{
+    match ast.node_weight(n).unwrap().as_yaml() {
+        Some(Entity::List(_)) => Some(
             ast.edges(n)
                 .filter_map(|e| match e.weight().as_yaml() {
-                    Some(Relation::ListValue(i)) => Some((*i, e.target())),
+                    Some(Relation::ListValue(i)) => Some((i.0, e.target())),
                     _ => None,
                 })
                 .collect::<Vec<_>>()
@@ -202,75 +240,51 @@ pub fn as_list<E: AsYamlEntity, R: AsYamlRelation>(
     }
 }
 
-pub fn as_string<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<String>
+pub fn as_string<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<&YamlString>
 where
     E: AsYamlEntity,
     R: AsYamlRelation,
 {
-    let t = &ast[n];
-    let t = t.as_yaml().unwrap();
-    match t {
-        Entity::Str(v) => Some(v.clone()),
-        _ => None,
-    }
+    ast.node_weight(n)
+        .unwrap()
+        .as_yaml()
+        .and_then(|yaml_node| yaml_node.try_into().ok())
 }
 
-pub fn as_null<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<YamlNull>
+pub fn as_bool<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<&YamlBool>
 where
     E: AsYamlEntity,
     R: AsYamlRelation,
 {
-    let t = &ast[n];
-    let t = t.as_yaml().unwrap();
-    match t {
-        Entity::Null(v) => Some(v.clone()),
-        _ => None,
-    }
-}
-
-pub fn as_bool<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<bool>
-where
-    E: AsYamlEntity,
-    R: AsYamlRelation,
-{
-    let t = &ast[n];
-    let t = t.as_yaml().unwrap();
-    match t {
-        Entity::Bool(v) => Some(*v),
-        _ => None,
-    }
+    ast.node_weight(n)
+        .unwrap()
+        .as_yaml()
+        .and_then(|yaml_node| yaml_node.try_into().ok())
 }
 
 #[cfg(test)]
 mod tests {
+    extern crate derive_more;
+    use derive_more::{From, TryInto};
+
     use std::mem::size_of;
 
     use petgraph::dot::Dot;
 
     use crate::{AsFileEntity, FileEntity, FileRelation, YamlParser};
 
-    #[derive(Debug)]
+    #[derive(Debug, From, TryInto)]
+    #[try_into(owned, ref, ref_mut)]
     pub enum Entity {
         File(FileEntity),
         Yaml(crate::Entity),
     }
 
-    #[derive(Debug)]
+    #[derive(Debug, From, TryInto)]
+    #[try_into(owned, ref, ref_mut)]
     pub enum Relation {
         File(FileRelation),
         Yaml(crate::Relation),
-    }
-
-    impl From<crate::Entity> for Entity {
-        fn from(value: crate::Entity) -> Self {
-            Self::Yaml(value)
-        }
-    }
-
-    impl From<FileEntity> for Entity {
-        fn from(value: FileEntity) -> Self {
-            Self::File(value)
-        }
     }
 
     impl AsFileEntity for Entity {
@@ -282,25 +296,13 @@ mod tests {
         }
     }
 
-    impl From<crate::Relation> for Relation {
-        fn from(value: crate::Relation) -> Self {
-            Self::Yaml(value)
-        }
-    }
-
-    impl From<FileRelation> for Relation {
-        fn from(value: FileRelation) -> Self {
-            Self::File(value)
-        }
-    }
-
     #[test]
     fn it_works() {
         let mut ast = petgraph::Graph::<Entity, Relation, petgraph::Directed, u32>::new();
 
         let doc_path = "file://".to_string() + env!("CARGO_MANIFEST_DIR");
         let doc_path = url::Url::parse(&doc_path).unwrap();
-        let doc_path = doc_path.join("../tests/a.yaml").unwrap();
+        let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
 
         dbg!(&doc_path);
 
@@ -312,5 +314,7 @@ mod tests {
 
         dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
         dbg!(Dot::new(&ast));
+
+        assert!(false);
     }
 }

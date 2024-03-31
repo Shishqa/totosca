@@ -57,22 +57,30 @@ impl Lookup {
     {
         ast.edge_references()
             .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::RefHasType) => Some((
+                Some(crate::Relation::RefHasType(_)) => Some((
                     e.source(),
                     (
-                        crate::Relation::Type(toto_yaml::as_string(e.target(), ast).unwrap()),
+                        crate::Relation::from(crate::TypeRelation(
+                            toto_yaml::as_string(e.target(), ast)
+                                .map(|n| n.0.clone())
+                                .unwrap(),
+                        )),
                         *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
                     ),
-                    crate::Relation::HasType,
+                    crate::Relation::from(crate::HasTypeRelation),
                     e.target(),
                 )),
-                Some(crate::Relation::RefDerivedFrom) => Some((
+                Some(crate::Relation::RefDerivedFrom(_)) => Some((
                     e.source(),
                     (
-                        crate::Relation::Type(toto_yaml::as_string(e.target(), ast).unwrap()),
+                        crate::Relation::Type(crate::TypeRelation(
+                            toto_yaml::as_string(e.target(), ast)
+                                .map(|n| n.0.clone())
+                                .unwrap(),
+                        )),
                         *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
                     ),
-                    crate::Relation::DerivedFrom,
+                    crate::Relation::from(crate::DerivedFromRelation),
                     e.target(),
                 )),
                 _ => None,
@@ -83,7 +91,7 @@ impl Lookup {
                 let root = ast
                     .edges_directed(n, petgraph::Direction::Incoming)
                     .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::RefRoot) => Some(e.source()),
+                        Some(crate::Relation::RefRoot(_)) => Some(e.source()),
                         _ => None,
                     })
                     .unwrap();
