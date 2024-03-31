@@ -25,6 +25,10 @@ where
     type NodeTypeDefinition = v2_0::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = v2_0::NodeTemplateDefinition<Self>;
     type DataTypeDefinition = v2_0::DataTypeDefinition<Self>;
+    type SchemaDefinition = v2_0::SchemaDefinition<Self>;
+    type AttributeDefinition = v2_0::AttributeDefinition<Self>;
+    type PropertyDefinition = v2_0::PropertyDefinition<Self>;
+    type ParameterDefinition = v2_0::ParameterDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca1_3<E, R>

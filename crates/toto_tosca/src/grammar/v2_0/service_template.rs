@@ -3,9 +3,11 @@ use std::marker::PhantomData;
 use toto_parser::RelationParser;
 
 use crate::{
-    grammar::{collection::Collection, ToscaDefinitionsVersion},
-    DefinitionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
+    DefinitionRelation, DescriptionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
+
+use super::value;
 
 #[derive(Debug)]
 pub struct ServiceTemplateDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
@@ -18,6 +20,9 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ServiceTemplateEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
+        "outputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "node_templates" => Collection::<DefinitionRelation, V::NodeTemplateDefinition>::parse,
     };
 }

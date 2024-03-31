@@ -1,5 +1,6 @@
 extern crate derive_more;
-use derive_more::{From, TryInto};
+
+use derive_more::{From, FromStr, TryInto};
 
 #[derive(Debug)]
 pub struct Version {
@@ -41,6 +42,15 @@ pub struct NodeEntity;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct DataEntity;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub enum StatusEntity {
+    #[default]
+    Supported,
+    Unsupported,
+    Experimental,
+    Deprecated,
+}
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Entity {
@@ -50,6 +60,7 @@ pub enum Entity {
     Repository(RepositoryEntity),
     Node(NodeEntity),
     Data(DataEntity),
+    Status(StatusEntity),
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -73,14 +84,8 @@ pub struct NamespaceRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct VersionRelation;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct ImportRelation(pub usize);
-
-impl From<usize> for ImportRelation {
-    fn from(value: usize) -> Self {
-        Self(value)
-    }
-}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ImportUrlRelation;
@@ -100,44 +105,32 @@ pub struct ImportRepositoryRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ImportNamespaceRelation;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct TypeRelation(pub String);
 
-impl From<String> for TypeRelation {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
-
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct DefinitionRelation(pub String);
 
-impl From<String> for DefinitionRelation {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
-
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct AssignmentRelation(pub String);
 
-impl From<String> for AssignmentRelation {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
-
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct MetadataRelation(pub String);
-
-impl From<String> for MetadataRelation {
-    fn from(value: String) -> Self {
-        Self(value)
-    }
-}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct SchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RequiredRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DefaultRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct StatusRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ExternalSchemaRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct KeySchemaRelation;
@@ -182,6 +175,11 @@ pub enum Relation {
     Type(TypeRelation),
     Definition(DefinitionRelation),
     Assignment(AssignmentRelation),
+
+    Required(RequiredRelation),
+    Status(StatusRelation),
+    Default(DefaultRelation),
+    ExternalSchema(ExternalSchemaRelation),
 
     Metadata(MetadataRelation),
 

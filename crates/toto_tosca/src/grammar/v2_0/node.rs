@@ -1,8 +1,9 @@
 use std::marker::PhantomData;
 
 use crate::{
-    grammar::{field::Field, ToscaDefinitionsVersion},
-    RefDerivedFromRelation, RefHasTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
+    DefinitionRelation, RefDerivedFromRelation, RefHasTypeRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation,
 };
 use toto_parser::RelationParser;
 
@@ -26,6 +27,20 @@ where
     };
 }
 
+impl<E, R, V> toto_parser::Schema<E, R> for NodeTypeDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
+        "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
+    };
+}
+
 impl<E, R, V> toto_parser::EntityParser<E, R> for NodeTemplateDefinition<V>
 where
     E: ToscaCompatibleEntity,
@@ -38,18 +53,6 @@ where
     ) -> Option<toto_ast::GraphHandle> {
         <Self as toto_parser::Schema<E, R>>::parse(n, ast)
     }
-}
-
-impl<E, R, V> toto_parser::Schema<E, R> for NodeTypeDefinition<V>
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
-{
-    const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
-    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
-    };
 }
 
 impl<E, R, V> toto_parser::EntityParser<E, R> for NodeTypeDefinition<V>

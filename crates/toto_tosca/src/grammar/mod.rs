@@ -18,6 +18,10 @@ pub trait ToscaDefinitionsVersion {
     type NodeTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NodeTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type DataTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type SchemaDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type PropertyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type AttributeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ParameterDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]
