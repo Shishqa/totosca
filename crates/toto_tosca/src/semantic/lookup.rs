@@ -13,10 +13,16 @@ type Namespace = HashMap<
 >;
 
 pub struct Lookup {
-    ns: Namespace,
+    pub ns: Namespace,
 }
 
 impl Lookup {
+    pub fn new() -> Self {
+        Self {
+            ns: Namespace::new(),
+        }
+    }
+
     pub fn from_ast<E, R>(ast: &toto_ast::AST<E, R>) -> Self
     where
         E: ToscaCompatibleEntity,

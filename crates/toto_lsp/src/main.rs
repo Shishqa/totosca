@@ -4,12 +4,13 @@ use std::fs::File;
 use std::io::Write;
 
 use lsp_types::notification::Notification;
-use lsp_types::Location;
+use lsp_types::{CompletionItemKind, Location};
 
 use lsp_types::request::Request;
+use petgraph::data::DataMap;
 use petgraph::dot::Dot;
 use petgraph::visit::EdgeRef;
-use petgraph::Direction::{Incoming, Outgoing};
+use petgraph::Direction::{self, Incoming, Outgoing};
 use serde_json::from_value;
 
 mod models;
@@ -57,6 +58,10 @@ impl Server {
                 lsp_types::TextDocumentSyncKind::INCREMENTAL,
             )),
             definition_provider: Some(lsp_types::OneOf::Left(true)),
+            completion_provider: Some(lsp_types::CompletionOptions {
+                trigger_characters: Some(vec![": ".to_string()]),
+                ..Default::default()
+            }),
             // diagnostic_provider: Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
             //     identifier: None,
             //     inter_file_dependencies: false,
@@ -91,6 +96,10 @@ impl Server {
                     match req.method.as_str() {
                         lsp_types::request::GotoDefinition::METHOD => {
                             self.goto_definition(&req)?;
+                            continue;
+                        }
+                        lsp_types::request::Completion::METHOD => {
+                            self.completion(&req)?;
                             continue;
                         }
                         &_ => {}
@@ -219,6 +228,123 @@ impl Server {
             eprintln!("sending: {notif:?}");
             self.connection.sender.send(notif)?;
         }
+
+        Ok(())
+    }
+
+    fn completion(&self, req: &lsp_server::Request) -> Result<(), Box<dyn Error + Sync + Send>> {
+        let params =
+            from_value::<lsp_types::CompletionParams>(req.params.clone())?.text_document_position;
+
+        eprintln!("looking for {}", params.text_document.uri);
+        let file_handle = self
+            .ast
+            .node_indices()
+            .find(|n| matches!(self.ast.node_weight(*n).unwrap().as_file(), Some(f) if f.url == params.text_document.uri))
+            .unwrap();
+
+        let params_pos = Self::from_lc(
+            self.ast
+                .node_weight(file_handle)
+                .unwrap()
+                .as_file()
+                .unwrap()
+                .content
+                .as_ref()
+                .unwrap(),
+            params.position.line,
+            params.position.character,
+        );
+
+        let semantic_token = self
+            .ast
+            .edges_directed(file_handle, Incoming)
+            .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
+            .filter_map(
+                |(pos, source)| match self.ast.node_weight(source).unwrap().as_yaml() {
+                    Some(_) => Some((pos, get_yaml_len(source, &self.ast), source)),
+                    _ => None,
+                },
+            )
+            .filter_map(|(pos, len, source)| {
+                if pos <= params_pos && params_pos <= pos + len {
+                    Some(self.ast.edges_directed(source, Incoming))
+                } else {
+                    None
+                }
+            })
+            .flatten()
+            .find_map(|e| match e.weight().as_tosca() {
+                Some(
+                    toto_tosca::Relation::RefHasType(_) | toto_tosca::Relation::RefDerivedFrom(_),
+                ) => Some(e.source()),
+                _ => None,
+            });
+
+        if semantic_token.is_none() {
+            eprintln!("can't provide completion (no semantic)");
+            return Ok(());
+        }
+        let semantic_token = semantic_token.unwrap();
+
+        let root = self
+            .ast
+            .edges_directed(semantic_token, petgraph::Direction::Incoming)
+            .find_map(|e| match e.weight().as_tosca() {
+                Some(toto_tosca::Relation::RefRoot(_)) => Some(e.source()),
+                _ => None,
+            })
+            .unwrap();
+
+        let options = self
+            .ast
+            .edges_directed(root, Direction::Outgoing)
+            .filter_map(|e| {
+                let edge = e.weight().as_tosca().and_then(|e| match e {
+                    toto_tosca::Relation::Type(type_name) => Some(type_name),
+                    _ => None,
+                });
+
+                let target = self
+                    .ast
+                    .node_weight(e.target())
+                    .unwrap()
+                    .as_tosca()
+                    .filter(|n| {
+                        e.target() != semantic_token
+                            && *n
+                                == self
+                                    .ast
+                                    .node_weight(semantic_token)
+                                    .unwrap()
+                                    .as_tosca()
+                                    .unwrap()
+                    });
+
+                target.and(edge)
+            })
+            .map(|type_name| {
+                let mut item = lsp_types::CompletionItem::new_simple(
+                    type_name.0.clone(),
+                    "detail".to_string(),
+                );
+                item.kind = Some(CompletionItemKind::TYPE_PARAMETER);
+
+                item
+            })
+            .collect::<Vec<_>>();
+
+        let response = lsp_types::CompletionResponse::Array(options);
+        let response = serde_json::to_value(response)?;
+
+        let response = lsp_server::Message::Response(lsp_server::Response {
+            id: req.id.clone(),
+            result: Some(response),
+            error: None,
+        });
+
+        eprintln!("sending: {response:?}");
+        self.connection.sender.send(response)?;
 
         Ok(())
     }

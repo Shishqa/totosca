@@ -7,13 +7,15 @@ use semantic::{Importer, Lookup};
 use toto_parser::{add_with_loc, ParseError};
 
 pub struct ToscaParser {
-    importer: Importer,
+    pub importer: Importer,
+    pub ns: Lookup,
 }
 
 impl ToscaParser {
     pub fn new() -> Self {
         Self {
             importer: Importer::new(),
+            ns: Lookup::new(),
         }
     }
 
@@ -54,8 +56,8 @@ impl ToscaParser {
                 });
             });
 
-        let lookup = Lookup::from_ast(ast);
-        lookup.lookup(ast);
+        self.ns = Lookup::from_ast(ast);
+        self.ns.lookup(ast);
 
         file_handle
     }
