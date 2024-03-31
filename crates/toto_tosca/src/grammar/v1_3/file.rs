@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use toto_parser::RelationParser;
 
 use crate::{
-    grammar::{v2_0, ToscaDefinitionsVersion},
+    grammar::{field::Field, list::List, v2_0, ToscaDefinitionsVersion},
     ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
@@ -16,11 +16,12 @@ where
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::File.into();
+    const SELF: fn() -> E = || crate::Entity::from(crate::FileEntity).into();
+
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "tosca_definitions_version" => |_, _, _| {},
-        "description" => toto_parser::Field::<v2_0::value::Description, v2_0::value::String>::parse,
-        "imports" => toto_parser::List::<v2_0::import::Import, V::ImportDefinition>::parse,
+        "description" => Field::<crate::DescriptionRelation, v2_0::value::StringValue>::parse,
+        "imports" => List::<crate::ImportRelation, V::ImportDefinition>::parse,
     };
 }
 

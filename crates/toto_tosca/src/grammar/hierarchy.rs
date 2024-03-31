@@ -16,7 +16,11 @@ impl Hierarchy {
         let mut dfs = Dfs::new(&*ast, file_handle);
         while let Some(nx) = dfs.next(&*ast) {
             if ast.node_weight(nx).unwrap().as_tosca().is_some() {
-                ast.add_edge(file_handle, nx, crate::Relation::RefRoot.into());
+                ast.add_edge(
+                    file_handle,
+                    nx,
+                    crate::Relation::from(crate::RefRootRelation).into(),
+                );
             }
         }
         file_handle

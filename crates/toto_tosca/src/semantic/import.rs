@@ -113,11 +113,11 @@ impl Importer {
                 let import_uri = ast
                     .edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::Url) => Some(e.target()),
+                        Some(crate::Relation::ImportUrl(_)) => Some(e.target()),
                         _ => None,
                     })
                     .and_then(|u| toto_yaml::as_string(u, ast))
-                    .and_then(|u| url::Url::parse(&u).or(uri.join(&u)).ok());
+                    .and_then(|u| url::Url::parse(&u.0).or(uri.join(&u.0)).ok());
 
                 if import_uri.is_none() {
                     todo!("handle profile");
@@ -128,12 +128,12 @@ impl Importer {
                 ast.add_edge(
                     file_handle,
                     imported_file,
-                    crate::Relation::ImportFile.into(),
+                    crate::Relation::from(crate::ImportFileRelation).into(),
                 );
                 ast.add_edge(
                     import_def,
                     imported_file,
-                    crate::Relation::ImportTarget.into(),
+                    crate::Relation::from(crate::ImportTargetRelation).into(),
                 );
             });
     }
@@ -146,12 +146,12 @@ impl Importer {
         R: ToscaCompatibleRelation,
     {
         let file_graph = EdgeFiltered::from_fn(&*ast, |e| {
-            matches!(e.weight().as_tosca(), Some(crate::Relation::ImportFile))
+            matches!(e.weight().as_tosca(), Some(crate::Relation::ImportFile(_)))
         });
         let file_graph = NodeFiltered::from_fn(&file_graph, |n| {
             matches!(
                 ast.node_weight(n.id()).unwrap().as_tosca(),
-                Some(crate::Entity::File)
+                Some(crate::Entity::File(_))
             )
         });
 
@@ -173,7 +173,7 @@ impl Importer {
             .filter_map(|import_def| {
                 ast.edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::ImportTarget) => Some((import_def, e.target())),
+                        Some(crate::Relation::ImportTarget(_)) => Some((import_def, e.target())),
                         _ => None,
                     })
             })
@@ -181,10 +181,11 @@ impl Importer {
                 let ns = ast
                     .edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::ImportNamespace) => Some(e.target()),
+                        Some(crate::Relation::ImportNamespace(_)) => Some(e.target()),
                         _ => None,
                     })
-                    .and_then(|u| toto_yaml::as_string(u, ast));
+                    .and_then(|u| toto_yaml::as_string(u, ast).cloned())
+                    .map(|u| u.0);
 
                 (target_file, ns)
             })
@@ -196,9 +197,11 @@ impl Importer {
                         e.weight()
                             .as_tosca()
                             .and_then(|n| match n {
-                                crate::Relation::Type(type_name) => Some(crate::Relation::Type(
-                                    [ns.as_slice(), &[type_name.clone()]].concat().join(":"),
-                                )),
+                                crate::Relation::Type(type_name) => {
+                                    Some(crate::Relation::Type(crate::TypeRelation(
+                                        [ns.as_slice(), &[type_name.0.clone()]].concat().join(":"),
+                                    )))
+                                }
                                 _ => None,
                             })
                             .map(|rel| (e.target(), rel))

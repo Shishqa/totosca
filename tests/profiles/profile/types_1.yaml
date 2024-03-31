@@ -10,7 +10,7 @@ data_types:
 
   test1:
     derived_from: test2
-    vls: hellp
+    vs: hell
 
   test2:
     derived_from: b:base

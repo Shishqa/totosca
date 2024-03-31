@@ -1,3 +1,6 @@
+extern crate derive_more;
+use derive_more::{From, TryInto};
+
 #[derive(Debug)]
 pub struct Version {
     pub minor: u64,
@@ -20,62 +23,179 @@ pub enum UnitSize {
     TiB,
 }
 
-#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ImportEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FileEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ServiceTemplateEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RepositoryEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct NodeEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct DataEntity;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, Copy, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Entity {
-    Import,
-    File,
-    Profile,
-    ServiceTemplate,
-    Repository,
-    Node,
-    Data,
+    Import(ImportEntity),
+    File(FileEntity),
+    ServiceTemplate(ServiceTemplateEntity),
+    Repository(RepositoryEntity),
+    Node(NodeEntity),
+    Data(DataEntity),
 }
 
-#[derive(Debug, PartialEq, Eq, Hash)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ToscaDefinitionsVersionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ServiceTemplateRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RepositoryRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ProfileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DescriptionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct NamespaceRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct VersionRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportRelation(pub usize);
+
+impl From<usize> for ImportRelation {
+    fn from(value: usize) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportUrlRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportTargetRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportFileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportProfileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportRepositoryRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ImportNamespaceRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct TypeRelation(pub String);
+
+impl From<String> for TypeRelation {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DefinitionRelation(pub String);
+
+impl From<String> for DefinitionRelation {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct AssignmentRelation(pub String);
+
+impl From<String> for AssignmentRelation {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MetadataRelation(pub String);
+
+impl From<String> for MetadataRelation {
+    fn from(value: String) -> Self {
+        Self(value)
+    }
+}
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct SchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct KeySchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct EntrySchemaRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefRootRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct HasTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefHasTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DerivedFromRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefDerivedFromRelation;
+
+#[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
+#[try_into(owned, ref, ref_mut)]
 pub enum Relation {
-    ToscaDefinitionsVersion,
-    ServiceTemplate,
-    Repository,
-    Profile,
-    Description,
-    Url,
-    Namespace,
-    Version,
-    Import(usize),
+    ToscaDefinitionsVersion(ToscaDefinitionsVersionRelation),
+    ServiceTemplate(ServiceTemplateRelation),
+    Repository(RepositoryRelation),
+    Profile(ProfileRelation),
+    Description(DescriptionRelation),
+    Namespace(NamespaceRelation),
+    Version(VersionRelation),
+    Import(ImportRelation),
 
-    ImportTarget,
-    ImportFile,
-    ImportProfile,
-    ImportRepository,
-    ImportNamespace,
+    ImportTarget(ImportTargetRelation),
+    ImportUrl(ImportUrlRelation),
+    ImportFile(ImportFileRelation),
+    ImportProfile(ImportProfileRelation),
+    ImportRepository(ImportRepositoryRelation),
+    ImportNamespace(ImportNamespaceRelation),
 
-    Type(String),
-    Definition(String),
-    Assignment(String),
+    Type(TypeRelation),
+    Definition(DefinitionRelation),
+    Assignment(AssignmentRelation),
 
-    Metadata(String),
-    Schema,
-    Attribute(String),
-    Property(String),
-    Parameter(String),
-    Requirement(usize, String),
+    Metadata(MetadataRelation),
 
-    Function,
-    FunctionCall,
-    Value,
+    Schema(SchemaRelation),
+    KeySchema(KeySchemaRelation),
+    EntrySchema(EntrySchemaRelation),
 
-    RefRoot,
-    RefSelf,
+    RefRoot(RefRootRelation),
 
-    HasType,
-    RefHasType,
+    HasType(HasTypeRelation),
+    RefHasType(RefHasTypeRelation),
 
-    DerivedFrom,
-    RefDerivedFrom,
-
-    Validation,
-    KeySchema,
-    EntrySchema,
+    DerivedFrom(DerivedFromRelation),
+    RefDerivedFrom(RefDerivedFromRelation),
 }
 
 pub trait AsToscaEntity {

@@ -20,6 +20,7 @@ data_types:
 
   b:
     derived_from: a:test2
+    hah: hehe
 
   c:
     derived_from: a:test1

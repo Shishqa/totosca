@@ -8,7 +8,7 @@ use lsp_types::Location;
 
 use lsp_types::request::Request;
 use petgraph::dot::Dot;
-use petgraph::visit::{EdgeRef, IntoEdgesDirected, NodeRef};
+use petgraph::visit::EdgeRef;
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -16,7 +16,6 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::ToscaParser;
 use toto_tosca::{AsToscaEntity, AsToscaRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
@@ -275,9 +274,9 @@ impl Server {
             .flatten()
             .find_map(|e| match e.weight().as_tosca() {
                 Some(
-                    toto_tosca::Relation::Url
-                    | toto_tosca::Relation::RefHasType
-                    | toto_tosca::Relation::RefDerivedFrom,
+                    toto_tosca::Relation::ImportUrl(_)
+                    | toto_tosca::Relation::RefHasType(_)
+                    | toto_tosca::Relation::RefDerivedFrom(_),
                 ) => Some(e.source()),
                 _ => None,
             });
@@ -289,20 +288,20 @@ impl Server {
         let semantic_token = semantic_token.unwrap();
 
         let goto_target = match self.ast[semantic_token].as_tosca() {
-            Some(toto_tosca::Entity::Import) => self
+            Some(toto_tosca::Entity::Import(_)) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {
-                    Some(toto_tosca::Relation::ImportTarget) => Some(e.target()),
+                    Some(toto_tosca::Relation::ImportTarget(_)) => Some(e.target()),
                     _ => None,
                 }),
-            Some(toto_tosca::Entity::Node | toto_tosca::Entity::Data) => self
+            Some(toto_tosca::Entity::Node(_) | toto_tosca::Entity::Data(_)) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {
-                    Some(toto_tosca::Relation::HasType | toto_tosca::Relation::DerivedFrom) => {
-                        Some(e.target())
-                    }
+                    Some(
+                        toto_tosca::Relation::HasType(_) | toto_tosca::Relation::DerivedFrom(_),
+                    ) => Some(e.target()),
                     _ => None,
                 }),
             _ => None,

@@ -17,14 +17,19 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let import = add_with_loc(crate::Entity::Import, n, ast);
+        let import = add_with_loc(crate::Entity::from(crate::ImportEntity), n, ast);
         toto_yaml::as_string(n, ast)
-            .map(|_| {
-                ast.add_edge(import, n, crate::Relation::Url.into());
-            })
+            .cloned()
             .or_else(|| {
                 add_with_loc(toto_parser::ParseError::UnexpectedType("string"), n, ast);
                 None
+            })
+            .map(|_| {
+                ast.add_edge(
+                    import,
+                    n,
+                    crate::Relation::from(crate::ImportUrlRelation).into(),
+                );
             });
         Some(import)
     }

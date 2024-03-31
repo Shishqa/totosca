@@ -28,7 +28,7 @@ where
                 items.into_iter().find(|(k, v)| {
                     toto_yaml::as_string(*k, ast)
                         .and_then(|key| {
-                            if key == "tosca_definitions_version" {
+                            if key.0 == "tosca_definitions_version" {
                                 Some(v)
                             } else {
                                 None
@@ -45,16 +45,30 @@ where
                 );
                 None
             })
-            .and_then(|(_, v)| {
-                toto_yaml::as_string(v, ast).or_else(|| {
-                    add_with_loc(toto_parser::ParseError::UnexpectedType("string"), v, ast);
+            .and_then(|(_, v)| match toto_yaml::as_string(v, ast) {
+                Some(version) => match version.0.as_str() {
+                    "tosca_2_0" => Tosca2_0::parse(doc_root, ast),
+                    "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
+                    _ => {
+                        add_with_loc(
+                            toto_parser::ParseError::Custom(format!(
+                                "unknown version: {}",
+                                version.0
+                            )),
+                            doc_root,
+                            ast,
+                        );
+                        None
+                    }
+                },
+                _ => {
+                    add_with_loc(
+                        toto_parser::ParseError::MissingField("tosca_definitions_version"),
+                        doc_root,
+                        ast,
+                    );
                     None
-                })
-            })
-            .and_then(|version| match version.as_str() {
-                "tosca_2_0" => Tosca2_0::parse(doc_root, ast),
-                "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
-                _ => None,
+                }
             })
             .map(|file_handle| Hierarchy::link(file_handle, ast))
     }
