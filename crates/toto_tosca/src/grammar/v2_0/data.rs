@@ -5,9 +5,9 @@ use toto_parser::{add_with_loc, ParseError, RelationParser};
 use crate::{
     grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
     DefaultRelation, DefinitionRelation, DescriptionRelation, EntrySchemaRelation,
-    ExternalSchemaRelation, KeySchemaRelation, MetadataRelation, RefDerivedFromRelation,
-    RefHasTypeRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    VersionRelation,
+    ExternalSchemaRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
+    RefDerivedFromRelation, RefHasTypeRelation, RequiredRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
 };
 
 use super::value;
@@ -56,7 +56,7 @@ where
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "validation" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
     };
@@ -110,7 +110,7 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "default" => Field::<DefaultRelation, value::BoolValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
@@ -130,8 +130,8 @@ where
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::BoolValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => |_, _, _| todo!(),
-        "value" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "value" => Field::<ValueRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
         "external-schema" => Field::<ExternalSchemaRelation, value::StringValue>::parse,
@@ -152,9 +152,9 @@ where
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::BoolValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => |_, _, _| todo!(),
-        "value" => |_, _, _| todo!(),
-        "mapping" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "value" => Field::<ValueRelation, value::AnyValue>::parse,
+        "mapping" => Field::<MappingRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
         "external-schema" => Field::<ExternalSchemaRelation, value::StringValue>::parse,

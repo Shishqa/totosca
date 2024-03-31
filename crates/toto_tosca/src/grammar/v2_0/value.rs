@@ -37,3 +37,18 @@ where {
         })
     }
 }
+
+pub struct AnyValue;
+impl<E, R> toto_parser::EntityParser<E, R> for AnyValue
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        _: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle>
+where {
+        Some(n)
+    }
+}

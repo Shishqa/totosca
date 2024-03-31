@@ -1,6 +1,6 @@
 extern crate derive_more;
 
-use derive_more::{From, FromStr, TryInto};
+use derive_more::{From, TryInto};
 
 #[derive(Debug)]
 pub struct Version {
@@ -124,6 +124,15 @@ pub struct SchemaRelation;
 pub struct RequiredRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ValidationRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ValueRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MappingRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct DefaultRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -176,6 +185,9 @@ pub enum Relation {
     Definition(DefinitionRelation),
     Assignment(AssignmentRelation),
 
+    Validation(ValidationRelation),
+    Value(ValueRelation),
+    Mapping(MappingRelation),
     Required(RequiredRelation),
     Status(StatusRelation),
     Default(DefaultRelation),
