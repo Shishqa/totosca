@@ -25,14 +25,14 @@ impl ToscaParser {
         &mut self,
         uri: &url::Url,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle
+    ) -> Option<toto_ast::GraphHandle>
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
         if let Some(file_handle) = self.importer.get_file(&uri) {
             if !self.importer.is_file_changed(file_handle, ast) {
-                return file_handle;
+                return Some(file_handle);
             }
             self.importer.reimport(ast);
             dbg!("REIMPORT!");

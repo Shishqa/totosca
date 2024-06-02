@@ -134,8 +134,14 @@ impl YamlParser {
         E: AsFileEntity + From<Entity>,
         R: From<Relation> + From<FileRelation>,
     {
-        let doc = ast.node_weight(doc_handle).unwrap().as_file().unwrap();
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(doc.content.as_ref().unwrap());
+        let doc = ast
+            .node_weight(doc_handle)
+            .expect("node not found")
+            .as_file()
+            .expect("should be a file");
+        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(
+            doc.content.as_ref().expect("should have content"),
+        );
         if yaml.is_err() {
             dbg!(yaml.err());
             return None;
@@ -193,7 +199,7 @@ where
     E: AsYamlEntity,
     R: AsYamlRelation,
 {
-    match ast.node_weight(n).unwrap().as_yaml() {
+    match ast.node_weight(n).expect("node not found").as_yaml() {
         Some(Entity::Map(_)) => Some(
             ast.edges(n)
                 .filter_map(|e| match e.weight().as_yaml() {
@@ -207,7 +213,7 @@ where
                             Some(Relation::MapValue(_)) => Some(e.target()),
                             _ => None,
                         })
-                        .unwrap();
+                        .expect("should have value by key");
 
                     (k, v)
                 })
@@ -226,7 +232,7 @@ where
     E: AsYamlEntity,
     R: AsYamlRelation,
 {
-    match ast.node_weight(n).unwrap().as_yaml() {
+    match ast.node_weight(n).expect("node not found").as_yaml() {
         Some(Entity::List(_)) => Some(
             ast.edges(n)
                 .filter_map(|e| match e.weight().as_yaml() {
@@ -246,7 +252,7 @@ where
     R: AsYamlRelation,
 {
     ast.node_weight(n)
-        .unwrap()
+        .expect("node not found")
         .as_yaml()
         .and_then(|yaml_node| yaml_node.try_into().ok())
 }
@@ -257,7 +263,7 @@ where
     R: AsYamlRelation,
 {
     ast.node_weight(n)
-        .unwrap()
+        .expect("node not found")
         .as_yaml()
         .and_then(|yaml_node| yaml_node.try_into().ok())
 }
