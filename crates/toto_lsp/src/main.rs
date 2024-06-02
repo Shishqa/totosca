@@ -125,8 +125,7 @@ impl Server {
 
     fn get_lc(doc: &str, offset: usize) -> (u32, u32) {
         let linebreaks = doc[0..offset]
-            .chars()
-            .enumerate()
+            .char_indices()
             .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
             .collect::<Vec<_>>();
         let lineno = linebreaks.len();
@@ -135,22 +134,13 @@ impl Server {
     }
 
     fn from_lc(doc: &str, lineno: u32, charno: u32) -> usize {
-        let mut curr_lineno = 0;
-        let mut curr_charno = 0;
-        doc.chars()
-            .take_while(|c| {
-                if curr_lineno == lineno && curr_charno == charno {
-                    return false;
-                }
-                if *c == '\n' {
-                    curr_lineno += 1;
-                    curr_charno = 0;
-                } else {
-                    curr_charno += 1;
-                }
-                true
-            })
-            .count()
+        let base = doc
+            .split_inclusive('\n')
+            .take(lineno as usize)
+            .fold(0, |acc, l| acc + l.len());
+
+        dbg!(base, charno);
+        base + charno as usize
     }
 
     fn refresh_diag(&mut self, uri: &url::Url) -> Result<(), Box<dyn Error + Sync + Send>> {
@@ -199,8 +189,14 @@ impl Server {
                     None,
                     None,
                     format!(
-                        "{:?}",
-                        self.ast.node_weight(what).unwrap().as_parse().unwrap()
+                        "{:?} [{},{}] [({},{}),({},{})]",
+                        self.ast.node_weight(what).unwrap().as_parse().unwrap(),
+                        pos,
+                        pos + len,
+                        lineno_start,
+                        charno_start,
+                        lineno_end,
+                        charno_end,
                     ),
                     None,
                     None,
@@ -253,6 +249,7 @@ impl Server {
             params.position.line,
             params.position.character,
         );
+        dbg!(params.position.line, params.position.character, params_pos);
 
         let semantic_token = self
             .ast
@@ -282,7 +279,7 @@ impl Server {
             });
 
         if semantic_token.is_none() {
-            eprintln!("can't go to definition (no semantic)");
+            eprintln!("can't go to definition (no semantic) {}", params_pos);
             return Ok(());
         }
         let semantic_token = semantic_token.unwrap();

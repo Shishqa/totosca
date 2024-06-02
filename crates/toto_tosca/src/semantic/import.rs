@@ -25,13 +25,13 @@ impl Importer {
         &mut self,
         uri: &url::Url,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle
+    ) -> Option<toto_ast::GraphHandle>
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
         if let Some(file_handle) = self.get_file(&uri) {
-            return file_handle;
+            return Some(file_handle);
         }
 
         let mut doc = toto_yaml::FileEntity::from_url(uri.clone());
@@ -39,12 +39,13 @@ impl Importer {
 
         let doc_handle = ast.add_node(doc.into());
         let doc_root = toto_yaml::YamlParser::parse(doc_handle, ast).unwrap();
-        let file_handle = ToscaGrammar::parse(doc_root, ast).unwrap();
-
-        self.existing_urls.insert(uri.clone(), file_handle);
-        self.import_files(uri, file_handle, ast);
-
-        file_handle
+        if let Some(file_handle) = ToscaGrammar::parse(doc_root, ast) {
+            self.existing_urls.insert(uri.clone(), file_handle);
+            self.import_files(uri, file_handle, ast);
+            Some(file_handle)
+        } else {
+            None
+        }
     }
 
     pub fn reimport<E, R>(&mut self, ast: &mut toto_ast::AST<E, R>)
@@ -124,17 +125,18 @@ impl Importer {
                 }
                 let import_uri = import_uri.unwrap();
 
-                let imported_file = self.add_file(&import_uri, ast);
-                ast.add_edge(
-                    file_handle,
-                    imported_file,
-                    crate::Relation::from(crate::ImportFileRelation).into(),
-                );
-                ast.add_edge(
-                    import_def,
-                    imported_file,
-                    crate::Relation::from(crate::ImportTargetRelation).into(),
-                );
+                if let Some(imported_file) = self.add_file(&import_uri, ast) {
+                    ast.add_edge(
+                        file_handle,
+                        imported_file,
+                        crate::Relation::from(crate::ImportFileRelation).into(),
+                    );
+                    ast.add_edge(
+                        import_def,
+                        imported_file,
+                        crate::Relation::from(crate::ImportTargetRelation).into(),
+                    );
+                }
             });
     }
 
