@@ -282,7 +282,7 @@ impl Server {
             });
 
         if semantic_token.is_none() {
-            eprintln!("can't provide completion (no semantic)");
+            eprintln!("can't provide completion (no semantic) {}", params_pos);
             return Ok(());
         }
         let semantic_token = semantic_token.unwrap();
