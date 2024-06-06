@@ -299,6 +299,7 @@ impl Server {
                 | toto_tosca::Entity::Data(_)
                 | toto_tosca::Entity::Capability(_)
                 | toto_tosca::Entity::Artifact(_)
+                | toto_tosca::Entity::Interface(_)
                 | toto_tosca::Entity::Group(_),
             ) => self
                 .ast

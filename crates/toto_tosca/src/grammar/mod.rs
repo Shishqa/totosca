@@ -29,6 +29,13 @@ pub trait ToscaDefinitionsVersion {
     type CapabilityAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type GroupDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type GroupTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type OperationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type OperationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NotificationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NotificationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

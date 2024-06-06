@@ -28,6 +28,7 @@ where
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
         "capabilities" => Collection::<AssignmentRelation, V::CapabilityAssignment>::parse,
+        "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
     };
 }
 
@@ -44,6 +45,7 @@ where
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
         "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
         "capabilities" => Collection::<DefinitionRelation, V::CapabilityDefinition>::parse,
+        "interfaces" => Collection::<DefinitionRelation, V::InterfaceDefinition>::parse,
     };
 }
 

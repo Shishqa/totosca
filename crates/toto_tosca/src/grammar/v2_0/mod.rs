@@ -4,7 +4,10 @@ pub mod data;
 pub mod file;
 pub mod group;
 pub mod import;
+pub mod interface;
 pub mod node;
+pub mod notification;
+pub mod operation;
 pub mod service_template;
 pub mod value;
 
@@ -16,7 +19,10 @@ pub use data::*;
 pub use file::*;
 pub use group::*;
 pub use import::*;
+pub use interface::*;
 pub use node::*;
+pub use notification::*;
+pub use operation::*;
 pub use service_template::*;
 pub use value::*;
 
@@ -48,6 +54,14 @@ where
     type CapabilityAssignment = self::CapabilityAssignment<Self>;
     type GroupDefinition = self::GroupDefinition<Self>;
     type GroupTypeDefinition = self::GroupTypeDefinition<Self>;
+
+    type InterfaceDefinition = self::InterfaceDefinition<Self>;
+    type InterfaceTypeDefinition = self::InterfaceTypeDefinition<Self>;
+    type InterfaceAssignment = self::InterfaceAssignment<Self>;
+    type OperationDefinition = self::OperationDefinition<Self>;
+    type OperationAssignment = self::OperationAssignment<Self>;
+    type NotificationDefinition = self::NotificationDefinition<Self>;
+    type NotificationAssignment = self::NotificationAssignment<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

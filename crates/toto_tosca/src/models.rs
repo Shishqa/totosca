@@ -52,6 +52,12 @@ pub struct CapabilityEntity;
 pub struct InterfaceEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct OperationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct NotificationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct RelationshipEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
@@ -85,6 +91,8 @@ pub enum Entity {
     Artifact(ArtifactEntity),
     Capability(CapabilityEntity),
     Interface(InterfaceEntity),
+    Operation(OperationEntity),
+    Notification(NotificationEntity),
     Relationship(RelationshipEntity),
     Group(GroupEntity),
     Policy(PolicyEntity),
