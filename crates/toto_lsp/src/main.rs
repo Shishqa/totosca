@@ -295,6 +295,7 @@ impl Server {
             Some(
                 toto_tosca::Entity::Node(_)
                 | toto_tosca::Entity::Data(_)
+                | toto_tosca::Entity::Capability(_)
                 | toto_tosca::Entity::Artifact(_),
             ) => self
                 .ast

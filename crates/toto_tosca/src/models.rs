@@ -211,6 +211,15 @@ pub struct PrimaryArtifactRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct DependencyArtifactRelation(pub usize);
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidSourceNodeTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidRelationshipTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct DirectiveRelation(pub usize);
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -264,6 +273,11 @@ pub enum Relation {
 
     PrimaryArtifact(PrimaryArtifactRelation),
     DependencyArtifact(DependencyArtifactRelation),
+
+    RefValidSourceNodeType(RefValidSourceNodeTypeRelation),
+    RefValidRelationshipType(RefValidRelationshipTypeRelation),
+
+    Directive(DirectiveRelation),
 }
 
 pub trait AsToscaEntity {

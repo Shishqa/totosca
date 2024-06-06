@@ -27,6 +27,7 @@ where
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
+        "capabilities" => Collection::<AssignmentRelation, V::CapabilityAssignment>::parse,
     };
 }
 
@@ -42,6 +43,7 @@ where
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
         "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
+        "capabilities" => Collection::<DefinitionRelation, V::CapabilityDefinition>::parse,
     };
 }
 
