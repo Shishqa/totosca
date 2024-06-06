@@ -39,7 +39,7 @@ where
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "validation" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
