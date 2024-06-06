@@ -1,3 +1,4 @@
+pub mod artifact;
 pub mod data;
 pub mod file;
 pub mod import;
@@ -7,6 +8,7 @@ pub mod value;
 
 use std::marker::PhantomData;
 
+pub use artifact::*;
 pub use data::*;
 pub use file::*;
 pub use import::*;
@@ -35,6 +37,8 @@ where
     type AttributeDefinition = self::AttributeDefinition<Self>;
     type PropertyDefinition = self::PropertyDefinition<Self>;
     type ParameterDefinition = self::ParameterDefinition<Self>;
+    type ArtifactDefinition = self::ArtifactDefinition<Self>;
+    type ArtifactTypeDefinition = self::ArtifactTypeDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

@@ -43,6 +43,27 @@ pub struct NodeEntity;
 pub struct DataEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ArtifactEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct CapabilityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct InterfaceEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RelationshipEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct GroupEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct PolicyEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ImplementationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum StatusEntity {
     #[default]
     Supported,
@@ -61,6 +82,13 @@ pub enum Entity {
     Node(NodeEntity),
     Data(DataEntity),
     Status(StatusEntity),
+    Artifact(ArtifactEntity),
+    Capability(CapabilityEntity),
+    Interface(InterfaceEntity),
+    Relationship(RelationshipEntity),
+    Group(GroupEntity),
+    Policy(PolicyEntity),
+    Implementation(ImplementationEntity),
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -162,6 +190,27 @@ pub struct DerivedFromRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RefDerivedFromRelation;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MimeTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FileExtRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefHasFileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ChecksumRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ChecksumAlgorithmRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct PrimaryArtifactRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct DependencyArtifactRelation(pub usize);
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -206,6 +255,15 @@ pub enum Relation {
 
     DerivedFrom(DerivedFromRelation),
     RefDerivedFrom(RefDerivedFromRelation),
+
+    MimeType(MimeTypeRelation),
+    FileExt(FileExtRelation),
+    RefHasFile(RefHasFileRelation),
+    Checksum(ChecksumRelation),
+    ChecksumAlgorithm(ChecksumAlgorithmRelation),
+
+    PrimaryArtifact(PrimaryArtifactRelation),
+    DependencyArtifact(DependencyArtifactRelation),
 }
 
 pub trait AsToscaEntity {

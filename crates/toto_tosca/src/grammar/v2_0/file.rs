@@ -22,13 +22,15 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::FileEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "tosca_definitions_version" => |_, _, _| {},
+        "dsl_definitions" => |_, _, _| {},
         "profile" => Field::<ProfileRelation, value::StringValue>::parse,
-        "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "imports" => List::<ImportRelation, V::ImportDefinition>::parse,
         "service_template" => Field::<ServiceTemplateRelation, V::ServiceTemplateDefinition>::parse,
         "node_types" => Collection::<TypeRelation, V::NodeTypeDefinition>::parse,
         "data_types" => Collection::<TypeRelation, V::DataTypeDefinition>::parse,
+        "artifact_types" => Collection::<TypeRelation, V::ArtifactTypeDefinition>::parse,
     };
 }
 

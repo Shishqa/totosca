@@ -5,7 +5,7 @@ pub mod field;
 pub mod hierarchy;
 pub mod list;
 pub mod parser;
-pub mod v1_3;
+// pub mod v1_3;
 pub mod v2_0;
 
 pub trait ToscaDefinitionsVersion {
@@ -22,6 +22,8 @@ pub trait ToscaDefinitionsVersion {
     type PropertyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type AttributeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type ParameterDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ArtifactTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ArtifactDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

@@ -292,7 +292,11 @@ impl Server {
                     Some(toto_tosca::Relation::ImportTarget(_)) => Some(e.target()),
                     _ => None,
                 }),
-            Some(toto_tosca::Entity::Node(_) | toto_tosca::Entity::Data(_)) => self
+            Some(
+                toto_tosca::Entity::Node(_)
+                | toto_tosca::Entity::Data(_)
+                | toto_tosca::Entity::Artifact(_),
+            ) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {

@@ -26,6 +26,7 @@ where
         "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+        "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
     };
 }
 
@@ -40,6 +41,7 @@ where
         "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
+        "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
     };
 }
 

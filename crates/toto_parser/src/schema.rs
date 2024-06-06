@@ -71,3 +71,11 @@ where
         Some(node_template)
     }
 }
+
+pub fn mandatory(fields: &HashSet<String>, key: &'static str) -> Option<ParseError> {
+    if !fields.contains(key) {
+        Some(ParseError::MissingField(key))
+    } else {
+        None
+    }
+}
