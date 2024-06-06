@@ -27,6 +27,8 @@ pub trait ToscaDefinitionsVersion {
     type CapabilityDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type CapabilityTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type CapabilityAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type GroupDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type GroupTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

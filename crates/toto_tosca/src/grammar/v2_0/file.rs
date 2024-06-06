@@ -32,6 +32,7 @@ where
         "data_types" => Collection::<TypeRelation, V::DataTypeDefinition>::parse,
         "artifact_types" => Collection::<TypeRelation, V::ArtifactTypeDefinition>::parse,
         "capability_types" => Collection::<TypeRelation, V::CapabilityTypeDefinition>::parse,
+        "group_types" => Collection::<TypeRelation, V::GroupTypeDefinition>::parse,
     };
 }
 

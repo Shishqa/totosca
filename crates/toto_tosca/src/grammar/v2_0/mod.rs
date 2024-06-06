@@ -2,6 +2,7 @@ pub mod artifact;
 pub mod capability;
 pub mod data;
 pub mod file;
+pub mod group;
 pub mod import;
 pub mod node;
 pub mod service_template;
@@ -13,6 +14,7 @@ pub use artifact::*;
 pub use capability::*;
 pub use data::*;
 pub use file::*;
+pub use group::*;
 pub use import::*;
 pub use node::*;
 pub use service_template::*;
@@ -44,6 +46,8 @@ where
     type CapabilityDefinition = self::CapabilityDefinition<Self>;
     type CapabilityTypeDefinition = self::CapabilityTypeDefinition<Self>;
     type CapabilityAssignment = self::CapabilityAssignment<Self>;
+    type GroupDefinition = self::GroupDefinition<Self>;
+    type GroupTypeDefinition = self::GroupTypeDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>
