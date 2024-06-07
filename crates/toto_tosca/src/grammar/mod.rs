@@ -36,6 +36,8 @@ pub trait ToscaDefinitionsVersion {
     type OperationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NotificationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NotificationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

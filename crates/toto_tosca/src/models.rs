@@ -234,6 +234,12 @@ pub struct RefValidRelationshipTypeRelation(pub usize);
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct DirectiveRelation(pub usize);
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidCapabilityTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidTargetNodeTypeRelation(pub usize);
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -295,6 +301,9 @@ pub enum Relation {
 
     RefMemberNodeTemplate(RefMemberNodeTemplateRelation),
     RefMemberNodeType(RefMemberNodeTypeRelation),
+
+    RefValidCapabilityType(RefValidCapabilityTypeRelation),
+    RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
 }
 
 pub trait AsToscaEntity {

@@ -24,6 +24,7 @@ where
         "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "outputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "node_templates" => Collection::<DefinitionRelation, V::NodeTemplateDefinition>::parse,
+        "relationship_templates" => Collection::<DefinitionRelation, V::RelationshipTemplateDefinition>::parse,
         "groups" => Collection::<DefinitionRelation, V::GroupDefinition>::parse,
     };
 }
