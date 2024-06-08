@@ -11,6 +11,7 @@ pub mod operation;
 pub mod relationship;
 pub mod requirement;
 pub mod service_template;
+pub mod substitution_mapping;
 pub mod value;
 
 use std::marker::PhantomData;
@@ -28,6 +29,7 @@ pub use operation::*;
 pub use relationship::*;
 pub use requirement::*;
 pub use service_template::*;
+pub use substitution_mapping::*;
 pub use value::*;
 
 use super::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion};
@@ -44,6 +46,8 @@ where
     type FileDefinition = self::ToscaFileDefinition<Self>;
     type ImportDefinition = self::ImportDefinition<Self>;
     type ServiceTemplateDefinition = self::ServiceTemplateDefinition<Self>;
+    type SubstitutionMapping = self::SubstitutionMapping<Self>;
+
     type NodeTypeDefinition = self::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = self::NodeTemplateDefinition<Self>;
     type DataTypeDefinition = self::DataTypeDefinition<Self>;

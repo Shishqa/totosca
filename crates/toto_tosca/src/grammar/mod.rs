@@ -15,6 +15,8 @@ pub trait ToscaDefinitionsVersion {
     type ImportDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type FileDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type ServiceTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type SubstitutionMapping: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
     type NodeTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NodeTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type DataTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;

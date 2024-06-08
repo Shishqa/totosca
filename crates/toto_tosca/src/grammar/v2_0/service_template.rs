@@ -4,7 +4,8 @@ use toto_parser::RelationParser;
 
 use crate::{
     grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
-    DefinitionRelation, DescriptionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    DefinitionRelation, DescriptionRelation, MetadataRelation, SubstitutionMappingRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
 use super::value;
@@ -21,11 +22,15 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::ServiceTemplateEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "outputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "node_templates" => Collection::<DefinitionRelation, V::NodeTemplateDefinition>::parse,
         "relationship_templates" => Collection::<DefinitionRelation, V::RelationshipTemplateDefinition>::parse,
         "groups" => Collection::<DefinitionRelation, V::GroupDefinition>::parse,
+        "workflows" => Collection::<DefinitionRelation, value::AnyValue>::parse,
+        "policies" => |_, _, _| {},
+        "substitution_mappings" => Field::<SubstitutionMappingRelation, V::SubstitutionMapping>::parse,
     };
 }
 

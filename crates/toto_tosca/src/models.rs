@@ -34,6 +34,9 @@ pub struct FileEntity;
 pub struct ServiceTemplateEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SubstitutionMappingEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct RepositoryEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
@@ -87,6 +90,7 @@ pub enum Entity {
     Import(ImportEntity),
     File(FileEntity),
     ServiceTemplate(ServiceTemplateEntity),
+    SubstitutionMapping(SubstitutionMappingEntity),
     Repository(RepositoryEntity),
     Node(NodeEntity),
     Data(DataEntity),
@@ -108,6 +112,9 @@ pub struct ToscaDefinitionsVersionRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ServiceTemplateRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct SubstitutionMappingRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RepositoryRelation;
@@ -325,6 +332,8 @@ pub enum Relation {
 
     RefTargetNode(RefTargetNodeRelation),
     RefTargetCapability(RefTargetCapabilityRelation),
+
+    SubstitutionMapping(SubstitutionMappingRelation),
 }
 
 pub trait AsToscaEntity {
