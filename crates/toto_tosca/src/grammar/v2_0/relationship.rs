@@ -7,7 +7,7 @@ use crate::{
     RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation, ToscaCompatibleEntity,
     ToscaCompatibleRelation, VersionRelation,
 };
-use toto_parser::{mandatory, RelationParser};
+use toto_parser::{add_with_loc, mandatory, RelationParser};
 
 use super::value;
 
@@ -16,6 +16,12 @@ pub struct RelationshipTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>
 
 #[derive(Debug)]
 pub struct RelationshipTemplateDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+
+#[derive(Debug)]
+pub struct RelationshipDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+
+#[derive(Debug)]
+pub struct RelationshipAssignment<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
 impl<E, R, V> toto_parser::Schema<E, R> for RelationshipTypeDefinition<V>
 where
@@ -59,6 +65,41 @@ where
         &[|fields: &HashSet<String>| mandatory(fields, "type")];
 }
 
+impl<E, R, V> toto_parser::Schema<E, R> for RelationshipDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
+        "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+        "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+        "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
+    };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
+}
+
+impl<E, R, V> toto_parser::Schema<E, R> for RelationshipAssignment<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+        "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+        "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
+    };
+}
+
 impl<E, R, V> toto_parser::EntityParser<E, R> for RelationshipTypeDefinition<V>
 where
     E: ToscaCompatibleEntity,
@@ -84,5 +125,71 @@ where
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
         <Self as toto_parser::Schema<E, R>>::parse(n, ast)
+    }
+}
+
+impl<E, R, V> toto_parser::EntityParser<E, R> for RelationshipDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        let rel = add_with_loc(crate::Entity::from(crate::RelationshipEntity), n, ast);
+        toto_yaml::as_map(n, ast)
+            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
+            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
+                ast.add_edge(
+                    rel,
+                    n,
+                    crate::Relation::from(crate::RefHasTypeRelation).into(),
+                );
+                rel
+            }))
+            .or_else(|| {
+                add_with_loc(
+                    toto_parser::ParseError::UnexpectedType("map or string"),
+                    n,
+                    ast,
+                );
+                None
+            });
+        Some(rel)
+    }
+}
+
+impl<E, R, V> toto_parser::EntityParser<E, R> for RelationshipAssignment<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        let rel = add_with_loc(crate::Entity::from(crate::RelationshipEntity), n, ast);
+        toto_yaml::as_map(n, ast)
+            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
+            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
+                ast.add_edge(
+                    rel,
+                    n,
+                    crate::Relation::from(crate::RefHasTypeRelation).into(),
+                );
+                rel
+            }))
+            .or_else(|| {
+                add_with_loc(
+                    toto_parser::ParseError::UnexpectedType("map or string"),
+                    n,
+                    ast,
+                );
+                None
+            });
+        Some(rel)
     }
 }

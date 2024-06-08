@@ -9,6 +9,7 @@ pub mod node;
 pub mod notification;
 pub mod operation;
 pub mod relationship;
+pub mod requirement;
 pub mod service_template;
 pub mod value;
 
@@ -25,6 +26,7 @@ pub use node::*;
 pub use notification::*;
 pub use operation::*;
 pub use relationship::*;
+pub use requirement::*;
 pub use service_template::*;
 pub use value::*;
 
@@ -66,6 +68,11 @@ where
     type NotificationAssignment = self::NotificationAssignment<Self>;
     type RelationshipTypeDefinition = self::RelationshipTypeDefinition<Self>;
     type RelationshipTemplateDefinition = self::RelationshipTemplateDefinition<Self>;
+
+    type RequirementDefinition = self::RequirementDefinition<Self>;
+    type RequirementAssignment = self::RequirementAssignment<Self>;
+    type RelationshipDefinition = self::RelationshipDefinition<Self>;
+    type RelationshipAssignment = self::RequirementAssignment<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

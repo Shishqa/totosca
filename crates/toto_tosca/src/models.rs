@@ -61,6 +61,9 @@ pub struct NotificationEntity;
 pub struct RelationshipEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RequirementEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct GroupEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
@@ -94,6 +97,7 @@ pub enum Entity {
     Operation(OperationEntity),
     Notification(NotificationEntity),
     Relationship(RelationshipEntity),
+    Requirement(RequirementEntity),
     Group(GroupEntity),
     Policy(PolicyEntity),
     Implementation(ImplementationEntity),
@@ -148,7 +152,13 @@ pub struct TypeRelation(pub String);
 pub struct DefinitionRelation(pub String);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct OrderedDefinitionRelation(pub (String, usize));
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct AssignmentRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct OrderedAssignmentRelation(pub (String, usize));
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct MetadataRelation(pub String);
@@ -240,6 +250,12 @@ pub struct RefValidCapabilityTypeRelation(pub usize);
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct RefValidTargetNodeTypeRelation(pub usize);
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefTargetNodeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefTargetCapabilityRelation;
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -261,7 +277,9 @@ pub enum Relation {
 
     Type(TypeRelation),
     Definition(DefinitionRelation),
+    OrderedDefinition(OrderedDefinitionRelation),
     Assignment(AssignmentRelation),
+    OrderedAssignment(OrderedAssignmentRelation),
 
     Validation(ValidationRelation),
     Value(ValueRelation),
@@ -304,6 +322,9 @@ pub enum Relation {
 
     RefValidCapabilityType(RefValidCapabilityTypeRelation),
     RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
+
+    RefTargetNode(RefTargetNodeRelation),
+    RefTargetCapability(RefTargetCapabilityRelation),
 }
 
 pub trait AsToscaEntity {
