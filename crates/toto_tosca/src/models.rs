@@ -76,6 +76,24 @@ pub struct PolicyEntity;
 pub struct ImplementationEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowStepEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowDelegateActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowInlineActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowSetStateActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowCallOperationActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum StatusEntity {
     #[default]
     Supported,
@@ -105,6 +123,13 @@ pub enum Entity {
     Group(GroupEntity),
     Policy(PolicyEntity),
     Implementation(ImplementationEntity),
+
+    Workflow(WorkflowEntity),
+    WorkflowStep(WorkflowStepEntity),
+    WorkflowDelegateActivity(WorkflowDelegateActivityEntity),
+    WorkflowInlineActivity(WorkflowInlineActivityEntity),
+    WorkflowSetStateActivity(WorkflowSetStateActivityEntity),
+    WorkflowCallOperationActivity(WorkflowCallOperationActivityEntity),
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -263,6 +288,15 @@ pub struct RefTargetNodeRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RefTargetCapabilityRelation;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct WorkflowActivityRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefWorkflowRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefOperationRelation;
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -334,6 +368,10 @@ pub enum Relation {
     RefTargetCapability(RefTargetCapabilityRelation),
 
     SubstitutionMapping(SubstitutionMappingRelation),
+
+    WorkflowActivity(WorkflowActivityRelation),
+    RefWorkflow(RefWorkflowRelation),
+    RefOperation(RefOperationRelation),
 }
 
 pub trait AsToscaEntity {

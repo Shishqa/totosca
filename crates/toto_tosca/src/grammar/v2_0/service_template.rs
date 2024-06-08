@@ -28,7 +28,7 @@ where
         "node_templates" => Collection::<DefinitionRelation, V::NodeTemplateDefinition>::parse,
         "relationship_templates" => Collection::<DefinitionRelation, V::RelationshipTemplateDefinition>::parse,
         "groups" => Collection::<DefinitionRelation, V::GroupDefinition>::parse,
-        "workflows" => Collection::<DefinitionRelation, value::AnyValue>::parse,
+        "workflows" => Collection::<DefinitionRelation, V::WorkflowDefinition>::parse,
         "policies" => |_, _, _| {},
         "substitution_mappings" => Field::<SubstitutionMappingRelation, V::SubstitutionMapping>::parse,
     };

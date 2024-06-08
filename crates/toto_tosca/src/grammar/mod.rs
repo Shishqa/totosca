@@ -44,6 +44,10 @@ pub trait ToscaDefinitionsVersion {
     type RelationshipAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type RequirementDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type RequirementAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type WorkflowDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type WorkflowStepDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type WorkflowActivityDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

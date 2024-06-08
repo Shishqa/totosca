@@ -13,6 +13,7 @@ pub mod requirement;
 pub mod service_template;
 pub mod substitution_mapping;
 pub mod value;
+pub mod workflow;
 
 use std::marker::PhantomData;
 
@@ -31,6 +32,7 @@ pub use requirement::*;
 pub use service_template::*;
 pub use substitution_mapping::*;
 pub use value::*;
+pub use workflow::*;
 
 use super::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion};
 
@@ -77,6 +79,10 @@ where
     type RequirementAssignment = self::RequirementAssignment<Self>;
     type RelationshipDefinition = self::RelationshipDefinition<Self>;
     type RelationshipAssignment = self::RequirementAssignment<Self>;
+
+    type WorkflowDefinition = self::WorkflowDefinition<Self>;
+    type WorkflowStepDefinition = self::WorkflowStepDefinition<Self>;
+    type WorkflowActivityDefinition = self::WorkflowActivityDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>
