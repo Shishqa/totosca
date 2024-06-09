@@ -48,6 +48,10 @@ pub trait ToscaDefinitionsVersion {
     type WorkflowDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type WorkflowStepDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type WorkflowActivityDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type PolicyTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type PolicyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type PolicyTriggerDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

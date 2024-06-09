@@ -73,6 +73,9 @@ pub struct GroupEntity;
 pub struct PolicyEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct PolicyTriggerEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct ImplementationEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
@@ -122,6 +125,7 @@ pub enum Entity {
     Requirement(RequirementEntity),
     Group(GroupEntity),
     Policy(PolicyEntity),
+    PolicyTrigger(PolicyTriggerEntity),
     Implementation(ImplementationEntity),
 
     Workflow(WorkflowEntity),
@@ -297,6 +301,9 @@ pub struct RefWorkflowRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct RefOperationRelation;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct PolicyTriggerEventRelation;
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -372,6 +379,8 @@ pub enum Relation {
     WorkflowActivity(WorkflowActivityRelation),
     RefWorkflow(RefWorkflowRelation),
     RefOperation(RefOperationRelation),
+
+    PolicyTriggerEvent(PolicyTriggerEventRelation),
 }
 
 pub trait AsToscaEntity {

@@ -8,6 +8,7 @@ pub mod interface;
 pub mod node;
 pub mod notification;
 pub mod operation;
+pub mod policy;
 pub mod relationship;
 pub mod requirement;
 pub mod service_template;
@@ -27,6 +28,7 @@ pub use interface::*;
 pub use node::*;
 pub use notification::*;
 pub use operation::*;
+pub use policy::*;
 pub use relationship::*;
 pub use requirement::*;
 pub use service_template::*;
@@ -64,6 +66,10 @@ where
     type CapabilityAssignment = self::CapabilityAssignment<Self>;
     type GroupDefinition = self::GroupDefinition<Self>;
     type GroupTypeDefinition = self::GroupTypeDefinition<Self>;
+
+    type PolicyDefinition = self::PolicyDefinition<Self>;
+    type PolicyTypeDefinition = self::PolicyTypeDefinition<Self>;
+    type PolicyTriggerDefinition = self::PolicyTriggerDefinition<Self>;
 
     type InterfaceDefinition = self::InterfaceDefinition<Self>;
     type InterfaceTypeDefinition = self::InterfaceTypeDefinition<Self>;

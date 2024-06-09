@@ -34,6 +34,7 @@ where
         "capability_types" => Collection::<TypeRelation, V::CapabilityTypeDefinition>::parse,
         "relationship_types" => Collection::<TypeRelation, V::RelationshipTypeDefinition>::parse,
         "group_types" => Collection::<TypeRelation, V::GroupTypeDefinition>::parse,
+        "policy_types" => Collection::<TypeRelation, V::PolicyTypeDefinition>::parse,
         "interface_types" => Collection::<TypeRelation, V::InterfaceTypeDefinition>::parse,
     };
 }

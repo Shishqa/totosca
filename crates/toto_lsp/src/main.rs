@@ -300,6 +300,7 @@ impl Server {
                 | toto_tosca::Entity::Capability(_)
                 | toto_tosca::Entity::Relationship(_)
                 | toto_tosca::Entity::Artifact(_)
+                | toto_tosca::Entity::Policy(_)
                 | toto_tosca::Entity::Interface(_)
                 | toto_tosca::Entity::Group(_),
             ) => self

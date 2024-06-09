@@ -3,9 +3,9 @@ use std::marker::PhantomData;
 use toto_parser::RelationParser;
 
 use crate::{
-    grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
-    DefinitionRelation, DescriptionRelation, MetadataRelation, SubstitutionMappingRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation,
+    grammar::{collection::Collection, field::Field, list::KeyedList, ToscaDefinitionsVersion},
+    DefinitionRelation, DescriptionRelation, MetadataRelation, OrderedDefinitionRelation,
+    SubstitutionMappingRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
 use super::value;
@@ -29,7 +29,7 @@ where
         "relationship_templates" => Collection::<DefinitionRelation, V::RelationshipTemplateDefinition>::parse,
         "groups" => Collection::<DefinitionRelation, V::GroupDefinition>::parse,
         "workflows" => Collection::<DefinitionRelation, V::WorkflowDefinition>::parse,
-        "policies" => |_, _, _| {},
+        "policies" => KeyedList::<OrderedDefinitionRelation, V::PolicyDefinition>::parse,
         "substitution_mappings" => Field::<SubstitutionMappingRelation, V::SubstitutionMapping>::parse,
     };
 }
