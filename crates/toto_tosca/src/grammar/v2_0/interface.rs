@@ -1,0 +1,118 @@
+use std::{collections::HashSet, marker::PhantomData};
+
+use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+
+use crate::{
+    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
+    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
+    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, EntrySchemaRelation,
+    ExternalSchemaRelation, FileExtRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
+    MimeTypeRelation, PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation,
+    RefHasTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+};
+
+use super::{value, ImplementationDefinition};
+
+#[derive(Debug)]
+pub struct InterfaceTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+
+#[derive(Debug)]
+pub struct InterfaceDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+
+#[derive(Debug)]
+pub struct InterfaceAssignment<V: ToscaDefinitionsVersion>(PhantomData<V>);
+
+impl<E, R, V> toto_parser::Schema<E, R> for InterfaceTypeDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "version" => Field::<VersionRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
+        "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "operations" => Collection::<DefinitionRelation, V::OperationDefinition>::parse,
+        "notifications" => Collection::<DefinitionRelation, V::NotificationDefinition>::parse,
+        "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
+    };
+}
+
+impl<E, R, V> toto_parser::Schema<E, R> for InterfaceDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "description" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
+        "operations" => Collection::<DefinitionRelation, V::OperationDefinition>::parse,
+        "notifications" => Collection::<DefinitionRelation, V::NotificationDefinition>::parse,
+        "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
+    };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
+}
+
+impl<E, R, V> toto_parser::Schema<E, R> for InterfaceAssignment<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
+    const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
+        "operations" => Collection::<AssignmentRelation, V::OperationAssignment>::parse,
+        "notifications" => Collection::<AssignmentRelation, V::NotificationAssignment>::parse,
+        "inputs" => Collection::<AssignmentRelation, value::AnyValue>::parse,
+    };
+}
+
+impl<E, R, V> toto_parser::EntityParser<E, R> for InterfaceTypeDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        <Self as toto_parser::Schema<E, R>>::parse(n, ast)
+    }
+}
+
+impl<E, R, V> toto_parser::EntityParser<E, R> for InterfaceDefinition<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        <Self as toto_parser::Schema<E, R>>::parse(n, ast)
+    }
+}
+
+impl<E, R, V> toto_parser::EntityParser<E, R> for InterfaceAssignment<V>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle> {
+        <Self as toto_parser::Schema<E, R>>::parse(n, ast)
+    }
+}

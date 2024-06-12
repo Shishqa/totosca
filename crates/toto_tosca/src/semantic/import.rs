@@ -121,7 +121,14 @@ impl Importer {
                     .and_then(|u| url::Url::parse(&u.0).or(uri.join(&u.0)).ok());
 
                 if import_uri.is_none() {
-                    todo!("handle profile");
+                    toto_parser::add_with_loc(
+                        toto_parser::ParseError::Custom(
+                            "profile import not yet implemented".to_string(),
+                        ),
+                        import_def,
+                        ast,
+                    );
+                    return;
                 }
                 let import_uri = import_uri.unwrap();
 

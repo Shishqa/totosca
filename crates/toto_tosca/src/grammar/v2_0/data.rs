@@ -1,6 +1,6 @@
-use std::marker::PhantomData;
+use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, ParseError, RelationParser};
+use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser};
 
 use crate::{
     grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
@@ -39,7 +39,7 @@ where
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "validation" => |_, _, _| todo!(),
+        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
@@ -60,6 +60,9 @@ where
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
     };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
 }
 
 pub struct StatusValue;
@@ -115,6 +118,9 @@ where
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
     };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
 }
 
 impl<E, R, V> toto_parser::Schema<E, R> for PropertyDefinition<V>
@@ -128,7 +134,7 @@ where
         "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
-        "default" => Field::<DefaultRelation, value::BoolValue>::parse,
+        "default" => Field::<DefaultRelation, value::AnyValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
         "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "value" => Field::<ValueRelation, value::AnyValue>::parse,
@@ -137,6 +143,9 @@ where
         "external-schema" => Field::<ExternalSchemaRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
     };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
 }
 
 impl<E, R, V> toto_parser::Schema<E, R> for ParameterDefinition<V>
@@ -150,7 +159,7 @@ where
         "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
-        "default" => Field::<DefaultRelation, value::BoolValue>::parse,
+        "default" => Field::<DefaultRelation, value::AnyValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
         "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "value" => Field::<ValueRelation, value::AnyValue>::parse,

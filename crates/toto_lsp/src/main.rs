@@ -273,7 +273,9 @@ impl Server {
                 Some(
                     toto_tosca::Relation::ImportUrl(_)
                     | toto_tosca::Relation::RefHasType(_)
-                    | toto_tosca::Relation::RefDerivedFrom(_),
+                    | toto_tosca::Relation::RefDerivedFrom(_)
+                    | toto_tosca::Relation::RefMemberNodeType(_)
+                    | toto_tosca::Relation::RefValidSourceNodeType(_),
                 ) => Some(e.source()),
                 _ => None,
             });
@@ -292,7 +294,16 @@ impl Server {
                     Some(toto_tosca::Relation::ImportTarget(_)) => Some(e.target()),
                     _ => None,
                 }),
-            Some(toto_tosca::Entity::Node(_) | toto_tosca::Entity::Data(_)) => self
+            Some(
+                toto_tosca::Entity::Node(_)
+                | toto_tosca::Entity::Data(_)
+                | toto_tosca::Entity::Capability(_)
+                | toto_tosca::Entity::Relationship(_)
+                | toto_tosca::Entity::Artifact(_)
+                | toto_tosca::Entity::Policy(_)
+                | toto_tosca::Entity::Interface(_)
+                | toto_tosca::Entity::Group(_),
+            ) => self
                 .ast
                 .edges_directed(semantic_token, Outgoing)
                 .find_map(|e| match e.weight().as_tosca() {

@@ -5,7 +5,7 @@ pub mod field;
 pub mod hierarchy;
 pub mod list;
 pub mod parser;
-pub mod v1_3;
+// pub mod v1_3;
 pub mod v2_0;
 
 pub trait ToscaDefinitionsVersion {
@@ -15,6 +15,8 @@ pub trait ToscaDefinitionsVersion {
     type ImportDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type FileDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type ServiceTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type SubstitutionMapping: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
     type NodeTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type NodeTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type DataTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
@@ -22,6 +24,38 @@ pub trait ToscaDefinitionsVersion {
     type PropertyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type AttributeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type ParameterDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ArtifactTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ArtifactDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type CapabilityDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type CapabilityTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type CapabilityAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type GroupDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type GroupTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ImplementationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type InterfaceAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type OperationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type OperationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NotificationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type NotificationAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipTemplateDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RelationshipAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RequirementDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type RequirementAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type WorkflowDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type WorkflowStepDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type WorkflowActivityDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type PolicyTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type PolicyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type PolicyTriggerDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type FunctionDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type FunctionSignatureDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

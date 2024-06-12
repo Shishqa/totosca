@@ -1,18 +1,42 @@
+pub mod artifact;
+pub mod capability;
 pub mod data;
 pub mod file;
+pub mod function;
+pub mod group;
 pub mod import;
+pub mod interface;
 pub mod node;
+pub mod notification;
+pub mod operation;
+pub mod policy;
+pub mod relationship;
+pub mod requirement;
 pub mod service_template;
+pub mod substitution_mapping;
 pub mod value;
+pub mod workflow;
 
 use std::marker::PhantomData;
 
+pub use artifact::*;
+pub use capability::*;
 pub use data::*;
 pub use file::*;
+pub use function::*;
+pub use group::*;
 pub use import::*;
+pub use interface::*;
 pub use node::*;
+pub use notification::*;
+pub use operation::*;
+pub use policy::*;
+pub use relationship::*;
+pub use requirement::*;
 pub use service_template::*;
+pub use substitution_mapping::*;
 pub use value::*;
+pub use workflow::*;
 
 use super::{ToscaCompatibleEntity, ToscaCompatibleRelation, ToscaDefinitionsVersion};
 
@@ -28,6 +52,8 @@ where
     type FileDefinition = self::ToscaFileDefinition<Self>;
     type ImportDefinition = self::ImportDefinition<Self>;
     type ServiceTemplateDefinition = self::ServiceTemplateDefinition<Self>;
+    type SubstitutionMapping = self::SubstitutionMapping<Self>;
+
     type NodeTypeDefinition = self::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = self::NodeTemplateDefinition<Self>;
     type DataTypeDefinition = self::DataTypeDefinition<Self>;
@@ -35,6 +61,40 @@ where
     type AttributeDefinition = self::AttributeDefinition<Self>;
     type PropertyDefinition = self::PropertyDefinition<Self>;
     type ParameterDefinition = self::ParameterDefinition<Self>;
+    type ArtifactDefinition = self::ArtifactDefinition<Self>;
+    type ArtifactTypeDefinition = self::ArtifactTypeDefinition<Self>;
+    type CapabilityDefinition = self::CapabilityDefinition<Self>;
+    type CapabilityTypeDefinition = self::CapabilityTypeDefinition<Self>;
+    type CapabilityAssignment = self::CapabilityAssignment<Self>;
+    type GroupDefinition = self::GroupDefinition<Self>;
+    type GroupTypeDefinition = self::GroupTypeDefinition<Self>;
+
+    type PolicyDefinition = self::PolicyDefinition<Self>;
+    type PolicyTypeDefinition = self::PolicyTypeDefinition<Self>;
+    type PolicyTriggerDefinition = self::PolicyTriggerDefinition<Self>;
+
+    type ImplementationDefinition = self::ImplementationDefinition<Self>;
+    type InterfaceDefinition = self::InterfaceDefinition<Self>;
+    type InterfaceTypeDefinition = self::InterfaceTypeDefinition<Self>;
+    type InterfaceAssignment = self::InterfaceAssignment<Self>;
+    type OperationDefinition = self::OperationDefinition<Self>;
+    type OperationAssignment = self::OperationAssignment<Self>;
+    type NotificationDefinition = self::NotificationDefinition<Self>;
+    type NotificationAssignment = self::NotificationAssignment<Self>;
+    type RelationshipTypeDefinition = self::RelationshipTypeDefinition<Self>;
+    type RelationshipTemplateDefinition = self::RelationshipTemplateDefinition<Self>;
+
+    type RequirementDefinition = self::RequirementDefinition<Self>;
+    type RequirementAssignment = self::RequirementAssignment<Self>;
+    type RelationshipDefinition = self::RelationshipDefinition<Self>;
+    type RelationshipAssignment = self::RequirementAssignment<Self>;
+
+    type WorkflowDefinition = self::WorkflowDefinition<Self>;
+    type WorkflowStepDefinition = self::WorkflowStepDefinition<Self>;
+    type WorkflowActivityDefinition = self::WorkflowActivityDefinition<Self>;
+
+    type FunctionDefinition = self::FunctionDefinition<Self>;
+    type FunctionSignatureDefinition = self::FunctionSignatureDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

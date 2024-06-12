@@ -34,6 +34,9 @@ pub struct FileEntity;
 pub struct ServiceTemplateEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct SubstitutionMappingEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct RepositoryEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
@@ -41,6 +44,63 @@ pub struct NodeEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub struct DataEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ArtifactEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct CapabilityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct InterfaceEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct OperationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct NotificationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RelationshipEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct RequirementEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct GroupEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct PolicyEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct PolicyTriggerEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct ImplementationEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowStepEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowDelegateActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowInlineActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowSetStateActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct WorkflowCallOperationActivityEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FunctionEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FunctionSignatureEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum StatusEntity {
@@ -57,10 +117,32 @@ pub enum Entity {
     Import(ImportEntity),
     File(FileEntity),
     ServiceTemplate(ServiceTemplateEntity),
+    SubstitutionMapping(SubstitutionMappingEntity),
     Repository(RepositoryEntity),
     Node(NodeEntity),
     Data(DataEntity),
     Status(StatusEntity),
+    Artifact(ArtifactEntity),
+    Capability(CapabilityEntity),
+    Interface(InterfaceEntity),
+    Operation(OperationEntity),
+    Notification(NotificationEntity),
+    Relationship(RelationshipEntity),
+    Requirement(RequirementEntity),
+    Group(GroupEntity),
+    Policy(PolicyEntity),
+    PolicyTrigger(PolicyTriggerEntity),
+    Implementation(ImplementationEntity),
+
+    Workflow(WorkflowEntity),
+    WorkflowStep(WorkflowStepEntity),
+    WorkflowDelegateActivity(WorkflowDelegateActivityEntity),
+    WorkflowInlineActivity(WorkflowInlineActivityEntity),
+    WorkflowSetStateActivity(WorkflowSetStateActivityEntity),
+    WorkflowCallOperationActivity(WorkflowCallOperationActivityEntity),
+
+    Function(FunctionEntity),
+    FunctionSignature(FunctionSignatureEntity),
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -68,6 +150,9 @@ pub struct ToscaDefinitionsVersionRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ServiceTemplateRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct SubstitutionMappingRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RepositoryRelation;
@@ -112,7 +197,13 @@ pub struct TypeRelation(pub String);
 pub struct DefinitionRelation(pub String);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct OrderedDefinitionRelation(pub (String, usize));
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct AssignmentRelation(pub String);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct OrderedAssignmentRelation(pub (String, usize));
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct MetadataRelation(pub String);
@@ -162,6 +253,75 @@ pub struct DerivedFromRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RefDerivedFromRelation;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MimeTypeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FileExtRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefHasFileRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ChecksumRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct ChecksumAlgorithmRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct PrimaryArtifactRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct DependencyArtifactRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidSourceNodeTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefMemberNodeTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefMemberNodeTemplateRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidRelationshipTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct DirectiveRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidCapabilityTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefValidTargetNodeTypeRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefTargetNodeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefTargetCapabilityRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct WorkflowActivityRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefWorkflowRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct RefOperationRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct PolicyTriggerEventRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionArgumentRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionOptionalArgumentRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionSignatureRelation(pub usize);
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -183,7 +343,9 @@ pub enum Relation {
 
     Type(TypeRelation),
     Definition(DefinitionRelation),
+    OrderedDefinition(OrderedDefinitionRelation),
     Assignment(AssignmentRelation),
+    OrderedAssignment(OrderedAssignmentRelation),
 
     Validation(ValidationRelation),
     Value(ValueRelation),
@@ -206,6 +368,41 @@ pub enum Relation {
 
     DerivedFrom(DerivedFromRelation),
     RefDerivedFrom(RefDerivedFromRelation),
+
+    MimeType(MimeTypeRelation),
+    FileExt(FileExtRelation),
+    RefHasFile(RefHasFileRelation),
+    Checksum(ChecksumRelation),
+    ChecksumAlgorithm(ChecksumAlgorithmRelation),
+
+    PrimaryArtifact(PrimaryArtifactRelation),
+    DependencyArtifact(DependencyArtifactRelation),
+
+    RefValidSourceNodeType(RefValidSourceNodeTypeRelation),
+    RefValidRelationshipType(RefValidRelationshipTypeRelation),
+
+    Directive(DirectiveRelation),
+
+    RefMemberNodeTemplate(RefMemberNodeTemplateRelation),
+    RefMemberNodeType(RefMemberNodeTypeRelation),
+
+    RefValidCapabilityType(RefValidCapabilityTypeRelation),
+    RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
+
+    RefTargetNode(RefTargetNodeRelation),
+    RefTargetCapability(RefTargetCapabilityRelation),
+
+    SubstitutionMapping(SubstitutionMappingRelation),
+
+    WorkflowActivity(WorkflowActivityRelation),
+    RefWorkflow(RefWorkflowRelation),
+    RefOperation(RefOperationRelation),
+
+    PolicyTriggerEvent(PolicyTriggerEventRelation),
+
+    FunctionArgument(FunctionArgumentRelation),
+    FunctionOptionalArgument(FunctionOptionalArgumentRelation),
+    FunctionSignature(FunctionSignatureRelation),
 }
 
 pub trait AsToscaEntity {

@@ -1,33 +1,34 @@
-use std::marker::PhantomData;
+use std::{collections::HashSet, marker::PhantomData};
+
+use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
 
 use crate::{
-    grammar::{
-        collection::Collection,
-        field::Field,
-        list::{KeyedList, List},
-        ToscaDefinitionsVersion,
-    },
-    AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, OrderedAssignmentRelation, OrderedDefinitionRelation, RefDerivedFromRelation,
-    RefHasTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
+    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
+    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
+    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
+    MappingRelation, MetadataRelation, MimeTypeRelation, PrimaryArtifactRelation,
+    RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation, RefMemberNodeTemplateRelation,
+    RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
+    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    ValidationRelation, ValueRelation, VersionRelation,
 };
-use toto_parser::RelationParser;
 
 use super::value;
 
 #[derive(Debug)]
-pub struct NodeTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+pub struct GroupTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
 #[derive(Debug)]
-pub struct NodeTemplateDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+pub struct GroupDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
-impl<E, R, V> toto_parser::Schema<E, R> for NodeTypeDefinition<V>
+impl<E, R, V> toto_parser::Schema<E, R> for GroupTypeDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
+    const SELF: fn() -> E = || crate::Entity::from(crate::GroupEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
         "version" => Field::<VersionRelation, value::StringValue>::parse,
@@ -35,38 +36,31 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
-        "capabilities" => Collection::<DefinitionRelation, V::CapabilityDefinition>::parse,
-        "requirements" => KeyedList::<OrderedDefinitionRelation, V::RequirementDefinition>::parse,
-        "interfaces" => Collection::<DefinitionRelation, V::InterfaceDefinition>::parse,
-        "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
+        "members" => List::<RefMemberNodeTypeRelation, value::StringValue>::parse,
     };
 }
 
-impl<E, R, V> toto_parser::Schema<E, R> for NodeTemplateDefinition<V>
+impl<E, R, V> toto_parser::Schema<E, R> for GroupDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
 {
-    const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
+    const SELF: fn() -> E = || crate::Entity::from(crate::GroupEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
-        "directives" => List::<DirectiveRelation, value::StringValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
-        "capabilities" => Collection::<AssignmentRelation, V::CapabilityAssignment>::parse,
-        "requirements" => KeyedList::<OrderedAssignmentRelation, V::RequirementDefinition>::parse,
-        "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
-        "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
-        "count" => |_, _, _| {},
-        "node_filter" => |_, _, _| {},
-        "copy" => |_, _, _| {},
+        "members" => List::<RefMemberNodeTemplateRelation, value::StringValue>::parse,
     };
+
+    const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
+        &[|fields: &HashSet<String>| mandatory(fields, "type")];
 }
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for NodeTemplateDefinition<V>
+impl<E, R, V> toto_parser::EntityParser<E, R> for GroupTypeDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
@@ -80,7 +74,7 @@ where
     }
 }
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for NodeTypeDefinition<V>
+impl<E, R, V> toto_parser::EntityParser<E, R> for GroupDefinition<V>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
