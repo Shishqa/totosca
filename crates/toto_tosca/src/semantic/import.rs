@@ -10,6 +10,8 @@ use toto_parser::EntityParser;
 
 use crate::{grammar::parser::ToscaGrammar, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
+use super::Hierarchy;
+
 pub struct Importer {
     existing_urls: HashMap<url::Url, toto_ast::GraphHandle>,
 }
@@ -41,6 +43,7 @@ impl Importer {
         let doc_root = toto_yaml::YamlParser::parse(doc_handle, ast).unwrap();
         if let Some(file_handle) = ToscaGrammar::parse(doc_root, ast) {
             self.existing_urls.insert(uri.clone(), file_handle);
+            Hierarchy::link(file_handle, ast);
             self.import_files(uri, file_handle, ast);
             Some(file_handle)
         } else {

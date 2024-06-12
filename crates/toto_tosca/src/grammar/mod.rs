@@ -2,7 +2,6 @@ use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 pub mod collection;
 pub mod field;
-pub mod hierarchy;
 pub mod list;
 pub mod parser;
 // pub mod v1_3;

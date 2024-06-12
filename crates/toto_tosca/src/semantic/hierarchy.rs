@@ -5,10 +5,7 @@ use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 pub struct Hierarchy;
 
 impl Hierarchy {
-    pub fn link<E, R>(
-        file_handle: toto_ast::GraphHandle,
-        ast: &mut toto_ast::AST<E, R>,
-    ) -> toto_ast::GraphHandle
+    pub fn link<E, R>(file_handle: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
@@ -23,6 +20,5 @@ impl Hierarchy {
                 );
             }
         }
-        file_handle
     }
 }
