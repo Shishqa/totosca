@@ -2,6 +2,7 @@ pub mod artifact;
 pub mod capability;
 pub mod data;
 pub mod file;
+pub mod function;
 pub mod group;
 pub mod import;
 pub mod interface;
@@ -22,6 +23,7 @@ pub use artifact::*;
 pub use capability::*;
 pub use data::*;
 pub use file::*;
+pub use function::*;
 pub use group::*;
 pub use import::*;
 pub use interface::*;
@@ -71,6 +73,7 @@ where
     type PolicyTypeDefinition = self::PolicyTypeDefinition<Self>;
     type PolicyTriggerDefinition = self::PolicyTriggerDefinition<Self>;
 
+    type ImplementationDefinition = self::ImplementationDefinition<Self>;
     type InterfaceDefinition = self::InterfaceDefinition<Self>;
     type InterfaceTypeDefinition = self::InterfaceTypeDefinition<Self>;
     type InterfaceAssignment = self::InterfaceAssignment<Self>;
@@ -89,6 +92,9 @@ where
     type WorkflowDefinition = self::WorkflowDefinition<Self>;
     type WorkflowStepDefinition = self::WorkflowStepDefinition<Self>;
     type WorkflowActivityDefinition = self::WorkflowActivityDefinition<Self>;
+
+    type FunctionDefinition = self::FunctionDefinition<Self>;
+    type FunctionSignatureDefinition = self::FunctionSignatureDefinition<Self>;
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>

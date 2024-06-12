@@ -4,7 +4,7 @@ use toto_parser::RelationParser;
 
 use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    DescriptionRelation, ImportRelation, MetadataRelation, ProfileRelation,
+    DefinitionRelation, DescriptionRelation, ImportRelation, MetadataRelation, ProfileRelation,
     ServiceTemplateRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
 };
 
@@ -36,6 +36,7 @@ where
         "group_types" => Collection::<TypeRelation, V::GroupTypeDefinition>::parse,
         "policy_types" => Collection::<TypeRelation, V::PolicyTypeDefinition>::parse,
         "interface_types" => Collection::<TypeRelation, V::InterfaceTypeDefinition>::parse,
+        "functions" => Collection::<DefinitionRelation, V::FunctionDefinition>::parse,
     };
 }
 

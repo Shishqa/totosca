@@ -97,6 +97,12 @@ pub struct WorkflowSetStateActivityEntity;
 pub struct WorkflowCallOperationActivityEntity;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FunctionEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
+pub struct FunctionSignatureEntity;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, Copy)]
 pub enum StatusEntity {
     #[default]
     Supported,
@@ -134,6 +140,9 @@ pub enum Entity {
     WorkflowInlineActivity(WorkflowInlineActivityEntity),
     WorkflowSetStateActivity(WorkflowSetStateActivityEntity),
     WorkflowCallOperationActivity(WorkflowCallOperationActivityEntity),
+
+    Function(FunctionEntity),
+    FunctionSignature(FunctionSignatureEntity),
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -304,6 +313,15 @@ pub struct RefOperationRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct PolicyTriggerEventRelation;
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionArgumentRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionOptionalArgumentRelation(pub usize);
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+pub struct FunctionSignatureRelation(pub usize);
+
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
@@ -381,6 +399,10 @@ pub enum Relation {
     RefOperation(RefOperationRelation),
 
     PolicyTriggerEvent(PolicyTriggerEventRelation),
+
+    FunctionArgument(FunctionArgumentRelation),
+    FunctionOptionalArgument(FunctionOptionalArgumentRelation),
+    FunctionSignature(FunctionSignatureRelation),
 }
 
 pub trait AsToscaEntity {

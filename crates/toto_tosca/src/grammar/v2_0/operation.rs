@@ -29,7 +29,7 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::OperationEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "implementation" => Field::<DefinitionRelation, ImplementationDefinition<V>>::parse,
+        "implementation" => Field::<DefinitionRelation, V::ImplementationDefinition>::parse,
         "inputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "outputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
     };
@@ -43,7 +43,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::OperationEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "implementation" => Field::<DefinitionRelation, ImplementationDefinition<V>>::parse,
+        "implementation" => Field::<DefinitionRelation, V::ImplementationDefinition>::parse,
         "inputs" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "outputs" => Collection::<AssignmentRelation, value::AnyValue>::parse,
     };

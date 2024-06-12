@@ -31,6 +31,7 @@ pub trait ToscaDefinitionsVersion {
     type CapabilityAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type GroupDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type GroupTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type ImplementationDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type InterfaceDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type InterfaceTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type InterfaceAssignment: toto_parser::EntityParser<Self::Entity, Self::Relation>;
@@ -52,6 +53,9 @@ pub trait ToscaDefinitionsVersion {
     type PolicyTypeDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type PolicyDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type PolicyTriggerDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    type FunctionDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+    type FunctionSignatureDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
 }
 
 #[cfg(test)]

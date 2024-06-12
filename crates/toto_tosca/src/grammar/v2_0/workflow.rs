@@ -15,7 +15,7 @@ use crate::{
     WorkflowActivityRelation,
 };
 
-use super::{value, ImplementationDefinition};
+use super::value;
 
 #[derive(Debug)]
 pub struct WorkflowDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
@@ -52,7 +52,7 @@ where
         "outputs" => Collection::<DefinitionRelation, V::ParameterDefinition>::parse,
         "precondition" => |_, _, _| {},
         "steps" => Collection::<DefinitionRelation, V::WorkflowStepDefinition>::parse,
-        "implementation" => Field::<DefinitionRelation, ImplementationDefinition<V>>::parse,
+        "implementation" => Field::<DefinitionRelation, V::ImplementationDefinition>::parse,
     };
 
     const VALIDATION: &'static [toto_parser::ValidationFieldFn] = &[
