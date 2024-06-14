@@ -2,6 +2,8 @@ extern crate derive_more;
 
 use derive_more::{From, TryInto};
 
+use crate::semantic::SimpleLookuper;
+
 #[derive(Debug)]
 pub struct Version {
     pub minor: u64,
@@ -145,6 +147,11 @@ pub enum Entity {
     FunctionSignature(FunctionSignatureEntity),
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct RefRelation {
+    pub lookuper: Box<SimpleLookuper>,
+}
+
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ToscaDefinitionsVersionRelation;
 
@@ -283,6 +290,9 @@ pub struct RefMemberNodeTypeRelation(pub usize);
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct RefMemberNodeTemplateRelation(pub usize);
 
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct MemberNodeTemplateRelation(pub usize);
+
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct RefValidRelationshipTypeRelation(pub usize);
 
@@ -297,6 +307,9 @@ pub struct RefValidTargetNodeTypeRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RefTargetNodeRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct TargetNodeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct RefTargetCapabilityRelation;
@@ -325,6 +338,8 @@ pub struct FunctionSignatureRelation(pub usize);
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
+    Ref(RefRelation),
+
     ToscaDefinitionsVersion(ToscaDefinitionsVersionRelation),
     ServiceTemplate(ServiceTemplateRelation),
     Repository(RepositoryRelation),
@@ -384,12 +399,14 @@ pub enum Relation {
     Directive(DirectiveRelation),
 
     RefMemberNodeTemplate(RefMemberNodeTemplateRelation),
+    MemberNodeTemplate(MemberNodeTemplateRelation),
     RefMemberNodeType(RefMemberNodeTypeRelation),
 
     RefValidCapabilityType(RefValidCapabilityTypeRelation),
     RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
 
     RefTargetNode(RefTargetNodeRelation),
+    TargetNode(TargetNodeRelation),
     RefTargetCapability(RefTargetCapabilityRelation),
 
     SubstitutionMapping(SubstitutionMappingRelation),

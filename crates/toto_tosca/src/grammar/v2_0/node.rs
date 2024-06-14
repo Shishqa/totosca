@@ -4,6 +4,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
+        field_ref::FieldRef,
         list::{KeyedList, List},
         ToscaDefinitionsVersion,
     },
@@ -29,7 +30,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "derived_from" => |r, n, ast| FieldRef::derived_from(crate::Entity::from(crate::NodeEntity)).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -50,7 +51,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(crate::NodeEntity)).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "directives" => List::<DirectiveRelation, value::StringValue>::parse,

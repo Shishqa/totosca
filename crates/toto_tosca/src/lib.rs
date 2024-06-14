@@ -54,8 +54,7 @@ impl ToscaParser {
                 });
             });
 
-        let lookup = Lookup::from_ast(ast);
-        lookup.lookup(ast);
+        Lookup::lookup(ast);
 
         file_handle
     }
