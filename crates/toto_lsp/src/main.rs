@@ -154,7 +154,7 @@ impl Server {
         let mut file = File::create(".toto-ast.dot")?;
         file.write_all(format!("{:?}", dot).as_bytes())?;
 
-        get_errors(&self.ast).into_iter().for_each(|(what, loc)| {
+        get_errors(&self.ast).for_each(|(what, loc)| {
             let len = loc.map(|l| get_yaml_len(l, &self.ast)).unwrap_or(1);
             let (pos, file) = self
                 .ast
@@ -207,7 +207,7 @@ impl Server {
             let notif_params = Some(lsp_types::PublishDiagnosticsParams {
                 uri: uri.clone(),
                 version: None,
-                diagnostics: diagnostics.remove(uri).unwrap_or(vec![]),
+                diagnostics: diagnostics.remove(uri).unwrap_or_default(),
             });
             let notif_params = serde_json::to_value(notif_params)?;
 
@@ -310,10 +310,7 @@ impl Server {
                 _ => None,
             })
             .flatten()
-            .find_map(|e| match e.weight().as_file() {
-                Some(loc) => Some((e.target(), loc.0)),
-                _ => None,
-            })
+            .find_map(|e| e.weight().as_file().map(|loc| (e.target(), loc.0)))
             .map(|(file_handle, pos)| {
                 let file = self
                     .ast
