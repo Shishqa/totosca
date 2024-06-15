@@ -2,7 +2,7 @@ use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-use super::{hierarchy::Hierarchy, v2_0::Tosca2_0};
+use super::v2_0::Tosca2_0;
 
 pub struct ToscaGrammar;
 
@@ -70,6 +70,5 @@ where
                     None
                 }
             })
-            .map(|file_handle| Hierarchy::link(file_handle, ast))
     }
 }

@@ -1,18 +1,14 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationParser, Schema};
+use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationParser};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, PrimaryArtifactRelation,
-    RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation, RefMemberNodeTemplateRelation,
-    RefMemberNodeTypeRelation, RefTargetNodeRelation, RefValidRelationshipTypeRelation,
-    RefValidSourceNodeTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
-    WorkflowActivityRelation,
+    grammar::{
+        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        ToscaDefinitionsVersion,
+    },
+    DefinitionRelation, DescriptionRelation, MetadataRelation, TargetNodeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
 };
 
 use super::value;
@@ -85,7 +81,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowStepEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "target" => Field::<RefTargetNodeRelation, value::StringValue>::parse,
+        "target" => |r, n, ast| FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).parse(r, n, ast),
         "target_relationship" => Field::<DefinitionRelation, value::StringValue>::parse,
         "filter" => |_, _, _| {},
         "activities" => List::<WorkflowActivityRelation, V::WorkflowActivityDefinition>::parse,
@@ -107,7 +103,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowDelegateActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "workflow" => |r, n, ast| FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation).parse(r, n, ast),
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 
@@ -123,7 +119,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowInlineActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => Field::<DescriptionRelation, value::StringValue>::parse,
+        "workflow" => |r, n, ast| FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation).parse(r, n, ast),
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 
@@ -194,11 +190,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(activity, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    activity,
-                    n,
-                    crate::Relation::from(crate::RefWorkflowRelation).into(),
-                );
+                FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation)
+                    .link(activity, n, ast);
                 activity
             }))
             .or_else(|| {
@@ -231,11 +224,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(activity, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    activity,
-                    n,
-                    crate::Relation::from(crate::RefWorkflowRelation).into(),
-                );
+                FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation)
+                    .link(activity, n, ast);
                 activity
             }))
             .or_else(|| {
@@ -271,7 +261,7 @@ where
                 ast.add_edge(
                     activity,
                     n,
-                    crate::Relation::from(crate::RefOperationRelation).into(),
+                    crate::Relation::from(crate::OperationRelation).into(),
                 );
                 activity
             }))

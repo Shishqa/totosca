@@ -1,17 +1,15 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::{add_with_loc, mandatory, RelationParser};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, PrimaryArtifactRelation,
-    RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation, RepositoryRelation,
-    RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation,
-    ValueRelation, VersionRelation,
+    grammar::{
+        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        ToscaDefinitionsVersion,
+    },
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
+    MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    ValidRelationshipTypeRelation, ValidSourceNodeTypeRelation, VersionRelation,
 };
 
 use super::value;
@@ -33,14 +31,14 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::CapabilityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::CapabilityEntity, crate::DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
-        "valid_source_node_types" => List::<RefValidSourceNodeTypeRelation, value::StringValue>::parse,
-        "valid_relationship_types" => List::<RefValidRelationshipTypeRelation, value::StringValue>::parse,
+        "valid_source_node_types" => List::<ValidSourceNodeTypeRelation, value::StringValue>::parse,
+        "valid_relationship_types" => List::<ValidRelationshipTypeRelation, value::StringValue>::parse,
     };
 }
 
@@ -52,13 +50,13 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::CapabilityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::CapabilityEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
-        "valid_source_node_types" => List::<RefValidSourceNodeTypeRelation, value::StringValue>::parse,
-        "valid_relationship_types" => List::<RefValidRelationshipTypeRelation, value::StringValue>::parse,
+        "valid_source_node_types" => List::<ValidSourceNodeTypeRelation, value::StringValue>::parse,
+        "valid_relationship_types" => List::<ValidRelationshipTypeRelation, value::StringValue>::parse,
     };
 
     const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
@@ -93,11 +91,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(capability, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    capability,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::type_ref(crate::CapabilityEntity, crate::HasTypeRelation)
+                    .link(capability, n, ast);
                 capability
             }))
             .or_else(|| {

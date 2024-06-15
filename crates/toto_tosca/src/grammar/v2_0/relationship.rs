@@ -1,11 +1,13 @@
 use std::{collections::HashSet, marker::PhantomData};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
+    grammar::{
+        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        ToscaDefinitionsVersion,
+    },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
-    RefDerivedFromRelation, RefHasTypeRelation, RefValidCapabilityTypeRelation,
-    RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, VersionRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, ValidCapabilityTypeRelation,
+    ValidSourceNodeTypeRelation, ValidTargetNodeTypeRelation, VersionRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
@@ -31,16 +33,16 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::RelationshipEntity, crate::DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
         "interfaces" => Collection::<DefinitionRelation, V::InterfaceDefinition>::parse,
-        "valid_capability_types" => List::<RefValidCapabilityTypeRelation, value::StringValue>::parse,
-        "valid_target_node_types" => List::<RefValidTargetNodeTypeRelation, value::StringValue>::parse,
-        "valid_source_node_types" => List::<RefValidSourceNodeTypeRelation, value::StringValue>::parse,
+        "valid_capability_types" => List::<ValidCapabilityTypeRelation, value::StringValue>::parse,
+        "valid_target_node_types" => List::<ValidTargetNodeTypeRelation, value::StringValue>::parse,
+        "valid_source_node_types" => List::<ValidSourceNodeTypeRelation, value::StringValue>::parse,
     };
 }
 
@@ -52,7 +54,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::RelationshipEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
@@ -73,7 +75,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::RelationshipEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
@@ -93,7 +95,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RelationshipEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::RelationshipEntity, crate::HasTypeRelation).parse(r, n, ast),
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
@@ -142,11 +144,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    rel,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::type_ref(crate::RelationshipEntity, crate::HasTypeRelation)
+                    .link(rel, n, ast);
                 rel
             }))
             .or_else(|| {
@@ -175,11 +174,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    rel,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::type_ref(crate::RelationshipEntity, crate::HasTypeRelation)
+                    .parse(rel, n, ast);
                 rel
             }))
             .or_else(|| {

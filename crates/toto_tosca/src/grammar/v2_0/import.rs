@@ -22,6 +22,7 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::ImportEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "url" => Field::<ImportUrlRelation, value::StringValue>::parse,
+
         "profile" => Field::<ImportProfileRelation, value::StringValue>::parse,
         "repository" => Field::<ImportRepositoryRelation, value::StringValue>::parse,
         "namespace" => Field::<ImportNamespaceRelation, value::StringValue>::parse,

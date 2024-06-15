@@ -29,6 +29,11 @@ where
                         *v_handle,
                         crate::Relation::from(K::from(k_str.0.clone())).into(),
                     );
+                    ast.add_edge(
+                        *v_handle,
+                        root,
+                        crate::Relation::Root(crate::RootRelation).into(),
+                    );
                 });
             });
         }

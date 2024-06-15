@@ -1,118 +1,105 @@
-// note: this code is garbage, but works
-
-use std::collections::HashMap;
-
-use petgraph::visit::EdgeRef;
+use petgraph::{data::DataMap, visit::EdgeRef};
 use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-type Namespace = HashMap<
-    toto_ast::GraphHandle,
-    HashMap<(crate::Relation, crate::Entity), toto_ast::GraphHandle>,
->;
-
-pub struct Lookup {
-    ns: Namespace,
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+pub struct SimpleLookuper {
+    pub root: (crate::Relation, crate::Entity),
+    pub what: crate::Entity,
+    pub what_rel: fn(String) -> crate::Relation,
+    pub then: crate::Relation,
 }
 
-impl Lookup {
-    pub fn from_ast<E, R>(ast: &toto_ast::AST<E, R>) -> Self
+impl SimpleLookuper {
+    pub fn lookup<E, R>(&self, ast: &mut toto_ast::AST<E, R>, e: toto_ast::EdgeHandle)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let mut ns = Namespace::new();
+        let (source, target) = ast.edge_endpoints(e).unwrap();
 
-        ast.edge_references()
-            .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::Type(type_name)) => Some((
-                    e.source(),
-                    (
-                        crate::Relation::Type(type_name.clone()),
-                        *ast.node_weight(e.target()).unwrap().as_tosca().unwrap(),
-                    ),
-                    e.target(),
-                )),
-                _ => None,
-            })
-            .for_each(|(n, rel, t)| {
-                if let Some(n_ns) = ns.get_mut(&n) {
-                    n_ns.insert(rel, t);
+        let target_str = toto_yaml::as_string(target, ast).expect("expected string");
+        let target_rel = (self.what_rel)(target_str.0.clone());
+
+        let mut path = vec![source];
+        let mut curr_node = source;
+        let root = loop {
+            let root = ast
+                .edges_directed(curr_node, petgraph::Direction::Outgoing)
+                .find_map(|e| {
+                    if e.weight().as_tosca() == Some(&self.root.0) {
+                        Some(e.target())
+                    } else {
+                        None
+                    }
+                })
+                .expect(&format!(
+                    "expected {:?} to have {:?} entity",
+                    path, self.root.1
+                ));
+
+            if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
+                break root;
+            }
+            curr_node = root;
+            path.push(curr_node);
+        };
+
+        let lookuped = ast
+            .edges_directed(root, petgraph::Direction::Outgoing)
+            .find_map(|e| {
+                if e.weight().as_tosca() == Some(&target_rel)
+                    && ast.node_weight(e.target()).unwrap().as_tosca() == Some(&self.what)
+                {
+                    Some(e.target())
                 } else {
-                    let mut n_ns =
-                        HashMap::<(crate::Relation, crate::Entity), toto_ast::GraphHandle>::new();
-                    n_ns.insert(rel, t);
-                    ns.insert(n, n_ns);
+                    None
                 }
             });
 
-        Self { ns }
-    }
+        if let Some(lookuped) = lookuped {
+            if ast
+                .edges_connecting(source, lookuped)
+                .find(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == self.then))
+                .is_some()
+            {
+                return;
+            }
 
-    pub fn lookup<E, R>(&self, ast: &mut toto_ast::AST<E, R>)
+            ast.add_edge(source, lookuped, self.then.clone().into());
+        } else {
+            add_with_loc(
+                toto_parser::ParseError::Custom(format!(
+                    "unknown {:?} {:?}",
+                    self.what, target_rel
+                )),
+                target,
+                ast,
+            );
+        }
+    }
+}
+
+pub struct Lookup;
+
+impl Lookup {
+    pub fn lookup<E, R>(ast: &mut toto_ast::AST<E, R>)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
         ast.edge_references()
             .filter_map(|e| match e.weight().as_tosca() {
-                Some(crate::Relation::RefHasType(_)) => Some((
-                    e.source(),
-                    (
-                        crate::Relation::from(crate::TypeRelation(
-                            toto_yaml::as_string(e.target(), ast)
-                                .map(|n| n.0.clone())
-                                .unwrap(),
-                        )),
-                        *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
-                    ),
-                    crate::Relation::from(crate::HasTypeRelation),
-                    e.target(),
-                )),
-                Some(crate::Relation::RefDerivedFrom(_)) => Some((
-                    e.source(),
-                    (
-                        crate::Relation::Type(crate::TypeRelation(
-                            toto_yaml::as_string(e.target(), ast)
-                                .map(|n| n.0.clone())
-                                .unwrap(),
-                        )),
-                        *ast.node_weight(e.source()).unwrap().as_tosca().unwrap(),
-                    ),
-                    crate::Relation::from(crate::DerivedFromRelation),
-                    e.target(),
-                )),
+                Some(crate::Relation::Ref(referencer)) => {
+                    Some((e.id(), referencer.lookuper.clone()))
+                }
                 _ => None,
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .for_each(|(n, rel_ref, new_rel, err_target)| {
-                let root = ast
-                    .edges_directed(n, petgraph::Direction::Incoming)
-                    .find_map(|e| match e.weight().as_tosca() {
-                        Some(crate::Relation::RefRoot(_)) => Some(e.source()),
-                        _ => None,
-                    })
-                    .unwrap();
-
-                if let Some(target_type) = self.ns.get(&root).and_then(|n_ns| n_ns.get(&rel_ref)) {
-                    if ast
-                        .edges_connecting(n, *target_type)
-                        .find(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == new_rel))
-                        .is_some()
-                    {
-                        return;
-                    }
-
-                    ast.add_edge(n, *target_type, new_rel.into());
-                } else {
-                    add_with_loc(
-                        toto_parser::ParseError::Custom("unknown type".to_string()),
-                        err_target,
-                        ast,
-                    );
-                }
+            .for_each(|(e, lookuper)| {
+                lookuper.lookup(ast, e);
             });
     }
 }

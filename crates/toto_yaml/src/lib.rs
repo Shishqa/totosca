@@ -320,7 +320,5 @@ mod tests {
 
         dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
         dbg!(Dot::new(&ast));
-
-        assert!(false);
     }
 }

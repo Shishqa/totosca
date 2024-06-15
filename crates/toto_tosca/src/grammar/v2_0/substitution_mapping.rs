@@ -1,22 +1,12 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::{mandatory, RelationParser};
 
 use crate::{
     grammar::{
-        collection::Collection,
-        field::Field,
-        list::{KeyedList, List},
-        ToscaDefinitionsVersion,
+        collection::Collection, field_ref::FieldRef, list::KeyedList, ToscaDefinitionsVersion,
     },
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, OrderedDefinitionRelation,
-    PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefMemberNodeTemplateRelation, RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation,
-    RefValidSourceNodeTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    DefinitionRelation, OrderedDefinitionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
 use super::value;
@@ -32,7 +22,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::SubstitutionMappingEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node_type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "node_type" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::SubstitutesTypeRelation).parse(r, n, ast),
         "substitution_filter" => |_, _, _| {},
         "properties" => Collection::<DefinitionRelation, value::AnyValue>::parse,
         "attributes" => Collection::<DefinitionRelation, value::AnyValue>::parse,

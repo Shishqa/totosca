@@ -16,7 +16,7 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::{AsToscaEntity, AsToscaRelation};
+use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
@@ -270,13 +270,12 @@ impl Server {
             })
             .flatten()
             .find_map(|e| match e.weight().as_tosca() {
-                Some(
-                    toto_tosca::Relation::ImportUrl(_)
-                    | toto_tosca::Relation::RefHasType(_)
-                    | toto_tosca::Relation::RefDerivedFrom(_)
-                    | toto_tosca::Relation::RefMemberNodeType(_)
-                    | toto_tosca::Relation::RefValidSourceNodeType(_),
-                ) => Some(e.source()),
+                Some(toto_tosca::Relation::Ref(referencer)) => {
+                    Some((e.source(), referencer.lookuper.then.clone()))
+                }
+                Some(toto_tosca::Relation::ImportUrl(_)) => {
+                    Some((e.source(), toto_tosca::Relation::from(ImportTargetRelation)))
+                }
                 _ => None,
             });
 
@@ -286,34 +285,16 @@ impl Server {
         }
         let semantic_token = semantic_token.unwrap();
 
-        let goto_target = match self.ast[semantic_token].as_tosca() {
-            Some(toto_tosca::Entity::Import(_)) => self
-                .ast
-                .edges_directed(semantic_token, Outgoing)
-                .find_map(|e| match e.weight().as_tosca() {
-                    Some(toto_tosca::Relation::ImportTarget(_)) => Some(e.target()),
-                    _ => None,
-                }),
-            Some(
-                toto_tosca::Entity::Node(_)
-                | toto_tosca::Entity::Data(_)
-                | toto_tosca::Entity::Capability(_)
-                | toto_tosca::Entity::Relationship(_)
-                | toto_tosca::Entity::Artifact(_)
-                | toto_tosca::Entity::Policy(_)
-                | toto_tosca::Entity::Interface(_)
-                | toto_tosca::Entity::Group(_),
-            ) => self
-                .ast
-                .edges_directed(semantic_token, Outgoing)
-                .find_map(|e| match e.weight().as_tosca() {
-                    Some(
-                        toto_tosca::Relation::HasType(_) | toto_tosca::Relation::DerivedFrom(_),
-                    ) => Some(e.target()),
-                    _ => None,
-                }),
-            _ => None,
-        };
+        let goto_target = self
+            .ast
+            .edges_directed(semantic_token.0, Outgoing)
+            .find_map(|e| {
+                if e.weight().as_tosca() == Some(&semantic_token.1) {
+                    Some(e.target())
+                } else {
+                    None
+                }
+            });
 
         if goto_target.is_none() {
             eprintln!("can't go to definition (no target)");

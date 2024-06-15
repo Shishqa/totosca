@@ -24,6 +24,11 @@ where
                 items.for_each(|(i, v)| {
                     V::parse(v, ast).map(|v_handle| {
                         ast.add_edge(root, v_handle, crate::Relation::from(K::from(i)).into());
+                        ast.add_edge(
+                            v_handle,
+                            root,
+                            crate::Relation::Root(crate::RootRelation).into(),
+                        );
                         v_handle
                     });
                 });
@@ -69,6 +74,11 @@ where
                                         root,
                                         *v_handle,
                                         crate::Relation::from(K::from((k_str.0.clone(), i))).into(),
+                                    );
+                                    ast.add_edge(
+                                        *v_handle,
+                                        root,
+                                        crate::Relation::Root(crate::RootRelation).into(),
                                     );
                                 });
                             } else {

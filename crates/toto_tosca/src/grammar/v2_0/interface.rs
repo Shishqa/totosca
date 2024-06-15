@@ -1,18 +1,14 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::{mandatory, RelationParser};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, EntrySchemaRelation,
-    ExternalSchemaRelation, FileExtRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
-    MimeTypeRelation, PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation,
-    RefHasTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    grammar::{collection::Collection, field::Field, field_ref::FieldRef, ToscaDefinitionsVersion},
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 
-use super::{value, ImplementationDefinition};
+use super::value;
 
 #[derive(Debug)]
 pub struct InterfaceTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
@@ -31,7 +27,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::InterfaceEntity, crate::DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -49,7 +45,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::InterfaceEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "operations" => Collection::<DefinitionRelation, V::OperationDefinition>::parse,

@@ -1,18 +1,15 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::{mandatory, RelationParser};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, PolicyTriggerEventRelation,
-    PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefMemberNodeTemplateRelation, RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation,
-    RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation, RepositoryRelation,
-    RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation,
-    ValueRelation, VersionRelation, WorkflowActivityRelation,
+    grammar::{
+        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        ToscaDefinitionsVersion,
+    },
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
+    PolicyTriggerEventRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    ValidTargetNodeTypeRelation, VersionRelation, WorkflowActivityRelation,
 };
 
 use super::value;
@@ -54,12 +51,12 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::PolicyEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => Field::<RefDerivedFromRelation, value::StringValue>::parse,
+        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::PolicyEntity, crate::DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
-        "targets" => List::<RefValidTargetNodeTypeRelation, value::StringValue>::parse,
+        "targets" => List::<ValidTargetNodeTypeRelation, value::StringValue>::parse,
         "triggers" => Collection::<DefinitionRelation, V::PolicyTriggerDefinition>::parse,
     };
 }
@@ -72,12 +69,12 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::PolicyEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(crate::PolicyEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         // todo: target nodes and groups
-        "targets" => List::<RefValidTargetNodeTypeRelation, value::StringValue>::parse,
+        "targets" => List::<ValidTargetNodeTypeRelation, value::StringValue>::parse,
         "triggers" => Collection::<DefinitionRelation, V::PolicyTriggerDefinition>::parse,
     };
 

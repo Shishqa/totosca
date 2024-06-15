@@ -1,18 +1,14 @@
-use std::{collections::HashSet, marker::PhantomData};
+use std::marker::PhantomData;
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::RelationParser;
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, EntrySchemaRelation,
-    ExternalSchemaRelation, FileExtRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
-    MimeTypeRelation, PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation,
-    RefHasTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation,
 };
 
-use super::{value, ImplementationDefinition};
+use super::value;
 
 #[derive(Debug)]
 pub struct OperationDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);

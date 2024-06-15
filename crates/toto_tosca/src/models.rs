@@ -2,6 +2,8 @@ extern crate derive_more;
 
 use derive_more::{From, TryInto};
 
+use crate::semantic::SimpleLookuper;
+
 #[derive(Debug)]
 pub struct Version {
     pub minor: u64,
@@ -145,6 +147,11 @@ pub enum Entity {
     FunctionSignature(FunctionSignatureEntity),
 }
 
+#[derive(Debug, PartialEq, Eq, Hash, Clone)]
+pub struct RefRelation {
+    pub lookuper: Box<SimpleLookuper>,
+}
+
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ToscaDefinitionsVersionRelation;
 
@@ -239,19 +246,16 @@ pub struct KeySchemaRelation;
 pub struct EntrySchemaRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefRootRelation;
+pub struct RootRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct HasTypeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefHasTypeRelation;
+pub struct SubstitutesTypeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct DerivedFromRelation;
-
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefDerivedFromRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct MimeTypeRelation;
@@ -260,7 +264,7 @@ pub struct MimeTypeRelation;
 pub struct FileExtRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefHasFileRelation;
+pub struct HasFileRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ChecksumRelation;
@@ -275,40 +279,94 @@ pub struct PrimaryArtifactRelation;
 pub struct DependencyArtifactRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidSourceNodeTypeRelation(pub usize);
+pub struct ValidSourceNodeTypeRelation;
+
+impl From<usize> for ValidSourceNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefMemberNodeTypeRelation(pub usize);
+pub struct MemberNodeTypeRelation;
+
+impl From<usize> for MemberNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefMemberNodeTemplateRelation(pub usize);
+pub struct MemberNodeTemplateRelation;
+
+impl From<usize> for MemberNodeTemplateRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidRelationshipTypeRelation(pub usize);
+pub struct ValidRelationshipTypeRelation;
+
+impl From<usize> for ValidRelationshipTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct DirectiveRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidCapabilityTypeRelation(pub usize);
+pub struct ValidCapabilityTypeRelation;
+
+impl From<usize> for ValidCapabilityTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidTargetNodeTypeRelation(pub usize);
+pub struct ValidTargetNodeTypeRelation;
+
+impl From<usize> for ValidTargetNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefTargetNodeRelation;
+pub struct TargetNodeRelation;
+
+impl From<usize> for TargetNodeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefTargetCapabilityRelation;
+pub struct TargetCapabilityRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct WorkflowActivityRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefWorkflowRelation;
+pub struct WorkflowRelation;
+
+impl From<usize> for WorkflowRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefOperationRelation;
+pub struct OperationRelation;
+
+impl From<usize> for OperationRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct PolicyTriggerEventRelation;
@@ -325,6 +383,8 @@ pub struct FunctionSignatureRelation(pub usize);
 #[derive(Debug, PartialEq, Eq, Hash, Clone, From, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
+    Ref(RefRelation),
+
     ToscaDefinitionsVersion(ToscaDefinitionsVersionRelation),
     ServiceTemplate(ServiceTemplateRelation),
     Repository(RepositoryRelation),
@@ -361,42 +421,40 @@ pub enum Relation {
     KeySchema(KeySchemaRelation),
     EntrySchema(EntrySchemaRelation),
 
-    RefRoot(RefRootRelation),
+    Root(RootRelation),
 
     HasType(HasTypeRelation),
-    RefHasType(RefHasTypeRelation),
-
     DerivedFrom(DerivedFromRelation),
-    RefDerivedFrom(RefDerivedFromRelation),
+    SubstitutesType(SubstitutesTypeRelation),
 
     MimeType(MimeTypeRelation),
     FileExt(FileExtRelation),
-    RefHasFile(RefHasFileRelation),
+    HasFile(HasFileRelation),
     Checksum(ChecksumRelation),
     ChecksumAlgorithm(ChecksumAlgorithmRelation),
 
     PrimaryArtifact(PrimaryArtifactRelation),
     DependencyArtifact(DependencyArtifactRelation),
 
-    RefValidSourceNodeType(RefValidSourceNodeTypeRelation),
-    RefValidRelationshipType(RefValidRelationshipTypeRelation),
+    ValidSourceNodeType(ValidSourceNodeTypeRelation),
+    ValidRelationshipType(ValidRelationshipTypeRelation),
 
     Directive(DirectiveRelation),
 
-    RefMemberNodeTemplate(RefMemberNodeTemplateRelation),
-    RefMemberNodeType(RefMemberNodeTypeRelation),
+    MemberNodeTemplate(MemberNodeTemplateRelation),
+    MemberNodeType(MemberNodeTypeRelation),
 
-    RefValidCapabilityType(RefValidCapabilityTypeRelation),
-    RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
+    ValidCapabilityType(ValidCapabilityTypeRelation),
+    ValidTargetNodeType(ValidTargetNodeTypeRelation),
 
-    RefTargetNode(RefTargetNodeRelation),
-    RefTargetCapability(RefTargetCapabilityRelation),
+    TargetNode(TargetNodeRelation),
+    TargetCapability(TargetCapabilityRelation),
 
     SubstitutionMapping(SubstitutionMappingRelation),
 
     WorkflowActivity(WorkflowActivityRelation),
-    RefWorkflow(RefWorkflowRelation),
-    RefOperation(RefOperationRelation),
+    Workflow(WorkflowRelation),
+    Operation(OperationRelation),
 
     PolicyTriggerEvent(PolicyTriggerEventRelation),
 
