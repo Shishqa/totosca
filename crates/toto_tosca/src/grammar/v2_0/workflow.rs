@@ -7,7 +7,7 @@ use crate::{
         collection::Collection, field::Field, field_ref::FieldRef, list::List,
         ToscaDefinitionsVersion,
     },
-    DefinitionRelation, DescriptionRelation, MetadataRelation, TargetNodeRelation,
+    DefinitionRelation, DescriptionRelation, MetadataRelation,
     ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
 };
 
