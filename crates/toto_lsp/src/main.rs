@@ -47,7 +47,7 @@ impl Server {
             connection,
             io_threads,
             ast: toto_ast::AST::<Entity, Relation>::new(),
-            parser: toto_tosca::ToscaParser::new(),
+            parser: toto_tosca::ToscaParser::default(),
         }
     }
 

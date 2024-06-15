@@ -34,10 +34,8 @@ impl SimpleLookuper {
                         None
                     }
                 })
-                .expect(&format!(
-                    "expected {:?} to have {:?} entity",
-                    path, self.root.1
-                ));
+                .unwrap_or_else(|| panic!("expected {:?} to have {:?} entity",
+                    path, self.root.1));
 
             if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
                 break root;
