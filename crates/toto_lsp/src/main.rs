@@ -16,7 +16,7 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
+use toto_tosca::{AsToscaRelation, ImportTargetRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
