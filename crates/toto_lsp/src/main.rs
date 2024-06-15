@@ -16,7 +16,7 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::{AsToscaEntity, AsToscaRelation};
+use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
@@ -271,7 +271,10 @@ impl Server {
             .flatten()
             .find_map(|e| match e.weight().as_tosca() {
                 Some(toto_tosca::Relation::Ref(referencer)) => {
-                    Some((e.source(), referencer.lookuper.clone()))
+                    Some((e.source(), referencer.lookuper.then.clone()))
+                }
+                Some(toto_tosca::Relation::ImportUrl(_)) => {
+                    Some((e.source(), toto_tosca::Relation::from(ImportTargetRelation)))
                 }
                 _ => None,
             });
@@ -286,7 +289,7 @@ impl Server {
             .ast
             .edges_directed(semantic_token.0, Outgoing)
             .find_map(|e| {
-                if e.weight().as_tosca() == Some(&semantic_token.1.then) {
+                if e.weight().as_tosca() == Some(&semantic_token.1) {
                     Some(e.target())
                 } else {
                     None
