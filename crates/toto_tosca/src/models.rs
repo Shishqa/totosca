@@ -246,7 +246,7 @@ pub struct KeySchemaRelation;
 pub struct EntrySchemaRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefRootRelation;
+pub struct RootRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct HasTypeRelation;
@@ -376,7 +376,7 @@ pub enum Relation {
     KeySchema(KeySchemaRelation),
     EntrySchema(EntrySchemaRelation),
 
-    RefRoot(RefRootRelation),
+    Root(RootRelation),
 
     HasType(HasTypeRelation),
     RefHasType(RefHasTypeRelation),

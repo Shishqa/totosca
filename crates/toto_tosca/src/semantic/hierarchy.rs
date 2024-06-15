@@ -16,7 +16,7 @@ impl Hierarchy {
                 ast.add_edge(
                     file_handle,
                     nx,
-                    crate::Relation::from(crate::RefRootRelation).into(),
+                    crate::Relation::from(crate::RootRelation).into(),
                 );
             }
         }

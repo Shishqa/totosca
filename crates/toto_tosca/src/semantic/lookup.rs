@@ -22,18 +22,27 @@ impl SimpleLookuper {
         let target_str = toto_yaml::as_string(target, ast).expect("expected string");
         let target_rel = (self.what_rel)(target_str.0.clone());
 
-        let root = ast
-            .edges_directed(source, petgraph::Direction::Incoming)
-            .find_map(|e| {
-                if e.weight().as_tosca() == Some(&self.root.0)
-                    && ast.node_weight(e.source()).unwrap().as_tosca() == Some(&self.root.1)
-                {
-                    Some(e.source())
-                } else {
-                    None
-                }
-            })
-            .unwrap();
+        let mut curr_node = source;
+        let root = loop {
+            let root = ast
+                .edges_directed(curr_node, petgraph::Direction::Outgoing)
+                .find_map(|e| {
+                    if e.weight().as_tosca() == Some(&self.root.0) {
+                        Some(e.target())
+                    } else {
+                        None
+                    }
+                })
+                .expect(&format!(
+                    "expected {:?} to have incoming {:?} relation",
+                    curr_node, self.root.0
+                ));
+
+            if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
+                break root;
+            }
+            curr_node = root;
+        };
 
         let lookuped = ast
             .edges_directed(root, petgraph::Direction::Outgoing)
@@ -59,7 +68,10 @@ impl SimpleLookuper {
             ast.add_edge(source, lookuped, self.then.clone().into());
         } else {
             add_with_loc(
-                toto_parser::ParseError::Custom("unknown type".to_string()),
+                toto_parser::ParseError::Custom(format!(
+                    "unknown {:?} {:?}",
+                    self.what, target_rel
+                )),
                 target,
                 ast,
             );

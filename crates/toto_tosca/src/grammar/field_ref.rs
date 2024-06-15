@@ -2,7 +2,7 @@ use toto_parser::EntityParser;
 
 use crate::{
     semantic::SimpleLookuper, DerivedFromRelation, FileEntity, HasTypeRelation, RefRelation,
-    RefRootRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
+    RootRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
 };
 
 use super::v2_0::value;
@@ -13,7 +13,7 @@ impl FieldRef {
     pub fn derived_from(entity: crate::Entity) -> Self {
         Self(SimpleLookuper {
             root: (
-                crate::Relation::from(RefRootRelation),
+                crate::Relation::from(RootRelation),
                 crate::Entity::from(FileEntity),
             ),
             what: entity,
@@ -25,7 +25,7 @@ impl FieldRef {
     pub fn has_type(entity: crate::Entity) -> Self {
         Self(SimpleLookuper {
             root: (
-                crate::Relation::from(RefRootRelation),
+                crate::Relation::from(RootRelation),
                 crate::Entity::from(FileEntity),
             ),
             what: entity,

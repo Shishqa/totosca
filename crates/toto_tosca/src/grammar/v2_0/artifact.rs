@@ -13,8 +13,8 @@ use crate::{
     DescriptionRelation, EntrySchemaRelation, ExternalSchemaRelation, FileEntity, FileExtRelation,
     HasTypeRelation, KeySchemaRelation, MappingRelation, MetadataRelation, MimeTypeRelation,
     PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefRootRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, TypeRelation, ValidationRelation, ValueRelation, VersionRelation,
+    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    TypeRelation, ValidationRelation, ValueRelation, VersionRelation,
 };
 
 use super::value;
@@ -40,7 +40,6 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::ArtifactEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "derived_from" => |r, n, ast| FieldRef::derived_from(crate::Entity::from(ArtifactEntity)).parse(r, n, ast),
-
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
