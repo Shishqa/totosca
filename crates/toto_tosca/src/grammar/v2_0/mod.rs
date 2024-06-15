@@ -130,15 +130,11 @@ mod tests {
         let mut parser = ToscaParser::new();
         parser.parse(&doc_path, &mut ast);
 
-        let tosca_graph =
-            NodeFiltered::from_fn(&ast, |n| ast[n.id()].as_tosca().is_some());
-        let tosca_graph =
-            EdgeFiltered::from_fn(&tosca_graph, |e| e.weight().as_tosca().is_some());
+        let tosca_graph = NodeFiltered::from_fn(&ast, |n| ast[n.id()].as_tosca().is_some());
+        let tosca_graph = EdgeFiltered::from_fn(&tosca_graph, |e| e.weight().as_tosca().is_some());
 
         dbg!(Dot::new(&tosca_graph));
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
-
-        assert!(false);
     }
 }
