@@ -35,7 +35,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::DataEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::derived_from(crate::Entity::from(crate::DataEntity)).parse(r, n, ast),
+        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::DataEntity, crate::DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -54,7 +54,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::DataEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(r, n, ast),
+        "type" => |r, n, ast| FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
@@ -109,7 +109,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::DataEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(r, n, ast),
+        "type" => |r, n, ast| FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "default" => Field::<DefaultRelation, value::BoolValue>::parse,
         "status" => Field::<DefaultRelation, StatusValue>::parse,
@@ -131,7 +131,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::DataEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(r, n, ast),
+        "type" => |r, n, ast| FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::AnyValue>::parse,
@@ -156,7 +156,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::DataEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(r, n, ast),
+        "type" => |r, n, ast| FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).parse(r, n, ast),
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::AnyValue>::parse,
@@ -199,7 +199,7 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(data, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(data, n, ast);
+                FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).link(data, n, ast);
                 data
             }))
             .or_else(|| {

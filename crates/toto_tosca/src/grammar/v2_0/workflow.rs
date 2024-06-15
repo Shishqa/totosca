@@ -1,11 +1,11 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationParser, Schema};
+use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationParser};
 
 use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    DefinitionRelation, DescriptionRelation, MetadataRelation,
-    RefTargetNodeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
+    DefinitionRelation, DescriptionRelation, MetadataRelation, TargetNodeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
 };
 
 use super::value;
@@ -78,7 +78,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowStepEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "target" => Field::<RefTargetNodeRelation, value::StringValue>::parse,
+        "target" => Field::<TargetNodeRelation, value::StringValue>::parse,
         "target_relationship" => Field::<DefinitionRelation, value::StringValue>::parse,
         "filter" => |_, _, _| {},
         "activities" => List::<WorkflowActivityRelation, V::WorkflowActivityDefinition>::parse,
@@ -190,7 +190,7 @@ where
                 ast.add_edge(
                     activity,
                     n,
-                    crate::Relation::from(crate::RefWorkflowRelation).into(),
+                    crate::Relation::from(crate::WorkflowRelation).into(),
                 );
                 activity
             }))
@@ -227,7 +227,7 @@ where
                 ast.add_edge(
                     activity,
                     n,
-                    crate::Relation::from(crate::RefWorkflowRelation).into(),
+                    crate::Relation::from(crate::WorkflowRelation).into(),
                 );
                 activity
             }))
@@ -264,7 +264,7 @@ where
                 ast.add_edge(
                     activity,
                     n,
-                    crate::Relation::from(crate::RefOperationRelation).into(),
+                    crate::Relation::from(crate::OperationRelation).into(),
                 );
                 activity
             }))

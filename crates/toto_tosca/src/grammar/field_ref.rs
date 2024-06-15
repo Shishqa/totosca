@@ -1,9 +1,8 @@
 use toto_parser::EntityParser;
 
 use crate::{
-    semantic::SimpleLookuper, DerivedFromRelation, FileEntity, HasTypeRelation, RefRelation,
-    RootRelation, SubstitutesTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    TypeRelation,
+    semantic::SimpleLookuper, DefinitionRelation, FileEntity, RefRelation, RootRelation,
+    ServiceTemplateEntity, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
 };
 
 use super::v2_0::value;
@@ -11,39 +10,35 @@ use super::v2_0::value;
 pub struct FieldRef(pub SimpleLookuper);
 
 impl FieldRef {
-    pub fn derived_from(entity: crate::Entity) -> Self {
+    pub fn type_ref<E, R>(entity: E, relation: R) -> Self
+    where
+        crate::Entity: From<E>,
+        crate::Relation: From<R>,
+    {
         Self(SimpleLookuper {
             root: (
-                crate::Relation::from(RootRelation),
-                crate::Entity::from(FileEntity),
+                crate::Relation::Root(RootRelation),
+                crate::Entity::File(FileEntity),
             ),
-            what: entity,
-            what_rel: |s| crate::Relation::from(TypeRelation::from(s)),
-            then: crate::Relation::from(DerivedFromRelation),
+            what: crate::Entity::from(entity),
+            what_rel: |s| crate::Relation::Type(TypeRelation::from(s)),
+            then: crate::Relation::from(relation),
         })
     }
 
-    pub fn has_type(entity: crate::Entity) -> Self {
+    pub fn def_ref<E, R>(entity: E, relation: R) -> Self
+    where
+        crate::Entity: From<E>,
+        crate::Relation: From<R>,
+    {
         Self(SimpleLookuper {
             root: (
-                crate::Relation::from(RootRelation),
-                crate::Entity::from(FileEntity),
+                crate::Relation::Root(RootRelation),
+                crate::Entity::ServiceTemplate(ServiceTemplateEntity),
             ),
-            what: entity,
-            what_rel: |s| crate::Relation::from(TypeRelation::from(s)),
-            then: crate::Relation::from(HasTypeRelation),
-        })
-    }
-
-    pub fn substitutes_type(entity: crate::Entity) -> Self {
-        Self(SimpleLookuper {
-            root: (
-                crate::Relation::from(RootRelation),
-                crate::Entity::from(FileEntity),
-            ),
-            what: entity,
-            what_rel: |s| crate::Relation::from(TypeRelation::from(s)),
-            then: crate::Relation::from(SubstitutesTypeRelation),
+            what: crate::Entity::from(entity),
+            what_rel: |s| crate::Relation::Definition(DefinitionRelation::from(s)),
+            then: crate::Relation::from(relation),
         })
     }
 

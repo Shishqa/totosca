@@ -264,7 +264,7 @@ pub struct MimeTypeRelation;
 pub struct FileExtRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefHasFileRelation;
+pub struct HasFileRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ChecksumRelation;
@@ -279,46 +279,94 @@ pub struct PrimaryArtifactRelation;
 pub struct DependencyArtifactRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidSourceNodeTypeRelation(pub usize);
+pub struct ValidSourceNodeTypeRelation;
+
+impl From<usize> for ValidSourceNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefMemberNodeTypeRelation(pub usize);
+pub struct MemberNodeTypeRelation;
+
+impl From<usize> for MemberNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefMemberNodeTemplateRelation(pub usize);
+pub struct MemberNodeTemplateRelation;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct MemberNodeTemplateRelation(pub usize);
+impl From<usize> for MemberNodeTemplateRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidRelationshipTypeRelation(pub usize);
+pub struct ValidRelationshipTypeRelation;
+
+impl From<usize> for ValidRelationshipTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct DirectiveRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidCapabilityTypeRelation(pub usize);
+pub struct ValidCapabilityTypeRelation;
+
+impl From<usize> for ValidCapabilityTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefValidTargetNodeTypeRelation(pub usize);
+pub struct ValidTargetNodeTypeRelation;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefTargetNodeRelation;
+impl From<usize> for ValidTargetNodeTypeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct TargetNodeRelation;
 
+impl From<usize> for TargetNodeRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefTargetCapabilityRelation;
+pub struct TargetCapabilityRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
 pub struct WorkflowActivityRelation(pub usize);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefWorkflowRelation;
+pub struct WorkflowRelation;
+
+impl From<usize> for WorkflowRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
-pub struct RefOperationRelation;
+pub struct OperationRelation;
+
+impl From<usize> for OperationRelation {
+    fn from(_: usize) -> Self {
+        Self
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct PolicyTriggerEventRelation;
@@ -381,34 +429,32 @@ pub enum Relation {
 
     MimeType(MimeTypeRelation),
     FileExt(FileExtRelation),
-    RefHasFile(RefHasFileRelation),
+    HasFile(HasFileRelation),
     Checksum(ChecksumRelation),
     ChecksumAlgorithm(ChecksumAlgorithmRelation),
 
     PrimaryArtifact(PrimaryArtifactRelation),
     DependencyArtifact(DependencyArtifactRelation),
 
-    RefValidSourceNodeType(RefValidSourceNodeTypeRelation),
-    RefValidRelationshipType(RefValidRelationshipTypeRelation),
+    ValidSourceNodeType(ValidSourceNodeTypeRelation),
+    ValidRelationshipType(ValidRelationshipTypeRelation),
 
     Directive(DirectiveRelation),
 
-    RefMemberNodeTemplate(RefMemberNodeTemplateRelation),
     MemberNodeTemplate(MemberNodeTemplateRelation),
-    RefMemberNodeType(RefMemberNodeTypeRelation),
+    MemberNodeType(MemberNodeTypeRelation),
 
-    RefValidCapabilityType(RefValidCapabilityTypeRelation),
-    RefValidTargetNodeType(RefValidTargetNodeTypeRelation),
+    ValidCapabilityType(ValidCapabilityTypeRelation),
+    ValidTargetNodeType(ValidTargetNodeTypeRelation),
 
-    RefTargetNode(RefTargetNodeRelation),
     TargetNode(TargetNodeRelation),
-    RefTargetCapability(RefTargetCapabilityRelation),
+    TargetCapability(TargetCapabilityRelation),
 
     SubstitutionMapping(SubstitutionMappingRelation),
 
     WorkflowActivity(WorkflowActivityRelation),
-    RefWorkflow(RefWorkflowRelation),
-    RefOperation(RefOperationRelation),
+    Workflow(WorkflowRelation),
+    Operation(OperationRelation),
 
     PolicyTriggerEvent(PolicyTriggerEventRelation),
 

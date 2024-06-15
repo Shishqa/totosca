@@ -3,9 +3,8 @@ use std::{collections::HashSet, marker::PhantomData};
 use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, RefTargetCapabilityRelation, RefTargetNodeRelation,
-    RefValidCapabilityTypeRelation, RefValidTargetNodeTypeRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation,
+    MetadataRelation, TargetCapabilityRelation, TargetNodeRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, ValidCapabilityTypeRelation, ValidTargetNodeTypeRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
@@ -28,8 +27,8 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "relationship" => Field::<DefinitionRelation, V::RelationshipDefinition>::parse,
-        "node" => Field::<RefValidTargetNodeTypeRelation, value::StringValue>::parse,
-        "capability" => Field::<RefValidCapabilityTypeRelation, value::StringValue>::parse,
+        "node" => Field::<ValidTargetNodeTypeRelation, value::StringValue>::parse,
+        "capability" => Field::<ValidCapabilityTypeRelation, value::StringValue>::parse,
         "node_filter" => |_, _, _| {},
         "count_range" => |_, _, _| {},
     };
@@ -46,8 +45,8 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RequirementEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node" => Field::<RefTargetNodeRelation, value::StringValue>::parse,
-        "capability" => Field::<RefTargetCapabilityRelation, value::StringValue>::parse,
+        "node" => Field::<TargetNodeRelation, value::StringValue>::parse,
+        "capability" => Field::<TargetCapabilityRelation, value::StringValue>::parse,
         "relationship" => Field::<AssignmentRelation, V::RelationshipAssignment>::parse,
         "allocation" => |_, _, _| {},
         "count" => |_, _, _| {},
@@ -88,7 +87,7 @@ where
                 ast.add_edge(
                     req,
                     n,
-                    crate::Relation::from(crate::RefTargetNodeRelation).into(),
+                    crate::Relation::from(crate::TargetNodeRelation).into(),
                 );
                 req
             }))

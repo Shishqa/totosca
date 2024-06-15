@@ -1,13 +1,10 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{mandatory, RelationParser, Schema};
+use toto_parser::{mandatory, RelationParser};
 
 use crate::{
     grammar::{
-        collection::Collection,
-        field_ref::FieldRef,
-        list::{KeyedList},
-        ToscaDefinitionsVersion,
+        collection::Collection, field_ref::FieldRef, list::KeyedList, ToscaDefinitionsVersion,
     },
     DefinitionRelation, OrderedDefinitionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
@@ -25,7 +22,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::SubstitutionMappingEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node_type" => |r, n, ast| FieldRef::substitutes_type(crate::Entity::from(crate::NodeEntity)).parse(r, n, ast),
+        "node_type" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::SubstitutesTypeRelation).parse(r, n, ast),
         "substitution_filter" => |_, _, _| {},
         "properties" => Collection::<DefinitionRelation, value::AnyValue>::parse,
         "attributes" => Collection::<DefinitionRelation, value::AnyValue>::parse,

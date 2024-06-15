@@ -1,11 +1,11 @@
-use std::{marker::PhantomData};
+use std::marker::PhantomData;
 
-use toto_parser::{RelationParser, Schema};
+use toto_parser::RelationParser;
 
 use crate::{
     grammar::{collection::Collection, field::Field, ToscaDefinitionsVersion},
-    AssignmentRelation,
-    DefinitionRelation, DescriptionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation,
 };
 
 use super::value;

@@ -7,10 +7,11 @@ use crate::{
         collection::Collection, field::Field, field_ref::FieldRef, list::List,
         ToscaDefinitionsVersion,
     },
-    ArtifactEntity, AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefinitionRelation, DependencyArtifactRelation,
-    DescriptionRelation, FileExtRelation, MetadataRelation, MimeTypeRelation,
-    PrimaryArtifactRelation, RefHasFileRelation, RepositoryRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    ArtifactEntity, AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation,
+    DefinitionRelation, DependencyArtifactRelation, DerivedFromRelation, DescriptionRelation,
+    FileExtRelation, HasFileRelation, HasTypeRelation, MetadataRelation, MimeTypeRelation,
+    PrimaryArtifactRelation, RepositoryRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    VersionRelation,
 };
 
 use super::value;
@@ -35,7 +36,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ArtifactEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::derived_from(crate::Entity::from(ArtifactEntity)).parse(r, n, ast),
+        "derived_from" => |r, n, ast| FieldRef::type_ref(ArtifactEntity, DerivedFromRelation).parse(r, n, ast),
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -53,8 +54,8 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ArtifactEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::has_type(crate::Entity::from(ArtifactEntity)).parse(r, n, ast),
-        "file" => Field::<RefHasFileRelation, value::StringValue>::parse,
+        "type" => |r, n, ast| FieldRef::type_ref(ArtifactEntity, HasTypeRelation).parse(r, n, ast),
+        "file" => Field::<HasFileRelation, value::StringValue>::parse,
         "repository" => Field::<RepositoryRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
