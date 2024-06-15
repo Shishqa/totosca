@@ -11,10 +11,9 @@ use crate::{
     DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
     EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
     MappingRelation, MetadataRelation, MimeTypeRelation, PrimaryArtifactRelation,
-    RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation, RepositoryRelation,
-    RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation,
-    ValueRelation, VersionRelation,
+    RefHasFileRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
+    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    ValidationRelation, ValueRelation, VersionRelation,
 };
 
 use super::value;
@@ -96,11 +95,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(capability, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    capability,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::has_type(crate::Entity::from(crate::CapabilityEntity))
+                    .parse(capability, n, ast);
                 capability
             }))
             .or_else(|| {

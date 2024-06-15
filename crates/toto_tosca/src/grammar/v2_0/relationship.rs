@@ -6,9 +6,8 @@ use crate::{
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
-    RefDerivedFromRelation, RefHasTypeRelation, RefValidCapabilityTypeRelation,
-    RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, VersionRelation,
+    RefValidCapabilityTypeRelation, RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
@@ -145,11 +144,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    rel,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::has_type(crate::Entity::from(crate::RelationshipEntity))
+                    .parse(rel, n, ast);
                 rel
             }))
             .or_else(|| {
@@ -178,11 +174,8 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(rel, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    rel,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
+                FieldRef::has_type(crate::Entity::from(crate::RelationshipEntity))
+                    .parse(rel, n, ast);
                 rel
             }))
             .or_else(|| {

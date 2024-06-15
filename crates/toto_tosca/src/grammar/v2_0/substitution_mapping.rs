@@ -6,6 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
+        field_ref::FieldRef,
         list::{KeyedList, List},
         ToscaDefinitionsVersion,
     },
@@ -13,10 +14,10 @@ use crate::{
     DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
     EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
     MappingRelation, MetadataRelation, MimeTypeRelation, OrderedDefinitionRelation,
-    PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefMemberNodeTemplateRelation, RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation,
-    RefValidSourceNodeTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    PrimaryArtifactRelation, RefHasFileRelation, RefMemberNodeTemplateRelation,
+    RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
+    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    ValidationRelation, ValueRelation, VersionRelation,
 };
 
 use super::value;
@@ -32,7 +33,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::SubstitutionMappingEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node_type" => Field::<RefHasTypeRelation, value::StringValue>::parse,
+        "node_type" => |r, n, ast| FieldRef::substitutes_type(crate::Entity::from(crate::NodeEntity)).parse(r, n, ast),
         "substitution_filter" => |_, _, _| {},
         "properties" => Collection::<DefinitionRelation, value::AnyValue>::parse,
         "attributes" => Collection::<DefinitionRelation, value::AnyValue>::parse,

@@ -5,9 +5,9 @@ use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser};
 use crate::{
     grammar::{collection::Collection, field::Field, field_ref::FieldRef, ToscaDefinitionsVersion},
     DefaultRelation, DefinitionRelation, DescriptionRelation, EntrySchemaRelation,
-    ExternalSchemaRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
-    RefDerivedFromRelation, RefHasTypeRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    ExternalSchemaRelation, KeySchemaRelation, MappingRelation, MetadataRelation, RequiredRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation, ValueRelation,
+    VersionRelation,
 };
 
 use super::value;
@@ -195,16 +195,12 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let import = add_with_loc(crate::Entity::from(crate::DataEntity), n, ast);
+        let data = add_with_loc(crate::Entity::from(crate::DataEntity), n, ast);
         toto_yaml::as_map(n, ast)
-            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(import, items, ast))
+            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(data, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    import,
-                    n,
-                    crate::Relation::from(crate::RefHasTypeRelation).into(),
-                );
-                import
+                FieldRef::has_type(crate::Entity::from(crate::DataEntity)).parse(data, n, ast);
+                data
             }))
             .or_else(|| {
                 add_with_loc(
@@ -214,7 +210,7 @@ where
                 );
                 None
             });
-        Some(import)
+        Some(data)
     }
 }
 

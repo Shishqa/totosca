@@ -9,8 +9,8 @@ use crate::{
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, OrderedAssignmentRelation, OrderedDefinitionRelation, RefDerivedFromRelation,
-    RefHasTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    MetadataRelation, OrderedAssignmentRelation, OrderedDefinitionRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, VersionRelation,
 };
 use toto_parser::RelationParser;
 

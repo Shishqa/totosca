@@ -3,10 +3,9 @@ use std::{collections::HashSet, marker::PhantomData};
 use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, RefDerivedFromRelation, RefHasTypeRelation, RefTargetCapabilityRelation,
-    RefTargetNodeRelation, RefValidCapabilityTypeRelation, RefValidSourceNodeTypeRelation,
-    RefValidTargetNodeTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    VersionRelation,
+    MetadataRelation, RefTargetCapabilityRelation, RefTargetNodeRelation,
+    RefValidCapabilityTypeRelation, RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 

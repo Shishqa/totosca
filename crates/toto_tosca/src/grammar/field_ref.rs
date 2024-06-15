@@ -2,7 +2,8 @@ use toto_parser::EntityParser;
 
 use crate::{
     semantic::SimpleLookuper, DerivedFromRelation, FileEntity, HasTypeRelation, RefRelation,
-    RootRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
+    RootRelation, SubstitutesTypeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    TypeRelation,
 };
 
 use super::v2_0::value;
@@ -34,6 +35,18 @@ impl FieldRef {
         })
     }
 
+    pub fn substitutes_type(entity: crate::Entity) -> Self {
+        Self(SimpleLookuper {
+            root: (
+                crate::Relation::from(RootRelation),
+                crate::Entity::from(FileEntity),
+            ),
+            what: entity,
+            what_rel: |s| crate::Relation::from(TypeRelation::from(s)),
+            then: crate::Relation::from(SubstitutesTypeRelation),
+        })
+    }
+
     pub fn parse<E, R>(
         self,
         root: toto_ast::GraphHandle,
@@ -44,14 +57,26 @@ impl FieldRef {
         R: ToscaCompatibleRelation,
     {
         if let Some(n_handle) = value::StringValue::parse(n, ast) {
-            ast.add_edge(
-                root,
-                n_handle,
-                crate::Relation::from(RefRelation {
-                    lookuper: Box::new(self.0),
-                })
-                .into(),
-            );
+            self.link(root, n_handle, ast)
         }
+    }
+
+    pub fn link<E, R>(
+        self,
+        root: toto_ast::GraphHandle,
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        ast.add_edge(
+            root,
+            n,
+            crate::Relation::from(RefRelation {
+                lookuper: Box::new(self.0),
+            })
+            .into(),
+        );
     }
 }

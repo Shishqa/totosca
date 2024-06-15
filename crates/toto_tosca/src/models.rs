@@ -252,13 +252,10 @@ pub struct RootRelation;
 pub struct HasTypeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefHasTypeRelation;
+pub struct SubstitutesTypeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct DerivedFromRelation;
-
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
-pub struct RefDerivedFromRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct MimeTypeRelation;
@@ -379,10 +376,8 @@ pub enum Relation {
     Root(RootRelation),
 
     HasType(HasTypeRelation),
-    RefHasType(RefHasTypeRelation),
-
     DerivedFrom(DerivedFromRelation),
-    RefDerivedFrom(RefDerivedFromRelation),
+    SubstitutesType(SubstitutesTypeRelation),
 
     MimeType(MimeTypeRelation),
     FileExt(FileExtRelation),

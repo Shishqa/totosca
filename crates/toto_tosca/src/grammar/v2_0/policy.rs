@@ -11,11 +11,11 @@ use crate::{
     DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
     EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
     MappingRelation, MetadataRelation, MimeTypeRelation, PolicyTriggerEventRelation,
-    PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation, RefHasTypeRelation,
-    RefMemberNodeTemplateRelation, RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation,
-    RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation, RepositoryRelation,
-    RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation,
-    ValueRelation, VersionRelation, WorkflowActivityRelation,
+    PrimaryArtifactRelation, RefHasFileRelation, RefMemberNodeTemplateRelation,
+    RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
+    RefValidTargetNodeTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    WorkflowActivityRelation,
 };
 
 use super::value;

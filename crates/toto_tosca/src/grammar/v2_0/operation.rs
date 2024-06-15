@@ -7,9 +7,9 @@ use crate::{
     AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
     DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, EntrySchemaRelation,
     ExternalSchemaRelation, FileExtRelation, KeySchemaRelation, MappingRelation, MetadataRelation,
-    MimeTypeRelation, PrimaryArtifactRelation, RefDerivedFromRelation, RefHasFileRelation,
-    RefHasTypeRelation, RepositoryRelation, RequiredRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidationRelation, ValueRelation, VersionRelation,
+    MimeTypeRelation, PrimaryArtifactRelation, RefHasFileRelation, RepositoryRelation,
+    RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation,
+    ValueRelation, VersionRelation,
 };
 
 use super::{value, ImplementationDefinition};
