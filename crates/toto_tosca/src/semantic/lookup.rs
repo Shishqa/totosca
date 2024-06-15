@@ -61,8 +61,7 @@ impl SimpleLookuper {
         if let Some(lookuped) = lookuped {
             if ast
                 .edges_connecting(source, lookuped)
-                .find(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == self.then))
-                .is_some()
+                .any(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == self.then))
             {
                 return;
             }
