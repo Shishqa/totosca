@@ -55,49 +55,43 @@ where
             })
             .map(|items| {
                 items.for_each(|(i, v)| {
-                    toto_yaml::as_map(v, ast)
-                        .or_else(|| {
-                            add_with_loc(ParseError::UnexpectedType("map"), n, ast);
-                            None
-                        })
-                        .map(|items| {
-                            let mut items = items.take(2);
+                    if let Some(items) = toto_yaml::as_map(v, ast).or_else(|| {
+                        add_with_loc(ParseError::UnexpectedType("map"), n, ast);
+                        None
+                    }) {
+                        let mut items = items.take(2);
 
-                            if let Some((k, v)) = items.next() {
-                                let k_str = toto_yaml::as_string(k, ast).cloned().or_else(|| {
-                                    add_with_loc(ParseError::UnexpectedType("string"), k, ast);
-                                    None
-                                });
+                        if let Some((k, v)) = items.next() {
+                            let k_str = toto_yaml::as_string(k, ast).cloned().or_else(|| {
+                                add_with_loc(ParseError::UnexpectedType("string"), k, ast);
+                                None
+                            });
 
-                                k_str.zip(V::parse(v, ast)).inspect(|(k_str, v_handle)| {
-                                    ast.add_edge(
-                                        root,
-                                        *v_handle,
-                                        crate::Relation::from(K::from((k_str.0.clone(), i))).into(),
-                                    );
-                                    ast.add_edge(
-                                        *v_handle,
-                                        root,
-                                        crate::Relation::Root(crate::RootRelation).into(),
-                                    );
-                                });
-                            } else {
-                                add_with_loc(
-                                    ParseError::Custom("expected a key".to_string()),
-                                    v,
-                                    ast,
+                            k_str.zip(V::parse(v, ast)).inspect(|(k_str, v_handle)| {
+                                ast.add_edge(
+                                    root,
+                                    *v_handle,
+                                    crate::Relation::from(K::from((k_str.0.clone(), i))).into(),
                                 );
-                                return;
-                            }
-
-                            if items.next().is_some() {
-                                add_with_loc(
-                                    ParseError::Custom("expected only one key".to_string()),
-                                    v,
-                                    ast,
+                                ast.add_edge(
+                                    *v_handle,
+                                    root,
+                                    crate::Relation::Root(crate::RootRelation).into(),
                                 );
-                            }
-                        });
+                            });
+                        } else {
+                            add_with_loc(ParseError::Custom("expected a key".to_string()), v, ast);
+                            return;
+                        }
+
+                        if items.next().is_some() {
+                            add_with_loc(
+                                ParseError::Custom("expected only one key".to_string()),
+                                v,
+                                ast,
+                            );
+                        }
+                    }
                 });
                 n
             });
