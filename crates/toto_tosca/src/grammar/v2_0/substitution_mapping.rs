@@ -1,23 +1,15 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser, Schema};
+use toto_parser::{mandatory, RelationParser, Schema};
 
 use crate::{
     grammar::{
         collection::Collection,
-        field::Field,
         field_ref::FieldRef,
-        list::{KeyedList, List},
+        list::{KeyedList},
         ToscaDefinitionsVersion,
     },
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, OrderedDefinitionRelation,
-    PrimaryArtifactRelation, RefHasFileRelation, RefMemberNodeTemplateRelation,
-    RefMemberNodeTypeRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
-    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    ValidationRelation, ValueRelation, VersionRelation,
+    DefinitionRelation, OrderedDefinitionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
 use super::value;

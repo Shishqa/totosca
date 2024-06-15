@@ -4,14 +4,8 @@ use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationPar
 
 use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
-    AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefaultRelation,
-    DefinitionRelation, DependencyArtifactRelation, DescriptionRelation, DirectiveRelation,
-    EntrySchemaRelation, ExternalSchemaRelation, FileExtRelation, KeySchemaRelation,
-    MappingRelation, MetadataRelation, MimeTypeRelation, PrimaryArtifactRelation,
-    RefHasFileRelation, RefMemberNodeTemplateRelation, RefMemberNodeTypeRelation,
-    RefTargetNodeRelation, RefValidRelationshipTypeRelation, RefValidSourceNodeTypeRelation,
-    RepositoryRelation, RequiredRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    ValidationRelation, ValueRelation, VersionRelation, WorkflowActivityRelation,
+    DefinitionRelation, DescriptionRelation, MetadataRelation,
+    RefTargetNodeRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
 };
 
 use super::value;

@@ -4,8 +4,8 @@ use crate::{
     grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
     MetadataRelation, RefTargetCapabilityRelation, RefTargetNodeRelation,
-    RefValidCapabilityTypeRelation, RefValidSourceNodeTypeRelation, RefValidTargetNodeTypeRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    RefValidCapabilityTypeRelation, RefValidTargetNodeTypeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
