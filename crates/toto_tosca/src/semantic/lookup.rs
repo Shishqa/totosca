@@ -22,6 +22,7 @@ impl SimpleLookuper {
         let target_str = toto_yaml::as_string(target, ast).expect("expected string");
         let target_rel = (self.what_rel)(target_str.0.clone());
 
+        let mut path = vec![source];
         let mut curr_node = source;
         let root = loop {
             let root = ast
@@ -34,14 +35,15 @@ impl SimpleLookuper {
                     }
                 })
                 .expect(&format!(
-                    "expected {:?} to have incoming {:?} relation",
-                    curr_node, self.root.0
+                    "expected {:?} to have {:?} entity",
+                    path, self.root.1
                 ));
 
             if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
                 break root;
             }
             curr_node = root;
+            path.push(curr_node);
         };
 
         let lookuped = ast

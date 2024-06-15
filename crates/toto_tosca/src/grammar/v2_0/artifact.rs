@@ -100,10 +100,10 @@ where
                 <Self as toto_parser::Schema<E, R>>::parse_schema(implementation, items, ast)
             })
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
+                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).link(
                     implementation,
                     n,
-                    crate::Relation::from(crate::PrimaryArtifactRelation).into(),
+                    ast,
                 );
                 implementation
             }))
@@ -136,6 +136,11 @@ where
         let artifact = add_with_loc(crate::Entity::from(crate::ArtifactEntity), n, ast);
         toto_yaml::as_map(n, ast)
             .map(|items| ArtifactDefinition::<V>::parse_schema(artifact, items, ast))
+            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
+                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation)
+                    .link(artifact, n, ast);
+                artifact
+            }))
             .or_else(|| {
                 add_with_loc(
                     toto_parser::ParseError::UnexpectedType("map or string"),

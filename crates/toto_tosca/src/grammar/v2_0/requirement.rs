@@ -1,10 +1,13 @@
 use std::{collections::HashSet, marker::PhantomData};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, list::List, ToscaDefinitionsVersion},
+    grammar::{
+        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        ToscaDefinitionsVersion,
+    },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
     MetadataRelation, TargetCapabilityRelation, TargetNodeRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation, ValidCapabilityTypeRelation, ValidTargetNodeTypeRelation,
+    ToscaCompatibleRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
@@ -27,8 +30,8 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "relationship" => Field::<DefinitionRelation, V::RelationshipDefinition>::parse,
-        "node" => Field::<ValidTargetNodeTypeRelation, value::StringValue>::parse,
-        "capability" => Field::<ValidCapabilityTypeRelation, value::StringValue>::parse,
+        "node" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::ValidTargetNodeTypeRelation).parse(r, n, ast),
+        "capability" => |r, n, ast| FieldRef::type_ref(crate::CapabilityEntity, crate::ValidCapabilityTypeRelation).parse(r, n, ast),
         "node_filter" => |_, _, _| {},
         "count_range" => |_, _, _| {},
     };
@@ -45,7 +48,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RequirementEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node" => Field::<TargetNodeRelation, value::StringValue>::parse,
+        "node" => |r, n, ast| FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).parse(r, n, ast),
         "capability" => Field::<TargetCapabilityRelation, value::StringValue>::parse,
         "relationship" => Field::<AssignmentRelation, V::RelationshipAssignment>::parse,
         "allocation" => |_, _, _| {},
