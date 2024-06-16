@@ -50,7 +50,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RequirementEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node" => DefRef::<crate::NodeEntity, crate::TargetNodeRelation>::parse,
+        "node" => DefRef::<crate::ServiceTemplateEntity, crate::NodeEntity, crate::TargetNodeRelation>::parse,
         "capability" => Field::<TargetCapabilityRelation, value::StringValue>::parse,
         "relationship" => Field::<AssignmentRelation, V::RelationshipAssignment>::parse,
         "allocation" => |_, _, _| {},
@@ -89,7 +89,11 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(req, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).link(req, n, ast);
+                DefRef::<
+                    crate::ServiceTemplateEntity,
+                    crate::NodeEntity,
+                    crate::TargetNodeRelation,
+                >::parse(req, n, ast);
                 req
             }))
             .or_else(|| {

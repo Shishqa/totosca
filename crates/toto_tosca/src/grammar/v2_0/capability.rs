@@ -93,8 +93,9 @@ where
             Some(toto_yaml::Entity::Map(_)) => <Self as toto_parser::Schema<E, R>>::parse(n, ast),
             Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
                 let capability = add_with_loc(crate::Entity::from(crate::CapabilityEntity), n, ast);
-                FieldRef::type_ref(crate::CapabilityEntity, crate::HasTypeRelation)
-                    .parse(capability, n, ast);
+                TypeRef::<crate::CapabilityEntity, crate::HasTypeRelation>::parse(
+                    capability, n, ast,
+                );
                 Some(capability)
             }
             _ => {

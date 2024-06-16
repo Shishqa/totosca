@@ -6,7 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::{DefRef, FieldRef, TypeRef},
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
@@ -102,11 +102,11 @@ where
             Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
                 let implementation =
                     add_with_loc(crate::Entity::from(crate::ImplementationEntity), n, ast);
-                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).parse(
-                    implementation,
-                    n,
-                    ast,
-                );
+                DefRef::<
+                    crate::NodeEntity,
+                    crate::ArtifactEntity,
+                    crate::PrimaryArtifactRelation,
+                >::parse(implementation, n, ast);
                 Some(implementation)
             }
             _ => {
@@ -153,7 +153,7 @@ where
                 V::ArtifactDefinition::parse(n, ast);
             }
             Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
-                FieldRef::def_ref(crate::ArtifactEntity, Rel::default()).parse(root, n, ast);
+                DefRef::<crate::NodeEntity, crate::ArtifactEntity, Rel>::parse(root, n, ast);
             }
             _ => {
                 add_with_loc(

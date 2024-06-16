@@ -5,7 +5,7 @@ use crate::{
         collection::Collection,
         field::Field,
         field_ref::{FieldRef, TypeRef},
-        list::{ListRelator},
+        list::ListRelator,
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,

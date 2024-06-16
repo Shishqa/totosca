@@ -84,7 +84,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowStepEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "target" => DefRef::<crate::NodeEntity, crate::TargetNodeRelation>::parse,
+        "target" => DefRef::<crate::ServiceTemplateEntity, crate::NodeEntity, crate::TargetNodeRelation>::parse,
         "target_relationship" => Field::<DefinitionRelation, value::StringValue>::parse,
         "filter" => |_, _, _| {},
         "activities" => List::<WorkflowActivityRelation, V::WorkflowActivityDefinition>::parse,
@@ -106,7 +106,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowDelegateActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => DefRef::<crate::WorkflowEntity, crate::WorkflowRelation>::parse,
+        "workflow" => DefRef::<crate::ServiceTemplateEntity, crate::WorkflowEntity, crate::WorkflowRelation>::parse,
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 
@@ -122,7 +122,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowInlineActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => DefRef::<crate::WorkflowEntity, crate::WorkflowRelation>::parse,
+        "workflow" => DefRef::<crate::ServiceTemplateEntity, crate::WorkflowEntity, crate::WorkflowRelation>::parse,
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 
@@ -193,8 +193,11 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(activity, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation)
-                    .link(activity, n, ast);
+                DefRef::<
+                    crate::ServiceTemplateEntity,
+                    crate::WorkflowEntity,
+                    crate::WorkflowRelation,
+                >::parse(activity, n, ast);
                 activity
             }))
             .or_else(|| {
@@ -227,8 +230,11 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(activity, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation)
-                    .link(activity, n, ast);
+                DefRef::<
+                    crate::ServiceTemplateEntity,
+                    crate::WorkflowEntity,
+                    crate::WorkflowRelation,
+                >::parse(activity, n, ast);
                 activity
             }))
             .or_else(|| {
