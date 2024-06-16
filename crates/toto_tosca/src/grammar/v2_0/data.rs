@@ -200,22 +200,22 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let data = add_with_loc(crate::Entity::from(crate::DataEntity), n, ast);
-        toto_yaml::as_map(n, ast)
-            .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(data, items, ast))
-            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).link(data, n, ast);
-                data
-            }))
-            .or_else(|| {
+        match ast.node_weight(n).unwrap().as_yaml() {
+            Some(toto_yaml::Entity::Map(_)) => <Self as toto_parser::Schema<E, R>>::parse(n, ast),
+            Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
+                let data = add_with_loc(crate::Entity::from(crate::DataEntity), n, ast);
+                FieldRef::type_ref(crate::DataEntity, crate::HasTypeRelation).parse(data, n, ast);
+                Some(data)
+            }
+            _ => {
                 add_with_loc(
                     toto_parser::ParseError::UnexpectedType("map or string"),
                     n,
                     ast,
                 );
                 None
-            });
-        Some(data)
+            }
+        }
     }
 }
 

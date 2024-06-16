@@ -19,8 +19,21 @@ impl SimpleLookuper {
     {
         let (source, target) = ast.edge_endpoints(e).unwrap();
 
-        let target_str = toto_yaml::as_string(target, ast).expect("expected string");
-        let target_rel = (self.what_rel)(target_str.0.clone());
+        let target_str = toto_yaml::as_string(target, ast)
+            .map(|v| v.0.clone())
+            .or_else(|| {
+                add_with_loc(
+                    toto_parser::ParseError::UnexpectedType("string"),
+                    target,
+                    ast,
+                );
+                None
+            });
+        if target_str.is_none() {
+            return;
+        }
+        let target_str = target_str.unwrap();
+        let target_rel = (self.what_rel)(target_str);
 
         let mut path = vec![source];
         let mut curr_node = source;
@@ -113,7 +126,8 @@ impl SimpleLookuper {
             .edges_directed(root, petgraph::Direction::Outgoing)
             .filter_map(|e| {
                 if let Some(rel) = e.weight().as_tosca() {
-                    if std::mem::discriminant(rel) == std::mem::discriminant(&target_rel)
+                    if e.target() != source
+                        && std::mem::discriminant(rel) == std::mem::discriminant(&target_rel)
                         && ast.node_weight(e.target()).unwrap().as_tosca() == Some(&self.what)
                     {
                         let name = match rel {

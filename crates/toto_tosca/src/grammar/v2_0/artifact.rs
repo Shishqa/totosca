@@ -97,28 +97,27 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let implementation = add_with_loc(crate::Entity::from(crate::ImplementationEntity), n, ast);
-        toto_yaml::as_map(n, ast)
-            .map(|items| {
-                <Self as toto_parser::Schema<E, R>>::parse_schema(implementation, items, ast)
-            })
-            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).link(
+        match ast.node_weight(n).unwrap().as_yaml() {
+            Some(toto_yaml::Entity::Map(_)) => <Self as toto_parser::Schema<E, R>>::parse(n, ast),
+            Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
+                let implementation =
+                    add_with_loc(crate::Entity::from(crate::ImplementationEntity), n, ast);
+                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).parse(
                     implementation,
                     n,
                     ast,
                 );
-                implementation
-            }))
-            .or_else(|| {
+                Some(implementation)
+            }
+            _ => {
                 add_with_loc(
                     toto_parser::ParseError::UnexpectedType("map or string"),
                     n,
                     ast,
                 );
                 None
-            });
-        Some(implementation)
+            }
+        }
     }
 }
 
@@ -153,8 +152,8 @@ where
             Some(toto_yaml::Entity::Map(_)) => {
                 V::ArtifactDefinition::parse(n, ast);
             }
-            Some(toto_yaml::Entity::Str(_)) => {
-                FieldRef::def_ref(crate::ArtifactEntity, Rel::default()).link(root, n, ast);
+            Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
+                FieldRef::def_ref(crate::ArtifactEntity, Rel::default()).parse(root, n, ast);
             }
             _ => {
                 add_with_loc(

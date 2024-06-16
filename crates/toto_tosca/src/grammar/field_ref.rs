@@ -53,7 +53,7 @@ impl FieldRef {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(n_handle) = value::StringValue::parse(n, ast) {
+        if let Some(n_handle) = value::NullableStringValue::parse(n, ast) {
             self.link(root, n_handle, ast)
         }
     }

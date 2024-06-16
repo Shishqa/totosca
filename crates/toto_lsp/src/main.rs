@@ -7,10 +7,9 @@ use lsp_types::notification::Notification;
 use lsp_types::{CompletionItemKind, Location};
 
 use lsp_types::request::Request;
-use petgraph::data::DataMap;
 use petgraph::dot::Dot;
 use petgraph::visit::EdgeRef;
-use petgraph::Direction::{self, Incoming, Outgoing};
+use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
 mod models;
@@ -59,7 +58,7 @@ impl Server {
             )),
             definition_provider: Some(lsp_types::OneOf::Left(true)),
             completion_provider: Some(lsp_types::CompletionOptions {
-                trigger_characters: Some(vec![": ".to_string()]),
+                trigger_characters: Some(vec![": ".to_string(), "  ".to_string()]),
                 ..Default::default()
             }),
             // diagnostic_provider: Some(DiagnosticServerCapabilities::Options(DiagnosticOptions {
@@ -118,6 +117,12 @@ impl Server {
                             self.refresh_diag(&params.text_document.uri)?;
                             continue;
                         }
+                        // lsp_types::notification::DidChangeTextDocument::METHOD => {
+                        //     let params: lsp_types::DidChangeTextDocumentParams =
+                        //         from_value(not.params)?;
+                        //     self.refresh_diag(&params.text_document.uri)?;
+                        //     continue;
+                        // }
                         lsp_types::notification::DidSaveTextDocument::METHOD => {
                             let params: lsp_types::DidSaveTextDocumentParams =
                                 from_value(not.params)?;
@@ -232,9 +237,14 @@ impl Server {
         Ok(())
     }
 
-    fn completion(&self, req: &lsp_server::Request) -> Result<(), Box<dyn Error + Sync + Send>> {
+    fn completion(
+        &mut self,
+        req: &lsp_server::Request,
+    ) -> Result<(), Box<dyn Error + Sync + Send>> {
         let params =
             from_value::<lsp_types::CompletionParams>(req.params.clone())?.text_document_position;
+
+        self.refresh_diag(&params.text_document.uri)?;
 
         eprintln!("looking for {}", params.text_document.uri);
         let file_handle = self
@@ -268,6 +278,7 @@ impl Server {
             )
             .filter_map(|(pos, len, source)| {
                 if pos <= params_pos && params_pos <= pos + len {
+                    dbg!("GOTCHA");
                     Some(self.ast.edges_directed(source, Incoming))
                 } else {
                     None
@@ -282,7 +293,7 @@ impl Server {
             });
 
         if lookuper.is_none() {
-            eprintln!("can't provide completion (no semantic)");
+            eprintln!("can't provide completion (no semantic) {}", params_pos);
             return Ok(());
         }
         let lookuper = lookuper.unwrap();
