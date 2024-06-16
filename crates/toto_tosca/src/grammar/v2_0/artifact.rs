@@ -6,7 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::{DefRef, TypeRef},
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
@@ -97,28 +97,27 @@ where
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle> {
-        let implementation = add_with_loc(crate::Entity::from(crate::ImplementationEntity), n, ast);
-        toto_yaml::as_map(n, ast)
-            .map(|items| {
-                <Self as toto_parser::Schema<E, R>>::parse_schema(implementation, items, ast)
-            })
-            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).link(
-                    implementation,
-                    n,
-                    ast,
-                );
-                implementation
-            }))
-            .or_else(|| {
+        match ast.node_weight(n).unwrap().as_yaml() {
+            Some(toto_yaml::Entity::Map(_)) => <Self as toto_parser::Schema<E, R>>::parse(n, ast),
+            Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
+                let implementation =
+                    add_with_loc(crate::Entity::from(crate::ImplementationEntity), n, ast);
+                DefRef::<
+                    crate::NodeEntity,
+                    crate::ArtifactEntity,
+                    crate::PrimaryArtifactRelation,
+                >::parse(implementation, n, ast);
+                Some(implementation)
+            }
+            _ => {
                 add_with_loc(
                     toto_parser::ParseError::UnexpectedType("map or string"),
                     n,
                     ast,
                 );
                 None
-            });
-        Some(implementation)
+            }
+        }
     }
 }
 
@@ -153,8 +152,8 @@ where
             Some(toto_yaml::Entity::Map(_)) => {
                 V::ArtifactDefinition::parse(n, ast);
             }
-            Some(toto_yaml::Entity::Str(_)) => {
-                FieldRef::def_ref(crate::ArtifactEntity, Rel::default()).link(root, n, ast);
+            Some(toto_yaml::Entity::Str(_) | toto_yaml::Entity::Null(_)) => {
+                DefRef::<crate::NodeEntity, crate::ArtifactEntity, Rel>::parse(root, n, ast);
             }
             _ => {
                 add_with_loc(

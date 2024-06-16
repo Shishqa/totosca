@@ -7,11 +7,11 @@ use crate::{
         collection::Collection,
         field::Field,
         field_ref::{DefRef, TypeRef},
-        list::{ListRelator},
+        list::ListRelator,
         ToscaDefinitionsVersion,
     },
-    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    VersionRelation,
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 
 use super::value;
@@ -53,7 +53,7 @@ where
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
-        "members" => ListRelator::<DefRef<crate::NodeEntity, crate::MemberNodeTemplateRelation>>::parse,
+        "members" => ListRelator::<DefRef<crate::ServiceTemplateEntity, crate::NodeEntity, crate::MemberNodeTemplateRelation>>::parse,
     };
 
     const VALIDATION: &'static [toto_parser::ValidationFieldFn] =

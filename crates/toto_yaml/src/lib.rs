@@ -19,6 +19,7 @@ impl FileEntity {
 
     pub fn fetch(&mut self) -> anyhow::Result<()> {
         let path = self.url.to_file_path();
+        dbg!("fetching", &path);
         if path.is_err() {
             return Err(anyhow!("only local paths are supported"));
         }

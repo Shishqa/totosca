@@ -4,10 +4,7 @@ use toto_parser::{mandatory, RelationParser};
 
 use crate::{
     grammar::{
-        collection::Collection,
-        field_ref::{TypeRef},
-        list::KeyedList,
-        ToscaDefinitionsVersion,
+        collection::Collection, field_ref::TypeRef, list::KeyedList, ToscaDefinitionsVersion,
     },
     DefinitionRelation, OrderedDefinitionRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };

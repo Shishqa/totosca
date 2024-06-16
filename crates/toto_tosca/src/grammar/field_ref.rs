@@ -4,7 +4,7 @@ use toto_parser::EntityParser;
 
 use crate::{
     semantic::SimpleLookuper, DefinitionRelation, FileEntity, RefRelation, RootRelation,
-    ServiceTemplateEntity, ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, TypeRelation,
 };
 
 use super::v2_0::value;
@@ -28,22 +28,6 @@ impl FieldRef {
         })
     }
 
-    pub fn def_ref<E, R>(entity: E, relation: R) -> Self
-    where
-        crate::Entity: From<E>,
-        crate::Relation: From<R>,
-    {
-        Self(SimpleLookuper {
-            root: (
-                crate::Relation::Root(RootRelation),
-                crate::Entity::ServiceTemplate(ServiceTemplateEntity),
-            ),
-            what: crate::Entity::from(entity),
-            what_rel: |s| crate::Relation::Definition(DefinitionRelation::from(s)),
-            then: crate::Relation::from(relation),
-        })
-    }
-
     pub fn parse<E, R>(
         self,
         root: toto_ast::GraphHandle,
@@ -53,7 +37,7 @@ impl FieldRef {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(n_handle) = value::StringValue::parse(n, ast) {
+        if let Some(n_handle) = value::NullableStringValue::parse(n, ast) {
             self.link(root, n_handle, ast)
         }
     }
@@ -113,29 +97,41 @@ where
     }
 }
 
-pub struct DefRef<What, Then>(PhantomData<(What, Then)>);
+pub struct DefRef<Where, What, Then>(PhantomData<(Where, What, Then)>);
 
-impl<What, Then, E, R> toto_parser::RelationParser<E, R> for DefRef<What, Then>
+impl<Where, What, Then, E, R> toto_parser::RelationParser<E, R> for DefRef<Where, What, Then>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
+    Where: Default,
     What: Default,
     Then: Default,
-    crate::Entity: From<What>,
+    crate::Entity: From<What> + From<Where>,
     crate::Relation: From<Then>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
-        FieldRef::def_ref(What::default(), Then::default()).parse(root, n, ast)
+        FieldRef(SimpleLookuper {
+            root: (
+                crate::Relation::Root(RootRelation),
+                crate::Entity::from(Where::default()),
+            ),
+            what: crate::Entity::from(What::default()),
+            what_rel: |s| crate::Relation::Definition(DefinitionRelation::from(s)),
+            then: crate::Relation::from(Then::default()),
+        })
+        .parse(root, n, ast)
     }
 }
 
-impl<What, Then, E, R> toto_parser::ValueRelationParser<E, R, usize> for DefRef<What, Then>
+impl<Where, What, Then, E, R> toto_parser::ValueRelationParser<E, R, usize>
+    for DefRef<Where, What, Then>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
+    Where: Default,
     What: Default,
     Then: Default,
-    crate::Entity: From<What>,
+    crate::Entity: From<What> + From<Where>,
     crate::Relation: From<Then>,
 {
     fn parse(

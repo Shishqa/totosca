@@ -19,8 +19,21 @@ impl SimpleLookuper {
     {
         let (source, target) = ast.edge_endpoints(e).unwrap();
 
-        let target_str = toto_yaml::as_string(target, ast).expect("expected string");
-        let target_rel = (self.what_rel)(target_str.0.clone());
+        let target_str = toto_yaml::as_string(target, ast)
+            .map(|v| v.0.clone())
+            .or_else(|| {
+                add_with_loc(
+                    toto_parser::ParseError::UnexpectedType("string"),
+                    target,
+                    ast,
+                );
+                None
+            });
+        if target_str.is_none() {
+            return;
+        }
+        let target_str = target_str.unwrap();
+        let target_rel = (self.what_rel)(target_str);
 
         let mut path = vec![source];
         let mut curr_node = source;
@@ -34,8 +47,7 @@ impl SimpleLookuper {
                         None
                     }
                 })
-                .unwrap_or_else(|| panic!("expected {:?} to have {:?} entity",
-                    path, self.root.1));
+                .unwrap_or_else(|| panic!("expected {:?} to have {:?} entity", path, self.root.1));
 
             if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
                 break root;
@@ -75,6 +87,79 @@ impl SimpleLookuper {
                 ast,
             );
         }
+    }
+
+    pub fn lookup_suggests<E, R>(
+        &self,
+        ast: &toto_ast::AST<E, R>,
+        e: toto_ast::EdgeHandle,
+    ) -> Vec<(String, Option<String>, crate::Relation)>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let (source, _) = ast.edge_endpoints(e).unwrap();
+
+        let mut path = vec![source];
+        let mut curr_node = source;
+        let root = loop {
+            let root = ast
+                .edges_directed(curr_node, petgraph::Direction::Outgoing)
+                .find_map(|e| {
+                    if e.weight().as_tosca() == Some(&self.root.0) {
+                        Some(e.target())
+                    } else {
+                        None
+                    }
+                })
+                .unwrap_or_else(|| panic!("expected {:?} to have {:?} entity", path, self.root.1));
+
+            if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
+                break root;
+            }
+            curr_node = root;
+            path.push(curr_node);
+        };
+
+        let target_rel = (self.what_rel)("".to_string());
+        let lookuped = ast
+            .edges_directed(root, petgraph::Direction::Outgoing)
+            .filter_map(|e| {
+                if let Some(rel) = e.weight().as_tosca() {
+                    if e.target() != source
+                        && std::mem::discriminant(rel) == std::mem::discriminant(&target_rel)
+                        && ast.node_weight(e.target()).unwrap().as_tosca() == Some(&self.what)
+                    {
+                        let name = match rel {
+                            crate::Relation::Type(type_rel) => type_rel.0.clone(),
+                            crate::Relation::Definition(def_rel) => def_rel.0.clone(),
+                            _ => "".to_string(),
+                        };
+                        return Some((name, rel, e.target()));
+                    }
+                }
+                None
+            })
+            .collect::<Vec<_>>();
+
+        lookuped
+            .into_iter()
+            .map(|(name, rel, n)| {
+                let description = ast
+                    .edges_directed(n, petgraph::Direction::Outgoing)
+                    .find_map(|e| match e.weight().as_tosca() {
+                        Some(crate::Relation::Description(_)) => Some(
+                            toto_yaml::as_string(e.target(), ast)
+                                .expect("expected string")
+                                .0
+                                .clone(),
+                        ),
+                        _ => None,
+                    });
+
+                (name, description, rel.clone())
+            })
+            .collect()
     }
 }
 

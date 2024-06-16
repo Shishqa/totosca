@@ -36,15 +36,16 @@ impl ToscaParser {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(file_handle) = self.importer.get_file(uri) {
-            if !self.importer.is_file_changed(file_handle, ast) {
-                return Some(file_handle);
-            }
+        let file_handle = if let Some(file_handle) = self.importer.get_file(uri) {
+            // if !self.importer.is_file_changed(file_handle, ast) {
+            //     return Some(file_handle);
+            // }
             self.importer.reimport(ast);
             dbg!("REIMPORT!");
-        }
-
-        let file_handle = self.importer.add_file(uri, ast);
+            Some(file_handle)
+        } else {
+            self.importer.add_file(uri, ast)
+        };
 
         let _ = Importer::topo_iter_imports(ast)
             .map_err(|e| {

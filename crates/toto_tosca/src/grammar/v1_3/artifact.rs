@@ -6,7 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::{DefRef, TypeRef},
         list::ListRelator,
         v2_0, ToscaDefinitionsVersion,
     },
@@ -77,11 +77,11 @@ where
                 <Self as toto_parser::Schema<E, R>>::parse_schema(implementation, items, ast)
             })
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation).link(
-                    implementation,
-                    n,
-                    ast,
-                );
+                DefRef::<
+                        crate::NodeEntity,
+                        crate::ArtifactEntity,
+                        crate::PrimaryArtifactRelation,
+                    >::parse(implementation, n, ast);
                 implementation
             }))
             .or_else(|| {

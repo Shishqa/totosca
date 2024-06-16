@@ -6,12 +6,13 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{TypeRef},
+        field_ref::{DefRef, TypeRef},
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
-    PolicyTriggerEventRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation, WorkflowActivityRelation,
+    PolicyTriggerEventRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    WorkflowActivityRelation,
 };
 
 use super::value;
@@ -76,7 +77,7 @@ where
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         // todo: target nodes and groups
-        "targets" => ListRelator::<TypeRef<crate::NodeEntity, crate::ValidTargetNodeTypeRelation>>::parse,
+        "targets" => ListRelator::<DefRef<crate::ServiceTemplateEntity, crate::NodeEntity, crate::ValidTargetNodeTypeRelation>>::parse,
         "triggers" => Collection::<DefinitionRelation, V::PolicyTriggerDefinition>::parse,
     };
 

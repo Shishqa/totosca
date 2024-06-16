@@ -1,6 +1,6 @@
 extern crate derive_more;
 
-use derive_more::{From, TryInto};
+use derive_more::{From, Into, TryInto};
 
 use crate::semantic::SimpleLookuper;
 
@@ -197,10 +197,10 @@ pub struct ImportRepositoryRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ImportNamespaceRelation;
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From, Into)]
 pub struct TypeRelation(pub String);
 
-#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From, Into)]
 pub struct DefinitionRelation(pub String);
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
@@ -226,7 +226,7 @@ pub struct ValidationRelation;
 
 impl From<usize> for ValidationRelation {
     fn from(_: usize) -> Self {
-        Self::default()
+        Self
     }
 }
 
