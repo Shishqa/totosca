@@ -14,6 +14,12 @@ pub struct Importer {
     existing_urls: HashMap<url::Url, toto_ast::GraphHandle>,
 }
 
+impl Default for Importer {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Importer {
     pub fn new() -> Self {
         Self {
@@ -30,7 +36,7 @@ impl Importer {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(file_handle) = self.get_file(&uri) {
+        if let Some(file_handle) = self.get_file(uri) {
             return Some(file_handle);
         }
 
@@ -82,16 +88,13 @@ impl Importer {
     {
         let file = ast
             .neighbors_directed(file_handle, Outgoing)
-            .find_map(|n| match ast.node_weight(n.id()).unwrap().as_file() {
-                Some(f) => Some(f),
-                _ => None,
-            })
+            .find_map(|n| ast.node_weight(n.id()).unwrap().as_file())
             .unwrap();
 
         let path = file.url.to_file_path().unwrap();
         let new_content = std::fs::read_to_string(path).ok();
 
-        return file.content != new_content;
+        file.content != new_content
     }
 
     fn import_files<E, R>(
@@ -154,7 +157,7 @@ impl Importer {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let file_graph = EdgeFiltered::from_fn(&*ast, |e| {
+        let file_graph = EdgeFiltered::from_fn(ast, |e| {
             matches!(e.weight().as_tosca(), Some(crate::Relation::ImportFile(_)))
         });
         let file_graph = NodeFiltered::from_fn(&file_graph, |n| {
@@ -220,8 +223,7 @@ impl Importer {
                     .for_each(|(target_def, rel)| {
                         if ast
                             .edges_connecting(file_handle, target_def)
-                            .find(|e| *e.weight().as_tosca().unwrap() == rel)
-                            .is_some()
+                            .any(|e| *e.weight().as_tosca().unwrap() == rel)
                         {
                             return;
                         }

@@ -34,10 +34,8 @@ impl SimpleLookuper {
                         None
                     }
                 })
-                .expect(&format!(
-                    "expected {:?} to have {:?} entity",
-                    path, self.root.1
-                ));
+                .unwrap_or_else(|| panic!("expected {:?} to have {:?} entity",
+                    path, self.root.1));
 
             if ast.node_weight(root).unwrap().as_tosca() == Some(&self.root.1) {
                 break root;
@@ -61,8 +59,7 @@ impl SimpleLookuper {
         if let Some(lookuped) = lookuped {
             if ast
                 .edges_connecting(source, lookuped)
-                .find(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == self.then))
-                .is_some()
+                .any(|e| matches!(e.weight().as_tosca(), Some(rel) if *rel == self.then))
             {
                 return;
             }

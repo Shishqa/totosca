@@ -6,7 +6,7 @@ use crate::{
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, TargetCapabilityRelation, TargetNodeRelation, ToscaCompatibleEntity,
+    MetadataRelation, TargetCapabilityRelation, ToscaCompatibleEntity,
     ToscaCompatibleRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};

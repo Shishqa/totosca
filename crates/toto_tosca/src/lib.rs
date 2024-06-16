@@ -10,10 +10,16 @@ pub struct ToscaParser {
     importer: Importer,
 }
 
+impl Default for ToscaParser {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ToscaParser {
     pub fn new() -> Self {
         Self {
-            importer: Importer::new(),
+            importer: Importer::default(),
         }
     }
 
@@ -30,7 +36,7 @@ impl ToscaParser {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        if let Some(file_handle) = self.importer.get_file(&uri) {
+        if let Some(file_handle) = self.importer.get_file(uri) {
             if !self.importer.is_file_changed(file_handle, ast) {
                 return Some(file_handle);
             }
