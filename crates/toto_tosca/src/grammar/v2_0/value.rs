@@ -20,6 +20,24 @@ where {
     }
 }
 
+pub struct IntValue;
+impl<E, R> toto_parser::EntityParser<E, R> for IntValue
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+{
+    fn parse(
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> Option<toto_ast::GraphHandle>
+where {
+        toto_yaml::as_int(n, ast).map(|_| n).or_else(|| {
+            add_with_loc(toto_parser::ParseError::UnexpectedType("integer"), n, ast);
+            None
+        })
+    }
+}
+
 pub struct BoolValue;
 impl<E, R> toto_parser::EntityParser<E, R> for BoolValue
 where

@@ -5,7 +5,7 @@ pub mod field;
 pub mod field_ref;
 pub mod list;
 pub mod parser;
-// pub mod v1_3;
+pub mod v1_3;
 pub mod v2_0;
 
 pub trait ToscaDefinitionsVersion {

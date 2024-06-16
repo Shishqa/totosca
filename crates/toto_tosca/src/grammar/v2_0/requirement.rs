@@ -2,12 +2,14 @@ use std::{collections::HashSet, marker::PhantomData};
 
 use crate::{
     grammar::{
-        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        collection::Collection,
+        field::Field,
+        field_ref::{DefRef, FieldRef, TypeRef},
+        list::List,
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, TargetCapabilityRelation, ToscaCompatibleEntity,
-    ToscaCompatibleRelation,
+    MetadataRelation, TargetCapabilityRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
@@ -30,8 +32,8 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "relationship" => Field::<DefinitionRelation, V::RelationshipDefinition>::parse,
-        "node" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::ValidTargetNodeTypeRelation).parse(r, n, ast),
-        "capability" => |r, n, ast| FieldRef::type_ref(crate::CapabilityEntity, crate::ValidCapabilityTypeRelation).parse(r, n, ast),
+        "node" => TypeRef::<crate::NodeEntity, crate::ValidTargetNodeTypeRelation>::parse,
+        "capability" => TypeRef::<crate::CapabilityEntity, crate::ValidCapabilityTypeRelation>::parse,
         "node_filter" => |_, _, _| {},
         "count_range" => |_, _, _| {},
     };
@@ -48,7 +50,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::RequirementEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "node" => |r, n, ast| FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).parse(r, n, ast),
+        "node" => DefRef::<crate::NodeEntity, crate::TargetNodeRelation>::parse,
         "capability" => Field::<TargetCapabilityRelation, value::StringValue>::parse,
         "relationship" => Field::<AssignmentRelation, V::RelationshipAssignment>::parse,
         "allocation" => |_, _, _| {},
@@ -87,11 +89,7 @@ where
         toto_yaml::as_map(n, ast)
             .map(|items| <Self as toto_parser::Schema<E, R>>::parse_schema(req, items, ast))
             .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                ast.add_edge(
-                    req,
-                    n,
-                    crate::Relation::from(crate::TargetNodeRelation).into(),
-                );
+                FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).link(req, n, ast);
                 req
             }))
             .or_else(|| {

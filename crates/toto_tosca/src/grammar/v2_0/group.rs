@@ -4,11 +4,13 @@ use toto_parser::{mandatory, RelationParser};
 
 use crate::{
     grammar::{
-        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        collection::Collection,
+        field::Field,
+        field_ref::{DefRef, TypeRef},
+        list::{ListRelator},
         ToscaDefinitionsVersion,
     },
-    AssignmentRelation, DefinitionRelation, DescriptionRelation, MemberNodeTemplateRelation,
-    MemberNodeTypeRelation, MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
     VersionRelation,
 };
 
@@ -28,13 +30,13 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::GroupEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::GroupEntity, crate::DerivedFromRelation).parse(r, n, ast),
+        "derived_from" => TypeRef::<crate::GroupEntity, crate::DerivedFromRelation>::parse,
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "attributes" => Collection::<DefinitionRelation, V::AttributeDefinition>::parse,
-        "members" => List::<MemberNodeTypeRelation, value::StringValue>::parse,
+        "members" => ListRelator::<TypeRef<crate::NodeEntity, crate::MemberNodeTypeRelation>>::parse,
     };
 }
 
@@ -46,12 +48,12 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::GroupEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::type_ref(crate::GroupEntity, crate::HasTypeRelation).parse(r, n, ast),
+        "type" => TypeRef::<crate::GroupEntity, crate::HasTypeRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
-        "members" => List::<MemberNodeTemplateRelation, value::StringValue>::parse,
+        "members" => ListRelator::<DefRef<crate::NodeEntity, crate::MemberNodeTemplateRelation>>::parse,
     };
 
     const VALIDATION: &'static [toto_parser::ValidationFieldFn] =

@@ -1,13 +1,14 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser};
+use toto_parser::{add_with_loc, mandatory, RelationParser};
 
 use crate::{
     grammar::{
         collection::Collection,
         field::Field,
         field_ref::{FieldRef, TypeRef},
-        ToscaDefinitionsVersion,
+        list::List,
+        v2_0, ToscaDefinitionsVersion,
     },
     DefaultRelation, DefinitionRelation, DescriptionRelation, EntrySchemaRelation,
     ExternalSchemaRelation, KeySchemaRelation, MappingRelation, MetadataRelation, RequiredRelation,
@@ -15,7 +16,7 @@ use crate::{
     VersionRelation,
 };
 
-use super::value;
+use super::v2_0::value;
 
 #[derive(Debug)]
 pub struct DataTypeDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
@@ -44,7 +45,7 @@ where
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "constraints" => List::<ValidationRelation, value::AnyValue>::parse,
         "properties" => Collection::<DefinitionRelation, V::PropertyDefinition>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
@@ -61,49 +62,13 @@ where
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => TypeRef::<crate::DataEntity, crate::HasTypeRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
-        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "constraints" => List::<ValidationRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
     };
 
     const VALIDATION: &'static [toto_parser::ValidationFieldFn] =
         &[|fields: &HashSet<String>| mandatory(fields, "type")];
-}
-
-pub struct StatusValue;
-impl<E, R> toto_parser::EntityParser<E, R> for StatusValue
-where
-    E: ToscaCompatibleEntity,
-    R: ToscaCompatibleRelation,
-{
-    fn parse(
-        n: toto_ast::GraphHandle,
-        ast: &mut toto_ast::AST<E, R>,
-    ) -> Option<toto_ast::GraphHandle>
-where {
-        let s = toto_yaml::as_string(n, ast);
-        if s.is_none() {
-            add_with_loc(toto_parser::ParseError::UnexpectedType("string"), n, ast);
-            return None;
-        }
-        let s = s.unwrap();
-
-        let status = match s.0.as_str() {
-            "supported" => Ok(crate::StatusEntity::Supported),
-            "unsupported" => Ok(crate::StatusEntity::Unsupported),
-            "experimental" => Ok(crate::StatusEntity::Experimental),
-            "deprecated" => Ok(crate::StatusEntity::Deprecated),
-            other => Err(ParseError::Custom(format!("unknown status: {}", other))),
-        };
-
-        match status {
-            Ok(status) => Some(add_with_loc(crate::Entity::from(status), n, ast)),
-            Err(err) => {
-                add_with_loc(err, n, ast);
-                None
-            }
-        }
-    }
 }
 
 impl<E, R, V> toto_parser::Schema<E, R> for AttributeDefinition<V>
@@ -117,8 +82,8 @@ where
         "type" => TypeRef::<crate::DataEntity, crate::HasTypeRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "default" => Field::<DefaultRelation, value::AnyValue>::parse,
-        "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "status" => Field::<DefaultRelation, v2_0::StatusValue>::parse,
+        "constraints" => List::<ValidationRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
         "metadata" => Collection::<MetadataRelation, value::StringValue>::parse,
@@ -140,8 +105,8 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::AnyValue>::parse,
-        "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "status" => Field::<DefaultRelation, v2_0::StatusValue>::parse,
+        "constraints" => List::<ValidationRelation, value::AnyValue>::parse,
         "value" => Field::<ValueRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,
         "entry_schema" => Field::<EntrySchemaRelation, V::SchemaDefinition>::parse,
@@ -165,8 +130,8 @@ where
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "required" => Field::<RequiredRelation, value::BoolValue>::parse,
         "default" => Field::<DefaultRelation, value::AnyValue>::parse,
-        "status" => Field::<DefaultRelation, StatusValue>::parse,
-        "validation" => Field::<ValidationRelation, value::AnyValue>::parse,
+        "status" => Field::<DefaultRelation, v2_0::StatusValue>::parse,
+        "constraints" => List::<ValidationRelation, value::AnyValue>::parse,
         "value" => Field::<ValueRelation, value::AnyValue>::parse,
         "mapping" => Field::<MappingRelation, value::AnyValue>::parse,
         "key_schema" => Field::<KeySchemaRelation, V::SchemaDefinition>::parse,

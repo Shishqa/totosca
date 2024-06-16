@@ -3,7 +3,12 @@ use std::{collections::HashSet, marker::PhantomData};
 use toto_parser::{mandatory, RelationParser};
 
 use crate::{
-    grammar::{collection::Collection, field::Field, field_ref::FieldRef, ToscaDefinitionsVersion},
+    grammar::{
+        collection::Collection,
+        field::Field,
+        field_ref::{TypeRef},
+        ToscaDefinitionsVersion,
+    },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
     ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
@@ -27,7 +32,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::InterfaceEntity, crate::DerivedFromRelation).parse(r, n, ast),
+        "derived_from" => TypeRef::<crate::InterfaceEntity, crate::DerivedFromRelation>::parse,
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -45,7 +50,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::InterfaceEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::type_ref(crate::InterfaceEntity, crate::HasTypeRelation).parse(r, n, ast),
+        "type" => TypeRef::<crate::InterfaceEntity, crate::HasTypeRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "operations" => Collection::<DefinitionRelation, V::OperationDefinition>::parse,

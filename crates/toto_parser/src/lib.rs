@@ -16,3 +16,12 @@ pub trait EntityParser<E, R> {
 pub trait RelationParser<E, R> {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>);
 }
+
+pub trait ValueRelationParser<E, R, Value> {
+    fn parse(
+        v: Value,
+        root: toto_ast::GraphHandle,
+        n: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    );
+}

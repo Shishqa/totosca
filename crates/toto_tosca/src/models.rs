@@ -224,6 +224,12 @@ pub struct RequiredRelation;
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ValidationRelation;
 
+impl From<usize> for ValidationRelation {
+    fn from(_: usize) -> Self {
+        Self::default()
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ValueRelation;
 
