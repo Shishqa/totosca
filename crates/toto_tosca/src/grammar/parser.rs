@@ -2,7 +2,7 @@ use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-use super::v2_0::Tosca2_0;
+use super::{v1_3::Tosca1_3, v2_0::Tosca2_0};
 
 pub struct ToscaGrammar;
 
@@ -48,7 +48,7 @@ where
             .and_then(|(_, v)| match toto_yaml::as_string(v, ast) {
                 Some(version) => match version.0.as_str() {
                     "tosca_2_0" => Tosca2_0::parse(doc_root, ast),
-                    // "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
+                    "tosca_simple_yaml_1_3" => Tosca1_3::parse(doc_root, ast),
                     _ => {
                         add_with_loc(
                             toto_parser::ParseError::Custom(format!(
