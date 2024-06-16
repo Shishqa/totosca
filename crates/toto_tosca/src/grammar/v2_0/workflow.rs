@@ -4,11 +4,14 @@ use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationPar
 
 use crate::{
     grammar::{
-        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        collection::Collection,
+        field::Field,
+        field_ref::{DefRef, FieldRef},
+        list::List,
         ToscaDefinitionsVersion,
     },
-    DefinitionRelation, DescriptionRelation, MetadataRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation, WorkflowActivityRelation,
+    DefinitionRelation, DescriptionRelation, MetadataRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, WorkflowActivityRelation,
 };
 
 use super::value;
@@ -81,7 +84,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowStepEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "target" => |r, n, ast| FieldRef::def_ref(crate::NodeEntity, crate::TargetNodeRelation).parse(r, n, ast),
+        "target" => DefRef::<crate::NodeEntity, crate::TargetNodeRelation>::parse,
         "target_relationship" => Field::<DefinitionRelation, value::StringValue>::parse,
         "filter" => |_, _, _| {},
         "activities" => List::<WorkflowActivityRelation, V::WorkflowActivityDefinition>::parse,
@@ -103,7 +106,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowDelegateActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => |r, n, ast| FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation).parse(r, n, ast),
+        "workflow" => DefRef::<crate::WorkflowEntity, crate::WorkflowRelation>::parse,
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 
@@ -119,7 +122,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::WorkflowInlineActivityEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "workflow" => |r, n, ast| FieldRef::def_ref(crate::WorkflowEntity, crate::WorkflowRelation).parse(r, n, ast),
+        "workflow" => DefRef::<crate::WorkflowEntity, crate::WorkflowRelation>::parse,
         "inputs" => Collection::<DefinitionRelation, value::AnyValue>::parse,
     };
 

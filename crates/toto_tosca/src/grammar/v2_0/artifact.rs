@@ -6,7 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::FieldRef,
+        field_ref::{FieldRef, TypeRef},
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
@@ -39,7 +39,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ArtifactEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::type_ref(ArtifactEntity, DerivedFromRelation).parse(r, n, ast),
+        "derived_from" => TypeRef::<ArtifactEntity, DerivedFromRelation>::parse,
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -57,7 +57,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ArtifactEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::type_ref(ArtifactEntity, HasTypeRelation).parse(r, n, ast),
+        "type" => TypeRef::<ArtifactEntity, HasTypeRelation>::parse,
         "file" => Field::<HasFileRelation, value::StringValue>::parse,
         "repository" => Field::<RepositoryRelation, value::StringValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,

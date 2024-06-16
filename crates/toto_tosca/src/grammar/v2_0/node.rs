@@ -4,7 +4,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::FieldRef,
+        field_ref::{FieldRef, TypeRef},
         list::{KeyedList, List},
         ToscaDefinitionsVersion,
     },
@@ -30,7 +30,7 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "derived_from" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::DerivedFromRelation).parse(r, n, ast),
+        "derived_from" => TypeRef::<crate::NodeEntity, crate::DerivedFromRelation>::parse,
         "version" => Field::<VersionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
@@ -51,14 +51,14 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::NodeEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "type" => |r, n, ast| FieldRef::type_ref(crate::NodeEntity, crate::HasTypeRelation).parse(r, n, ast),
+        "type" => TypeRef::<crate::NodeEntity, crate::HasTypeRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "directives" => List::<DirectiveRelation, value::StringValue>::parse,
         "properties" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "attributes" => Collection::<AssignmentRelation, value::AnyValue>::parse,
         "capabilities" => Collection::<AssignmentRelation, V::CapabilityAssignment>::parse,
-        "requirements" => KeyedList::<OrderedAssignmentRelation, V::RequirementDefinition>::parse,
+        "requirements" => KeyedList::<OrderedAssignmentRelation, V::RequirementAssignment>::parse,
         "interfaces" => Collection::<AssignmentRelation, V::InterfaceAssignment>::parse,
         "artifacts" => Collection::<DefinitionRelation, V::ArtifactDefinition>::parse,
         "count" => |_, _, _| {},
