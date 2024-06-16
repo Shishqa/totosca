@@ -6,13 +6,12 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::{TypeRef},
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
-    PolicyTriggerEventRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    ValidTargetNodeTypeRelation, VersionRelation, WorkflowActivityRelation,
+    PolicyTriggerEventRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation, WorkflowActivityRelation,
 };
 
 use super::value;

@@ -11,8 +11,7 @@ use crate::{
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, DirectiveRelation,
-    MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    ValidRelationshipTypeRelation, ValidSourceNodeTypeRelation, VersionRelation,
+    MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 
 use super::value;

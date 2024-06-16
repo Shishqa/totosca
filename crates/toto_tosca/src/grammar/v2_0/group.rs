@@ -6,12 +6,11 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{DefRef, FieldRef, TypeRef},
-        list::{List, ListRelator},
+        field_ref::{DefRef, TypeRef},
+        list::{ListRelator},
         ToscaDefinitionsVersion,
     },
-    AssignmentRelation, DefinitionRelation, DescriptionRelation, MemberNodeTemplateRelation,
-    MemberNodeTypeRelation, MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
+    AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
     VersionRelation,
 };
 

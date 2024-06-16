@@ -5,7 +5,7 @@ use toto_parser::{mandatory, RelationParser};
 use crate::{
     grammar::{
         collection::Collection,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::{TypeRef},
         list::KeyedList,
         ToscaDefinitionsVersion,
     },

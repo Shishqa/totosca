@@ -5,12 +5,11 @@ use crate::{
         collection::Collection,
         field::Field,
         field_ref::{FieldRef, TypeRef},
-        list::{List, ListRelator},
+        list::{ListRelator},
         ToscaDefinitionsVersion,
     },
     AssignmentRelation, DefinitionRelation, DescriptionRelation, MetadataRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation, ValidCapabilityTypeRelation,
-    ValidSourceNodeTypeRelation, ValidTargetNodeTypeRelation, VersionRelation,
+    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
