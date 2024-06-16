@@ -257,6 +257,17 @@ where
         .and_then(|yaml_node| yaml_node.try_into().ok())
 }
 
+pub fn as_int<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<&YamlInt>
+where
+    E: AsYamlEntity,
+    R: AsYamlRelation,
+{
+    ast.node_weight(n)
+        .expect("node not found")
+        .as_yaml()
+        .and_then(|yaml_node| yaml_node.try_into().ok())
+}
+
 pub fn as_bool<E, R>(n: toto_ast::GraphHandle, ast: &toto_ast::AST<E, R>) -> Option<&YamlBool>
 where
     E: AsYamlEntity,

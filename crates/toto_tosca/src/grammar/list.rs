@@ -4,48 +4,37 @@ use toto_parser::{add_with_loc, ParseError};
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-pub struct List<K, V>(PhantomData<(K, V)>);
+use super::field::Field;
 
-impl<K, V, E, R> toto_parser::RelationParser<E, R> for List<K, V>
+pub struct ListRelator<C>(PhantomData<C>);
+
+impl<C, E, R> toto_parser::RelationParser<E, R> for ListRelator<C>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
-    K: From<usize>,
-    V: toto_parser::EntityParser<E, R>,
-    crate::Relation: From<K>,
+    C: toto_parser::ValueRelationParser<E, R, usize>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
-        toto_yaml::as_list(n, ast)
-            .or_else(|| {
-                add_with_loc(ParseError::UnexpectedType("list"), n, ast);
-                None
-            })
-            .map(|items| {
-                items.for_each(|(i, v)| {
-                    V::parse(v, ast).map(|v_handle| {
-                        ast.add_edge(root, v_handle, crate::Relation::from(K::from(i)).into());
-                        ast.add_edge(
-                            v_handle,
-                            root,
-                            crate::Relation::Root(crate::RootRelation).into(),
-                        );
-                        v_handle
-                    });
-                });
-                n
+        if let Some(items) = toto_yaml::as_list(n, ast).or_else(|| {
+            add_with_loc(ParseError::UnexpectedType("list"), n, ast);
+            None
+        }) {
+            items.for_each(|(i, v)| {
+                C::parse(i, root, v, ast);
             });
+        }
     }
 }
 
-pub struct KeyedList<K, V>(PhantomData<(K, V)>);
+pub type List<C, V> = ListRelator<Field<C, V>>;
 
-impl<K, V, E, R> toto_parser::RelationParser<E, R> for KeyedList<K, V>
+pub struct KeyedListRelator<C>(PhantomData<C>);
+
+impl<C, E, R> toto_parser::RelationParser<E, R> for KeyedListRelator<C>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
-    K: From<(String, usize)>,
-    V: toto_parser::EntityParser<E, R>,
-    crate::Relation: From<K>,
+    C: toto_parser::ValueRelationParser<E, R, (String, usize)>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
         toto_yaml::as_list(n, ast)
@@ -62,23 +51,14 @@ where
                         let mut items = items.take(2);
 
                         if let Some((k, v)) = items.next() {
-                            let k_str = toto_yaml::as_string(k, ast).cloned().or_else(|| {
-                                add_with_loc(ParseError::UnexpectedType("string"), k, ast);
-                                None
-                            });
-
-                            k_str.zip(V::parse(v, ast)).inspect(|(k_str, v_handle)| {
-                                ast.add_edge(
-                                    root,
-                                    *v_handle,
-                                    crate::Relation::from(K::from((k_str.0.clone(), i))).into(),
-                                );
-                                ast.add_edge(
-                                    *v_handle,
-                                    root,
-                                    crate::Relation::Root(crate::RootRelation).into(),
-                                );
-                            });
+                            if let Some(k_str) =
+                                toto_yaml::as_string(k, ast).cloned().or_else(|| {
+                                    add_with_loc(ParseError::UnexpectedType("string"), k, ast);
+                                    None
+                                })
+                            {
+                                C::parse((k_str.0.clone(), i), root, v, ast);
+                            }
                         } else {
                             add_with_loc(ParseError::Custom("expected a key".to_string()), v, ast);
                             return;
@@ -97,3 +77,5 @@ where
             });
     }
 }
+
+pub type KeyedList<C, V> = KeyedListRelator<Field<C, V>>;

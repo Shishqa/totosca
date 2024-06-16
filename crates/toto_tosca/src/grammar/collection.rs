@@ -2,15 +2,15 @@ use std::marker::PhantomData;
 
 use crate::{add_with_loc, ParseError, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-pub struct Collection<K, V>(PhantomData<(K, V)>);
+use super::field::Field;
 
-impl<K, V, E, R> toto_parser::RelationParser<E, R> for Collection<K, V>
+pub struct CollectionRelator<C>(PhantomData<C>);
+
+impl<C, E, R> toto_parser::RelationParser<E, R> for CollectionRelator<C>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
-    K: From<String>,
-    V: toto_parser::EntityParser<E, R>,
-    crate::Relation: From<K>,
+    C: toto_parser::ValueRelationParser<E, R, String>,
 {
     fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
         if let Some(items) = toto_yaml::as_map(n, ast).or_else(|| {
@@ -18,24 +18,15 @@ where
             None
         }) {
             items.for_each(|(k, v)| {
-                let k_str = toto_yaml::as_string(k, ast).cloned().or_else(|| {
+                if let Some(k_str) = toto_yaml::as_string(k, ast).cloned().or_else(|| {
                     add_with_loc(ParseError::UnexpectedType("string"), k, ast);
                     None
-                });
-
-                k_str.zip(V::parse(v, ast)).inspect(|(k_str, v_handle)| {
-                    ast.add_edge(
-                        root,
-                        *v_handle,
-                        crate::Relation::from(K::from(k_str.0.clone())).into(),
-                    );
-                    ast.add_edge(
-                        *v_handle,
-                        root,
-                        crate::Relation::Root(crate::RootRelation).into(),
-                    );
-                });
+                }) {
+                    C::parse(k_str.0.clone(), root, v, ast);
+                }
             });
         }
     }
 }
+
+pub type Collection<K, V> = CollectionRelator<Field<K, V>>;

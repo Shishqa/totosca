@@ -1,10 +1,13 @@
 use std::{collections::HashSet, marker::PhantomData};
 
-use toto_parser::{add_with_loc, mandatory, RelationParser, Schema};
+use toto_parser::{add_with_loc, mandatory, EntityParser, RelationParser};
 
 use crate::{
     grammar::{
-        collection::Collection, field::Field, field_ref::FieldRef, list::List,
+        collection::Collection,
+        field::Field,
+        field_ref::FieldRef,
+        list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },
     ArtifactEntity, AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation,
@@ -26,7 +29,7 @@ pub struct ArtifactDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 pub struct ImplementationDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
 
 #[derive(Debug)]
-pub struct ArtifactRefOrDefinition<V: ToscaDefinitionsVersion>(PhantomData<V>);
+pub struct ArtifactRefOrDefinition<V: ToscaDefinitionsVersion, Rel>(PhantomData<(V, Rel)>);
 
 impl<E, R, V> toto_parser::Schema<E, R> for ArtifactTypeDefinition<V>
 where
@@ -79,8 +82,8 @@ where
 {
     const SELF: fn() -> E = || crate::Entity::from(crate::ImplementationEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
-        "primary" => Field::<PrimaryArtifactRelation, ArtifactRefOrDefinition<V>>::parse,
-        "dependencies" => List::<DependencyArtifactRelation, ArtifactRefOrDefinition<V>>::parse,
+        "primary" => ArtifactRefOrDefinition::<V, PrimaryArtifactRelation>::parse,
+        "dependencies" => ListRelator::<ArtifactRefOrDefinition<V, DependencyArtifactRelation>>::parse,
     };
 }
 
@@ -119,38 +122,48 @@ where
     }
 }
 
-impl<E, R, V> toto_parser::EntityParser<E, R> for ArtifactRefOrDefinition<V>
+impl<E, R, V, Rel> toto_parser::ValueRelationParser<E, R, usize> for ArtifactRefOrDefinition<V, Rel>
 where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
     V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+    Rel: Default,
+    crate::Relation: From<Rel>,
 {
     fn parse(
+        _: usize,
+        root: toto_ast::GraphHandle,
         n: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> Option<toto_ast::GraphHandle> {
-        if toto_yaml::as_string(n, ast).is_some() {
-            return Some(n);
-        }
+    ) {
+        <Self as toto_parser::RelationParser<E, R>>::parse(root, n, ast);
+    }
+}
 
-        let artifact = add_with_loc(crate::Entity::from(crate::ArtifactEntity), n, ast);
-        toto_yaml::as_map(n, ast)
-            .map(|items| ArtifactDefinition::<V>::parse_schema(artifact, items, ast))
-            .or(toto_yaml::as_string(n, ast).map(|_| ()).map(|_| {
-                FieldRef::def_ref(crate::ArtifactEntity, crate::PrimaryArtifactRelation)
-                    .link(artifact, n, ast);
-                artifact
-            }))
-            .or_else(|| {
+impl<E, R, V, Rel> toto_parser::RelationParser<E, R> for ArtifactRefOrDefinition<V, Rel>
+where
+    E: ToscaCompatibleEntity,
+    R: ToscaCompatibleRelation,
+    V: ToscaDefinitionsVersion<Entity = E, Relation = R>,
+    Rel: Default,
+    crate::Relation: From<Rel>,
+{
+    fn parse(root: toto_ast::GraphHandle, n: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>) {
+        match ast.node_weight(n).expect("node not found").as_yaml() {
+            Some(toto_yaml::Entity::Map(_)) => {
+                V::ArtifactDefinition::parse(n, ast);
+            }
+            Some(toto_yaml::Entity::Str(_)) => {
+                FieldRef::def_ref(crate::ArtifactEntity, Rel::default()).link(root, n, ast);
+            }
+            _ => {
                 add_with_loc(
                     toto_parser::ParseError::UnexpectedType("map or string"),
                     n,
                     ast,
                 );
-                None
-            });
-
-        Some(artifact)
+            }
+        };
     }
 }
 

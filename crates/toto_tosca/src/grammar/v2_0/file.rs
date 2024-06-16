@@ -27,6 +27,7 @@ where
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "imports" => List::<ImportRelation, V::ImportDefinition>::parse,
+        // todo: repositories
         "service_template" => Field::<ServiceTemplateRelation, V::ServiceTemplateDefinition>::parse,
         "node_types" => Collection::<TypeRelation, V::NodeTypeDefinition>::parse,
         "data_types" => Collection::<TypeRelation, V::DataTypeDefinition>::parse,
