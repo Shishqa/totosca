@@ -3,12 +3,7 @@ use std::{collections::HashSet, marker::PhantomData};
 use toto_parser::{add_with_loc, mandatory, ParseError, RelationParser};
 
 use crate::{
-    grammar::{
-        collection::Collection,
-        field::Field,
-        field_ref::{FieldRef, TypeRef},
-        ToscaDefinitionsVersion,
-    },
+    grammar::{collection::Collection, field::Field, field_ref::TypeRef, ToscaDefinitionsVersion},
     DefaultRelation, DefinitionRelation, DescriptionRelation, EntrySchemaRelation,
     ExternalSchemaRelation, KeySchemaRelation, MappingRelation, MetadataRelation, RequiredRelation,
     ToscaCompatibleEntity, ToscaCompatibleRelation, ValidationRelation, ValueRelation,

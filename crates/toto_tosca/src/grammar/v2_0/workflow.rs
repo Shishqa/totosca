@@ -4,10 +4,7 @@ use toto_parser::{add_with_loc, mandatory, EntityParser, ParseError, RelationPar
 
 use crate::{
     grammar::{
-        collection::Collection,
-        field::Field,
-        field_ref::{DefRef, FieldRef},
-        list::List,
+        collection::Collection, field::Field, field_ref::DefRef, list::List,
         ToscaDefinitionsVersion,
     },
     DefinitionRelation, DescriptionRelation, MetadataRelation, ToscaCompatibleEntity,

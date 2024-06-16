@@ -6,7 +6,7 @@ use crate::{
     grammar::{
         collection::Collection,
         field::Field,
-        field_ref::{FieldRef, TypeRef},
+        field_ref::TypeRef,
         list::{List, ListRelator},
         ToscaDefinitionsVersion,
     },

@@ -226,7 +226,7 @@ pub struct ValidationRelation;
 
 impl From<usize> for ValidationRelation {
     fn from(_: usize) -> Self {
-        Self::default()
+        Self
     }
 }
 
