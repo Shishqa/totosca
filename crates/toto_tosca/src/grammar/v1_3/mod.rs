@@ -73,7 +73,7 @@ where
         root: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<Self::Entity, Self::Relation>,
     ) {
-        const BUILTIN_DATA: &[(&'static str, &'static str)] = &[
+        const BUILTIN_DATA: &[(&str, &str)] = &[
             ("string", ""),
             ("integer", ""),
             ("float", ""),
@@ -142,7 +142,7 @@ mod tests {
         let doc_path = doc_path.join("../tests/tosca_1_3.yaml").unwrap();
 
         let mut parser = ToscaParser::new();
-        parser.parse(&doc_path, &mut ast);
+        parser.parse(&doc_path, &mut ast).unwrap();
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
     }

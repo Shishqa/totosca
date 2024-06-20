@@ -8,7 +8,7 @@ use petgraph::{
 };
 use toto_parser::{add_with_loc, ParseError};
 
-use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 #[derive(Default)]
 pub struct FileStorage {
