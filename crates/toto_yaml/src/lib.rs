@@ -130,7 +130,7 @@ impl YamlParser {
     pub fn parse<E, R>(
         doc_handle: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> Option<toto_ast::GraphHandle>
+    ) -> anyhow::Result<toto_ast::GraphHandle>
     where
         E: AsFileEntity + From<Entity>,
         R: From<Relation> + From<FileRelation>,
@@ -143,12 +143,7 @@ impl YamlParser {
         let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(
             doc.content.as_ref().expect("should have content"),
         );
-        if yaml.is_err() {
-            dbg!(yaml.err());
-            return None;
-        }
-
-        Some(Self::parse_node(yaml.unwrap().remove(0), doc_handle, ast))
+        Ok(Self::parse_node(yaml?.remove(0), doc_handle, ast))
     }
 
     fn parse_node<E, R>(

@@ -6,21 +6,16 @@ use petgraph::{
     visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef},
     Direction::Outgoing,
 };
-use toto_parser::EntityParser;
+use toto_parser::{add_with_loc, ParseError};
 
-use crate::{grammar::parser::ToscaGrammar, ToscaCompatibleEntity, ToscaCompatibleRelation};
+use crate::{grammar::ToscaDefinitionsVersion, ToscaCompatibleEntity, ToscaCompatibleRelation};
 
-pub struct Importer {
+#[derive(Default)]
+pub struct FileStorage {
     existing_urls: HashMap<url::Url, toto_ast::GraphHandle>,
 }
 
-impl Default for Importer {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl Importer {
+impl FileStorage {
     pub fn new() -> Self {
         Self {
             existing_urls: HashMap::new(),
@@ -31,42 +26,25 @@ impl Importer {
         &mut self,
         uri: &url::Url,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> Option<toto_ast::GraphHandle>
+    ) -> anyhow::Result<toto_ast::GraphHandle>
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
         if let Some(file_handle) = self.get_file(uri) {
-            return Some(file_handle);
+            return Ok(file_handle);
         }
 
         let mut doc = toto_yaml::FileEntity::from_url(uri.clone());
-        doc.fetch().unwrap();
+        doc.fetch()?;
 
         let doc_handle = ast.add_node(doc.into());
-        let doc_root = toto_yaml::YamlParser::parse(doc_handle, ast).unwrap();
-        if let Some(file_handle) = ToscaGrammar::parse(doc_root, ast) {
-            self.existing_urls.insert(uri.clone(), file_handle);
-            self.import_files(uri, file_handle, ast);
-            Some(file_handle)
-        } else {
-            None
-        }
+        self.existing_urls.insert(uri.clone(), doc_handle);
+        Ok(doc_handle)
     }
 
-    pub fn reimport<E, R>(&mut self, ast: &mut toto_ast::AST<E, R>)
-    where
-        E: ToscaCompatibleEntity,
-        R: ToscaCompatibleRelation,
-    {
-        let uris = self.existing_urls.keys().cloned().collect::<Vec<_>>();
-
-        ast.clear();
-        self.existing_urls.clear();
-
-        for uri in uris {
-            self.add_file(&uri, ast);
-        }
+    pub fn has_file(&self, uri: &url::Url) -> bool {
+        self.existing_urls.contains_key(uri)
     }
 
     pub fn get_files(&self) -> impl Iterator<Item = &url::Url> {
@@ -77,32 +55,40 @@ impl Importer {
         self.existing_urls.get(uri).copied()
     }
 
-    pub fn is_file_changed<E, R>(
-        &self,
-        file_handle: toto_ast::GraphHandle,
-        ast: &mut toto_ast::AST<E, R>,
-    ) -> bool
+    pub fn clear(&mut self) {
+        self.existing_urls.clear()
+    }
+}
+
+pub struct Importer;
+
+impl Importer {
+    pub fn import_all_types<E, R>(ast: &mut toto_ast::AST<E, R>)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let file = ast
-            .neighbors_directed(file_handle, Outgoing)
-            .find_map(|n| ast.node_weight(n.id()).unwrap().as_file())
-            .unwrap();
-
-        let path = file.url.to_file_path().unwrap();
-        let new_content = std::fs::read_to_string(path).ok();
-
-        file.content != new_content
+        let _ = Self::topo_iter_imports(ast)
+            .map_err(|e| {
+                add_with_loc(
+                    ParseError::Custom("circular import detected".to_string()),
+                    e,
+                    ast,
+                );
+            })
+            .map(|imports| {
+                imports.for_each(|file_handle| {
+                    Self::import_types(file_handle, ast);
+                });
+            });
     }
 
-    fn import_files<E, R>(
-        &mut self,
+    pub fn iter_imports<E, R>(
         uri: &url::Url,
         file_handle: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) where
+    ) -> impl Iterator<Item = (url::Url, toto_ast::GraphHandle)>
+    where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
@@ -111,46 +97,21 @@ impl Importer {
                 Some(crate::Relation::Import(_)) => Some(e.target()),
                 _ => None,
             })
-            .collect::<Vec<_>>()
-            .into_iter()
-            .for_each(|import_def| {
-                let import_uri = ast
-                    .edges_directed(import_def, Outgoing)
+            .filter_map(|import_def| {
+                ast.edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
                         Some(crate::Relation::ImportUrl(_)) => Some(e.target()),
                         _ => None,
                     })
                     .and_then(|u| toto_yaml::as_string(u, ast))
-                    .and_then(|u| url::Url::parse(&u.0).or(uri.join(&u.0)).ok());
-
-                if import_uri.is_none() {
-                    toto_parser::add_with_loc(
-                        toto_parser::ParseError::Custom(
-                            "profile import not yet implemented".to_string(),
-                        ),
-                        import_def,
-                        ast,
-                    );
-                    return;
-                }
-                let import_uri = import_uri.unwrap();
-
-                if let Some(imported_file) = self.add_file(&import_uri, ast) {
-                    ast.add_edge(
-                        file_handle,
-                        imported_file,
-                        crate::Relation::from(crate::ImportFileRelation).into(),
-                    );
-                    ast.add_edge(
-                        import_def,
-                        imported_file,
-                        crate::Relation::from(crate::ImportTargetRelation).into(),
-                    );
-                }
-            });
+                    .and_then(|u| url::Url::parse(&u.0).or(uri.join(&u.0)).ok())
+                    .zip(Some(import_def))
+            })
+            .collect::<Vec<_>>()
+            .into_iter()
     }
 
-    pub fn topo_iter_imports<E, R>(
+    fn topo_iter_imports<E, R>(
         ast: &toto_ast::AST<E, R>,
     ) -> Result<impl Iterator<Item = toto_ast::GraphHandle>, toto_ast::GraphHandle>
     where
@@ -169,10 +130,10 @@ impl Importer {
 
         toposort(&file_graph, None)
             .map_err(|err| err.node_id())
-            .map(|v| v.into_iter().rev())
+            .map(|v| dbg!(v.into_iter().rev()))
     }
 
-    pub fn import_types<E, R>(file_handle: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>)
+    fn import_types<E, R>(file_handle: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>)
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
@@ -189,7 +150,7 @@ impl Importer {
                         _ => None,
                     })
             })
-            .map(|(import_def, target_file)| {
+            .map(|(import_def, doc_root)| {
                 let ns = ast
                     .edges_directed(import_def, Outgoing)
                     .find_map(|e| match e.weight().as_tosca() {
@@ -199,11 +160,30 @@ impl Importer {
                     .and_then(|u| toto_yaml::as_string(u, ast).cloned())
                     .map(|u| u.0);
 
-                (target_file, ns)
+                (doc_root, ns)
             })
             .collect::<Vec<_>>()
             .into_iter()
-            .for_each(|(target_file, ns)| {
+            .for_each(|(doc_root, ns)| {
+                let Some(target_file) = ast
+                    .edges_directed(doc_root, petgraph::Direction::Incoming)
+                    .filter_map(|e| {
+                        if e.weight().as_file().is_some() {
+                            Some(e.source())
+                        } else {
+                            None
+                        }
+                    })
+                    .find(|n| {
+                        matches!(
+                            ast.node_weight(*n).unwrap().as_tosca(),
+                            Some(crate::Entity::File(_))
+                        )
+                    })
+                else {
+                    return;
+                };
+
                 ast.edges_directed(target_file, Outgoing)
                     .filter_map(|e| {
                         e.weight()

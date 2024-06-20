@@ -1,3 +1,5 @@
+use toto_parser::EntityParser;
+
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
 pub mod collection;
@@ -8,7 +10,9 @@ pub mod parser;
 pub mod v1_3;
 pub mod v2_0;
 
-pub trait ToscaDefinitionsVersion {
+pub trait ToscaDefinitionsVersion: EntityParser<Self::Entity, Self::Relation> {
+    const NAME: &'static str;
+
     type Entity: ToscaCompatibleEntity;
     type Relation: ToscaCompatibleRelation;
 
@@ -56,6 +60,11 @@ pub trait ToscaDefinitionsVersion {
 
     type FunctionDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
     type FunctionSignatureDefinition: toto_parser::EntityParser<Self::Entity, Self::Relation>;
+
+    fn add_builtins(
+        root: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<Self::Entity, Self::Relation>,
+    );
 }
 
 #[cfg(test)]

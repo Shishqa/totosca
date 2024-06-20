@@ -8,7 +8,7 @@ use lsp_types::{CompletionItemKind, Location};
 
 use lsp_types::request::Request;
 use petgraph::dot::Dot;
-use petgraph::visit::EdgeRef;
+use petgraph::visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef};
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -16,7 +16,7 @@ mod models;
 
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
-use toto_tosca::{AsToscaRelation, ImportTargetRelation};
+use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
@@ -160,11 +160,15 @@ impl Server {
     fn refresh_diag(&mut self, uri: &url::Url) -> Result<(), Box<dyn Error + Sync + Send>> {
         eprintln!("trying read: {uri:?}");
 
-        self.parser.parse(uri, &mut self.ast);
+        self.parser.parse(uri, &mut self.ast)?;
 
         let mut diagnostics = HashMap::<url::Url, Vec<lsp_types::Diagnostic>>::new();
 
-        let dot = Dot::new(&self.ast);
+        let tosca_graph = EdgeFiltered::from_fn(&self.ast, |e| e.weight().as_tosca().is_some());
+        let tosca_graph = NodeFiltered::from_fn(&tosca_graph, |n| {
+            self.ast.node_weight(n.id()).unwrap().as_tosca().is_some()
+        });
+        let dot = Dot::new(&tosca_graph);
         let mut file = File::create(".toto-ast.dot")?;
         file.write_all(format!("{:?}", dot).as_bytes())?;
 
@@ -332,11 +336,13 @@ impl Server {
     }
 
     fn goto_definition(
-        &self,
+        &mut self,
         req: &lsp_server::Request,
     ) -> Result<(), Box<dyn Error + Sync + Send>> {
         let params = from_value::<lsp_types::GotoDefinitionParams>(req.params.clone())?
             .text_document_position_params;
+
+        self.refresh_diag(&params.text_document.uri)?;
 
         eprintln!("looking for {}", params.text_document.uri);
         let file_handle = self
@@ -410,25 +416,34 @@ impl Server {
         }
         let goto_target = goto_target.unwrap();
 
-        let (target_file, target_pos) = self
-            .ast
-            .edges_directed(goto_target, Outgoing)
-            .filter_map(|e| match e.weight().as_parse_loc() {
-                Some(_) => Some(self.ast.edges_directed(e.target(), Outgoing)),
-                _ => None,
-            })
-            .flatten()
-            .find_map(|e| e.weight().as_file().map(|loc| (e.target(), loc.0)))
-            .map(|(file_handle, pos)| {
-                let file = self
-                    .ast
-                    .node_weight(file_handle)
+        let (target_file, target_pos) =
+            if let Some(target_file) = self.ast.node_weight(goto_target).unwrap().as_file() {
+                (target_file, 0)
+            } else {
+                self.ast
+                    .edges_directed(goto_target, Outgoing)
+                    .filter_map(|e| match e.weight().as_parse_loc() {
+                        Some(_) => Some(self.ast.edges_directed(e.target(), Outgoing)),
+                        _ => None,
+                    })
+                    .flatten()
+                    .find_map(|e| e.weight().as_file().map(|loc| (e.target(), loc.0)))
+                    .map(|(file_handle, pos)| {
+                        let file = self
+                            .ast
+                            .node_weight(file_handle)
+                            .unwrap()
+                            .as_file()
+                            .unwrap();
+                        (file, pos)
+                    })
                     .unwrap()
-                    .as_file()
-                    .unwrap();
-                (file, pos)
-            })
-            .unwrap();
+            };
+
+        if target_file.url.scheme() == "builtin" {
+            eprintln!("can't go to builtin spec");
+            return Ok(());
+        }
 
         let (target_l, target_c) = Self::get_lc(target_file.content.as_ref().unwrap(), target_pos);
 

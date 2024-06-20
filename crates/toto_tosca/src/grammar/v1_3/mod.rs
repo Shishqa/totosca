@@ -23,6 +23,8 @@ where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
 {
+    const NAME: &'static str = "tosca_simple_yaml_1_3";
+
     type Entity = E;
     type Relation = R;
     type FileDefinition = self::file::ToscaFileDefinition<Self>;
@@ -66,6 +68,49 @@ where
 
     type FunctionDefinition = v2_0::AnyValue;
     type FunctionSignatureDefinition = v2_0::AnyValue;
+
+    fn add_builtins(
+        root: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<Self::Entity, Self::Relation>,
+    ) {
+        const BUILTIN_DATA: &[(&'static str, &'static str)] = &[
+            ("string", ""),
+            ("integer", ""),
+            ("float", ""),
+            ("boolean", ""),
+            ("bytes", ""),
+            ("timestamp", ""),
+            ("null", ""),
+            ("scalar-unit", ""),
+            ("scalar-unit.time", ""),
+            ("scalar-unit.size", ""),
+            ("scalar-unit.frequency", ""),
+            ("scalar-unit.bitrate", ""),
+            ("version", ""),
+            ("range", ""),
+            ("list", ""),
+            ("map", ""),
+        ];
+
+        for (name, details) in BUILTIN_DATA {
+            let data_handle =
+                ast.add_node(Self::Entity::from(crate::Entity::Data(crate::DataEntity)));
+            ast.add_edge(
+                root,
+                data_handle,
+                Self::Relation::from(crate::Relation::Type(crate::TypeRelation(name.to_string()))),
+            );
+
+            let description_handle = ast.add_node(Self::Entity::from(toto_yaml::Entity::Str(
+                toto_yaml::YamlString(details.to_string()),
+            )));
+            ast.add_edge(
+                data_handle,
+                description_handle,
+                Self::Relation::from(crate::Relation::Description(crate::DescriptionRelation)),
+            );
+        }
+    }
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca1_3<E, R>
