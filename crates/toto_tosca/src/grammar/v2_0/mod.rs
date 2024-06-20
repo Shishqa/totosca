@@ -35,6 +35,7 @@ pub use relationship::*;
 pub use requirement::*;
 pub use service_template::*;
 pub use substitution_mapping::*;
+use toto_parser::add_with_loc;
 pub use value::*;
 pub use workflow::*;
 
@@ -47,6 +48,8 @@ where
     E: ToscaCompatibleEntity,
     R: ToscaCompatibleRelation,
 {
+    const NAME: &'static str = "tosca_2_0";
+
     type Entity = E;
     type Relation = R;
     type FileDefinition = self::ToscaFileDefinition<Self>;
@@ -95,6 +98,53 @@ where
 
     type FunctionDefinition = self::FunctionDefinition<Self>;
     type FunctionSignatureDefinition = self::FunctionSignatureDefinition<Self>;
+
+    fn add_builtins(
+        root: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<Self::Entity, Self::Relation>,
+    ) {
+        const BUILTIN_DATA: &[(&str, &str)] = &[
+            ("string", ""),
+            ("integer", ""),
+            ("float", ""),
+            ("boolean", ""),
+            ("bytes", ""),
+            ("nil", ""),
+            ("timestamp", ""),
+            ("scalar-unit", ""),
+            ("scalar-unit.time", ""),
+            ("version", ""),
+            ("list", ""),
+            ("map", ""),
+        ];
+
+        for (name, details) in BUILTIN_DATA {
+            let data_handle = add_with_loc(
+                Self::Entity::from(crate::Entity::Data(crate::DataEntity)),
+                root,
+                ast,
+            );
+
+            ast.add_edge(
+                root,
+                data_handle,
+                Self::Relation::from(crate::Relation::Type(crate::TypeRelation(name.to_string()))),
+            );
+
+            let description_handle = add_with_loc(
+                Self::Entity::from(toto_yaml::Entity::Str(toto_yaml::YamlString(
+                    details.to_string(),
+                ))),
+                root,
+                ast,
+            );
+            ast.add_edge(
+                data_handle,
+                description_handle,
+                Self::Relation::from(crate::Relation::Description(crate::DescriptionRelation)),
+            );
+        }
+    }
 }
 
 impl<E, R> toto_parser::EntityParser<E, R> for Tosca2_0<E, R>
@@ -128,7 +178,7 @@ mod tests {
         let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
 
         let mut parser = ToscaParser::new();
-        parser.parse(&doc_path, &mut ast);
+        parser.parse(&doc_path, &mut ast).unwrap();
 
         let tosca_graph = NodeFiltered::from_fn(&ast, |n| ast[n.id()].as_tosca().is_some());
         let tosca_graph = EdgeFiltered::from_fn(&tosca_graph, |e| e.weight().as_tosca().is_some());

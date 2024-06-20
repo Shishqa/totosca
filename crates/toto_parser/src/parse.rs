@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use petgraph::{visit::EdgeRef, Direction::Outgoing};
+use petgraph::{data::DataMap, visit::EdgeRef, Direction::Outgoing};
 use toto_yaml::{AsFileEntity, AsFileRelation, FileRelation};
 
 #[derive(Debug, Clone)]
@@ -63,10 +63,13 @@ where
 {
     let n = ast.add_node(e.into());
 
-    let (pos, file) = ast
-        .edges_directed(loc, Outgoing)
-        .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
-        .unwrap();
+    let (pos, file) = if ast.node_weight(loc).unwrap().as_file().is_some() {
+        (0, loc)
+    } else {
+        ast.edges_directed(loc, Outgoing)
+            .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))
+            .unwrap()
+    };
 
     ast.add_edge(n, loc, ParseLoc.into());
     ast.add_edge(n, file, toto_yaml::FileRelation(pos).into());
