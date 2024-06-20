@@ -1,0 +1,21 @@
+[package]
+name = "toto_cli"
+edition.workspace = true
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+graphviz-rust.workspace = true
+petgraph.workspace = true
+url.workspace = true
+derive_more.workspace = true
+clap = { version = "4.5.7", features = ["derive"] }
+toto_ast = { path = "../toto_ast" }
+toto_yaml = { path = "../toto_yaml" }
+toto_parser = { path = "../toto_parser" }
+toto_tosca = { path = "../toto_tosca" }
