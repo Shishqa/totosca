@@ -17,6 +17,7 @@ pub use data::*;
 pub use file::*;
 pub use import::*;
 pub use relationship::*;
+use toto_parser::add_with_loc;
 
 impl<E, R> ToscaDefinitionsVersion for Tosca1_3<E, R>
 where
@@ -93,17 +94,25 @@ where
         ];
 
         for (name, details) in BUILTIN_DATA {
-            let data_handle =
-                ast.add_node(Self::Entity::from(crate::Entity::Data(crate::DataEntity)));
+            let data_handle = add_with_loc(
+                Self::Entity::from(crate::Entity::Data(crate::DataEntity)),
+                root,
+                ast,
+            );
+
             ast.add_edge(
                 root,
                 data_handle,
                 Self::Relation::from(crate::Relation::Type(crate::TypeRelation(name.to_string()))),
             );
 
-            let description_handle = ast.add_node(Self::Entity::from(toto_yaml::Entity::Str(
-                toto_yaml::YamlString(details.to_string()),
-            )));
+            let description_handle = add_with_loc(
+                Self::Entity::from(toto_yaml::Entity::Str(toto_yaml::YamlString(
+                    details.to_string(),
+                ))),
+                root,
+                ast,
+            );
             ast.add_edge(
                 data_handle,
                 description_handle,

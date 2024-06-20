@@ -35,6 +35,7 @@ pub use relationship::*;
 pub use requirement::*;
 pub use service_template::*;
 pub use substitution_mapping::*;
+use toto_parser::add_with_loc;
 pub use value::*;
 pub use workflow::*;
 
@@ -118,17 +119,25 @@ where
         ];
 
         for (name, details) in BUILTIN_DATA {
-            let data_handle =
-                ast.add_node(Self::Entity::from(crate::Entity::Data(crate::DataEntity)));
+            let data_handle = add_with_loc(
+                Self::Entity::from(crate::Entity::Data(crate::DataEntity)),
+                root,
+                ast,
+            );
+
             ast.add_edge(
                 root,
                 data_handle,
                 Self::Relation::from(crate::Relation::Type(crate::TypeRelation(name.to_string()))),
             );
 
-            let description_handle = ast.add_node(Self::Entity::from(toto_yaml::Entity::Str(
-                toto_yaml::YamlString(details.to_string()),
-            )));
+            let description_handle = add_with_loc(
+                Self::Entity::from(toto_yaml::Entity::Str(toto_yaml::YamlString(
+                    details.to_string(),
+                ))),
+                root,
+                ast,
+            );
             ast.add_edge(
                 data_handle,
                 description_handle,

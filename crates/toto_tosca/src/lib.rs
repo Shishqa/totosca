@@ -2,14 +2,12 @@ pub mod grammar;
 pub mod models;
 pub mod semantic;
 
-
-
 use anyhow::Ok;
 use grammar::{parser::ToscaGrammar, v1_3::Tosca1_3, v2_0::Tosca2_0, ToscaDefinitionsVersion};
 pub use models::*;
-use petgraph::{data::DataMap, visit::EdgeRef, Direction};
+use petgraph::{visit::EdgeRef, Direction};
 use semantic::{FileStorage, Importer, Lookup};
-use toto_parser::{add_with_loc, EntityParser, ParseError};
+use toto_parser::{add_with_loc, ParseError};
 
 #[derive(Default)]
 pub struct ToscaParser {
@@ -108,17 +106,17 @@ impl ToscaParser {
             url: url::Url::parse(format!("builtin://{}", V::NAME).as_str()).unwrap(),
             content: None,
         };
-        let builtin_handle = ast.add_node(doc.into());
-        let builtin_file_handle = ast.add_node(crate::Entity::File(crate::FileEntity).into());
+        let builtin_root = ast.add_node(doc.into());
+        let builtin_handle = ast.add_node(crate::Entity::File(crate::FileEntity).into());
         ast.add_edge(
-            builtin_file_handle,
             builtin_handle,
+            builtin_root,
             toto_yaml::FileRelation(0).into(),
         );
 
-        V::add_builtins(builtin_file_handle, ast);
+        V::add_builtins(builtin_handle, ast);
 
-        self.parse_file_versioned::<E, R, V>(uri, yaml_root, builtin_file_handle, ast)
+        self.parse_file_versioned::<E, R, V>(uri, yaml_root, builtin_root, builtin_handle, ast)
     }
 
     fn find_file<E, R>(
@@ -149,6 +147,7 @@ impl ToscaParser {
         &mut self,
         uri: &url::Url,
         yaml_root: toto_ast::GraphHandle,
+        builtin_root: toto_ast::GraphHandle,
         builtin_handle: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle>
@@ -159,10 +158,22 @@ impl ToscaParser {
     {
         let file_handle = V::parse(yaml_root, ast)?;
 
+        let import_entity = ast.add_node(crate::Entity::from(crate::ImportEntity).into());
+
+        ast.add_edge(
+            file_handle,
+            import_entity,
+            crate::Relation::from(crate::ImportRelation(1000000)).into(),
+        );
         ast.add_edge(
             file_handle,
             builtin_handle,
             crate::Relation::from(crate::ImportFileRelation).into(),
+        );
+        ast.add_edge(
+            import_entity,
+            builtin_root,
+            crate::Relation::from(crate::ImportTargetRelation).into(),
         );
 
         for (import_uri, import_def) in Importer::iter_imports(uri, file_handle, ast) {
@@ -224,9 +235,13 @@ impl ToscaParser {
                 continue;
             }
 
-            if let Some(target_handle) =
-                self.parse_file_versioned::<E, R, V>(&import_uri, yaml_root, builtin_handle, ast)
-            {
+            if let Some(target_handle) = self.parse_file_versioned::<E, R, V>(
+                &import_uri,
+                yaml_root,
+                builtin_root,
+                builtin_handle,
+                ast,
+            ) {
                 ast.add_edge(
                     file_handle,
                     target_handle,

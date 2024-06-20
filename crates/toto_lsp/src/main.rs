@@ -164,11 +164,11 @@ impl Server {
 
         let mut diagnostics = HashMap::<url::Url, Vec<lsp_types::Diagnostic>>::new();
 
-        let tosca_graph = EdgeFiltered::from_fn(&self.ast, |e| e.weight().as_tosca().is_some());
-        let tosca_graph = NodeFiltered::from_fn(&tosca_graph, |n| {
-            self.ast.node_weight(n.id()).unwrap().as_tosca().is_some()
-        });
-        let dot = Dot::new(&tosca_graph);
+        // let tosca_graph = EdgeFiltered::from_fn(&self.ast, |e| e.weight().as_tosca().is_some());
+        // let tosca_graph = NodeFiltered::from_fn(&tosca_graph, |n| {
+        //     self.ast.node_weight(n.id()).unwrap().as_tosca().is_some()
+        // });
+        let dot = Dot::new(&self.ast);
         let mut file = File::create(".toto-ast.dot")?;
         file.write_all(format!("{:?}", dot).as_bytes())?;
 
