@@ -6,7 +6,7 @@ use anyhow::Ok;
 use grammar::{parser::ToscaGrammar, v1_3::Tosca1_3, v2_0::Tosca2_0, ToscaDefinitionsVersion};
 pub use models::*;
 use petgraph::{visit::EdgeRef, Direction};
-use semantic::{FileStorage, Importer, Lookup};
+use semantic::{Derive, FileStorage, Importer, Lookup};
 use toto_parser::{add_with_loc, ParseError};
 
 #[derive(Default)]
@@ -41,6 +41,7 @@ impl ToscaParser {
 
         Importer::import_all_types(ast);
         Lookup::lookup(ast);
+        Derive::inherit_all_definitions(ast);
 
         Ok(doc_root)
     }

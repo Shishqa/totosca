@@ -7,8 +7,9 @@ use lsp_types::notification::Notification;
 use lsp_types::{CompletionItemKind, Location};
 
 use lsp_types::request::Request;
+use petgraph::data::DataMap;
 use petgraph::dot::Dot;
-use petgraph::visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef};
+use petgraph::visit::{EdgeFiltered, EdgeRef, IntoEdgesDirected, NodeFiltered, NodeRef};
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -17,7 +18,7 @@ mod models;
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
 use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
-use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
+use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity, AsYamlRelation};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
@@ -164,11 +165,23 @@ impl Server {
 
         let mut diagnostics = HashMap::<url::Url, Vec<lsp_types::Diagnostic>>::new();
 
-        // let tosca_graph = EdgeFiltered::from_fn(&self.ast, |e| e.weight().as_tosca().is_some());
-        // let tosca_graph = NodeFiltered::from_fn(&tosca_graph, |n| {
-        //     self.ast.node_weight(n.id()).unwrap().as_tosca().is_some()
-        // });
-        let dot = Dot::new(&self.ast);
+        let tosca_graph = EdgeFiltered::from_fn(&self.ast, |e| {
+            matches!(
+                e.weight().as_tosca(),
+                Some(
+                    toto_tosca::Relation::Definition(_)
+                        | toto_tosca::Relation::DerivedFrom(_)
+                        | toto_tosca::Relation::HasType(_)
+                        | toto_tosca::Relation::Assignment(_)
+                        | toto_tosca::Relation::RefinedFrom(_)
+                        | toto_tosca::Relation::DefinedBy(_)
+                )
+            )
+        });
+        let tosca_graph = NodeFiltered::from_fn(&tosca_graph, |n| {
+            self.ast.node_weight(n.id()).unwrap().as_tosca().is_some()
+        });
+        let dot = Dot::new(&tosca_graph);
         let mut file = File::create(".toto-ast.dot")?;
         file.write_all(format!("{:?}", dot).as_bytes())?;
 
@@ -365,7 +378,7 @@ impl Server {
         );
         dbg!(params.position.line, params.position.character, params_pos);
 
-        let semantic_token = self
+        let Some((semantic_token, semantic_rel)) = self
             .ast
             .edges_directed(file_handle, Incoming)
             .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
@@ -391,30 +404,26 @@ impl Server {
                     Some((e.source(), toto_tosca::Relation::from(ImportTargetRelation)))
                 }
                 _ => None,
-            });
-
-        if semantic_token.is_none() {
+            })
+        else {
             eprintln!("can't go to definition (no semantic) {}", params_pos);
             return Ok(());
-        }
-        let semantic_token = semantic_token.unwrap();
+        };
 
-        let goto_target = self
+        let Some(goto_target) = self
             .ast
-            .edges_directed(semantic_token.0, Outgoing)
+            .edges_directed(semantic_token, Outgoing)
             .find_map(|e| {
-                if e.weight().as_tosca() == Some(&semantic_token.1) {
+                if e.weight().as_tosca() == Some(&semantic_rel) {
                     Some(e.target())
                 } else {
                     None
                 }
-            });
-
-        if goto_target.is_none() {
+            })
+        else {
             eprintln!("can't go to definition (no target)");
             return Ok(());
-        }
-        let goto_target = goto_target.unwrap();
+        };
 
         let (target_file, target_pos) =
             if let Some(target_file) = self.ast.node_weight(goto_target).unwrap().as_file() {

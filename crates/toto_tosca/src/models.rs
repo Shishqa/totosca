@@ -264,6 +264,12 @@ pub struct SubstitutesTypeRelation;
 pub struct DerivedFromRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RefinedFromRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct DefinedByRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct MimeTypeRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone, From)]
@@ -431,6 +437,8 @@ pub enum Relation {
 
     HasType(HasTypeRelation),
     DerivedFrom(DerivedFromRelation),
+    RefinedFrom(RefinedFromRelation),
+    DefinedBy(DefinedByRelation),
     SubstitutesType(SubstitutesTypeRelation),
 
     MimeType(MimeTypeRelation),
