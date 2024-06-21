@@ -68,7 +68,7 @@ impl Derive {
         dbg!(ast.node_weight(def_handle));
         dbg!(ast
             .edges_directed(def_handle, Incoming)
-            .map(|e| e.weight().clone())
+            .map(|e| e.weight())
             .collect::<Vec<_>>());
 
         let Some((_inherit_kind, parent_handle)) = ast
@@ -90,11 +90,10 @@ impl Derive {
                 Some(crate::Relation::Definition(_)) => Some((
                     (
                         e.weight().as_tosca().unwrap().clone(),
-                        ast.node_weight(e.target())
+                        *ast.node_weight(e.target())
                             .unwrap()
                             .as_tosca()
-                            .unwrap()
-                            .clone(),
+                            .unwrap(),
                     ),
                     e.target(),
                 )),
@@ -112,11 +111,10 @@ impl Derive {
                     Some((
                         (
                             e.weight().as_tosca().unwrap().clone(),
-                            ast.node_weight(e.target())
+                            *ast.node_weight(e.target())
                                 .unwrap()
                                 .as_tosca()
-                                .unwrap()
-                                .clone(),
+                                .unwrap(),
                         ),
                         e.target(),
                     ))
