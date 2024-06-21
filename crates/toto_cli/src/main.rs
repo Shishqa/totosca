@@ -1,29 +1,39 @@
 use std::{env, process::exit};
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
+use colored::Colorize;
 
 mod models;
-use models::*;
 use toto_parser::{get_errors, report_error};
 use toto_tosca::ToscaParser;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Args {
-    path: String,
+    #[clap(subcommand)]
+    command: Command,
+}
+
+#[derive(Subcommand, Debug)]
+#[command(version, about, long_about = None)]
+enum Command {
+    Check { path: String },
 }
 
 fn main() {
     let args = Args::parse();
 
-    let mut ast = toto_ast::AST::<Entity, Relation>::new();
+    match args.command {
+        Command::Check { path } => check(path),
+    }
+}
+
+fn check(path: String) {
+    let mut ast = toto_ast::AST::<models::Entity, models::Relation>::new();
 
     let doc_path = "file://".to_string() + env::current_dir().unwrap().to_str().unwrap() + "/";
     let doc_path = url::Url::parse(&doc_path).unwrap();
-    let doc_path = doc_path
-        .join(&args.path)
-        .or(url::Url::parse(&args.path))
-        .unwrap();
+    let doc_path = doc_path.join(&path).or(url::Url::parse(&path)).unwrap();
 
     let mut parser = ToscaParser::new();
     parser.parse(&doc_path, &mut ast).unwrap();
@@ -34,6 +44,10 @@ fn main() {
     errors
         .into_iter()
         .for_each(|(what, loc)| report_error(what, loc, &ast));
+
+    if !has_errors {
+        println!("{}", "valid!".green());
+    }
 
     exit(if has_errors { 1 } else { 0 });
 }
