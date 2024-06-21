@@ -130,7 +130,7 @@ impl Importer {
 
         toposort(&file_graph, None)
             .map_err(|err| err.node_id())
-            .map(|v| dbg!(v.into_iter().rev()))
+            .map(|v| v.into_iter().rev())
     }
 
     fn import_types<E, R>(file_handle: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>)

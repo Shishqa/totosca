@@ -157,7 +157,6 @@ impl Server {
             .take(lineno as usize)
             .fold(0, |acc, l| acc + l.len());
 
-        dbg!(base, charno);
         base + charno as usize
     }
 
@@ -298,7 +297,6 @@ impl Server {
             )
             .filter_map(|(pos, len, source)| {
                 if pos <= params_pos && params_pos <= pos + len {
-                    dbg!("GOTCHA");
                     Some(self.ast.edges_directed(source, Incoming))
                 } else {
                     None
@@ -379,7 +377,6 @@ impl Server {
             params.position.line,
             params.position.character,
         );
-        dbg!(params.position.line, params.position.character, params_pos);
 
         let Some((semantic_token, semantic_rel)) = self
             .ast

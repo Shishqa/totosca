@@ -19,7 +19,6 @@ impl FileEntity {
 
     pub fn fetch(&mut self) -> anyhow::Result<()> {
         let path = self.url.to_file_path();
-        dbg!("fetching", &path);
         if path.is_err() {
             return Err(anyhow!("only local paths are supported"));
         }
@@ -280,10 +279,6 @@ mod tests {
     extern crate derive_more;
     use derive_more::{From, TryInto};
 
-    use std::mem::size_of;
-
-    use petgraph::dot::Dot;
-
     use crate::{AsFileEntity, FileEntity, FileRelation, YamlParser};
 
     #[derive(Debug, From, TryInto)]
@@ -317,15 +312,10 @@ mod tests {
         let doc_path = url::Url::parse(&doc_path).unwrap();
         let doc_path = doc_path.join("../tests/tosca_2_0.yaml").unwrap();
 
-        dbg!(&doc_path);
-
         let mut doc = FileEntity::from_url(doc_path);
         doc.fetch().unwrap();
         let doc_handle = ast.add_node(doc.into());
 
         YamlParser::parse(doc_handle, &mut ast).unwrap();
-
-        dbg!(size_of::<Entity>() * ast.node_count() + size_of::<Relation>() * ast.edge_count());
-        dbg!(Dot::new(&ast));
     }
 }
