@@ -19,8 +19,9 @@ petgraph.workspace = true
 url.workspace = true
 derive_more.workspace = true
 clap = { version = "4.5.7", features = ["derive"] }
+colored = "2.1.0"
 toto_ast = { path = "../toto_ast" }
 toto_yaml = { path = "../toto_yaml" }
 toto_parser = { path = "../toto_parser" }
 toto_tosca = { path = "../toto_tosca" }
-colored = "2.1.0"
+toto_lsp = { path = "../toto_lsp" }
