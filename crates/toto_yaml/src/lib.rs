@@ -274,6 +274,29 @@ where
         .and_then(|yaml_node| yaml_node.try_into().ok())
 }
 
+pub fn get_lc(doc: &str, offset: usize) -> (u32, u32) {
+    if offset == 0 {
+        return (0, 0);
+    }
+
+    let linebreaks = doc[0..offset]
+        .char_indices()
+        .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
+        .collect::<Vec<_>>();
+    let lineno = linebreaks.len();
+    let charno = offset - linebreaks.iter().next_back().copied().unwrap_or_default() - 1;
+    (lineno as u32, charno as u32)
+}
+
+pub fn from_lc(doc: &str, lineno: u32, charno: u32) -> usize {
+    let base = doc
+        .split_inclusive('\n')
+        .take(lineno as usize)
+        .fold(0, |acc, l| acc + l.len());
+
+    base + charno as usize
+}
+
 #[cfg(test)]
 mod tests {
     extern crate derive_more;

@@ -17,7 +17,7 @@ mod models;
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
 use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
-use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
+use toto_yaml::{from_lc, AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
@@ -137,29 +137,6 @@ impl Server {
         Ok(())
     }
 
-    fn get_lc(doc: &str, offset: usize) -> (u32, u32) {
-        if offset == 0 {
-            return (0, 0);
-        }
-
-        let linebreaks = doc[0..offset]
-            .char_indices()
-            .filter_map(|c| if c.1 == '\n' { Some(c.0) } else { None })
-            .collect::<Vec<_>>();
-        let lineno = linebreaks.len();
-        let charno = offset - linebreaks.iter().next_back().copied().unwrap_or_default() - 1;
-        (lineno as u32, charno as u32)
-    }
-
-    fn from_lc(doc: &str, lineno: u32, charno: u32) -> usize {
-        let base = doc
-            .split_inclusive('\n')
-            .take(lineno as usize)
-            .fold(0, |acc, l| acc + l.len());
-
-        base + charno as usize
-    }
-
     fn refresh_diag(&mut self, uri: &url::Url) -> Result<(), Box<dyn Error + Sync + Send>> {
         eprintln!("trying read: {uri:?}");
 
@@ -197,8 +174,10 @@ impl Server {
 
             let doc = self.ast[file].as_file().unwrap();
 
-            let (lineno_start, charno_start) = Self::get_lc(doc.content.as_ref().unwrap(), pos);
-            let (lineno_end, charno_end) = Self::get_lc(doc.content.as_ref().unwrap(), pos + len);
+            let (lineno_start, charno_start) =
+                toto_yaml::get_lc(doc.content.as_ref().unwrap(), pos);
+            let (lineno_end, charno_end) =
+                toto_yaml::get_lc(doc.content.as_ref().unwrap(), pos + len);
 
             if !diagnostics.contains_key(&doc.url) {
                 diagnostics.insert(doc.url.clone(), vec![]);
@@ -272,7 +251,7 @@ impl Server {
             .find(|n| matches!(self.ast.node_weight(*n).unwrap().as_file(), Some(f) if f.url == params.text_document.uri))
             .unwrap();
 
-        let params_pos = Self::from_lc(
+        let params_pos = toto_yaml::from_lc(
             self.ast
                 .node_weight(file_handle)
                 .unwrap()
@@ -365,7 +344,7 @@ impl Server {
             .find(|n| matches!(self.ast.node_weight(*n).unwrap().as_file(), Some(f) if f.url == params.text_document.uri))
             .unwrap();
 
-        let params_pos = Self::from_lc(
+        let params_pos = toto_yaml::from_lc(
             self.ast
                 .node_weight(file_handle)
                 .unwrap()
@@ -454,7 +433,8 @@ impl Server {
             return Ok(());
         }
 
-        let (target_l, target_c) = Self::get_lc(target_file.content.as_ref().unwrap(), target_pos);
+        let (target_l, target_c) =
+            toto_yaml::get_lc(target_file.content.as_ref().unwrap(), target_pos);
 
         let response = lsp_types::GotoDefinitionResponse::from(Location::new(
             target_file.url.clone(),
