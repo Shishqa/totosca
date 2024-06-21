@@ -7,9 +7,8 @@ use lsp_types::notification::Notification;
 use lsp_types::{CompletionItemKind, Location};
 
 use lsp_types::request::Request;
-use petgraph::data::DataMap;
 use petgraph::dot::Dot;
-use petgraph::visit::{EdgeFiltered, EdgeRef, IntoEdgesDirected, NodeFiltered, NodeRef};
+use petgraph::visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef};
 use petgraph::Direction::{Incoming, Outgoing};
 use serde_json::from_value;
 
@@ -18,7 +17,7 @@ mod models;
 use models::*;
 use toto_parser::{get_errors, get_yaml_len, AsParseError, AsParseLoc};
 use toto_tosca::{AsToscaEntity, AsToscaRelation, ImportTargetRelation};
-use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity, AsYamlRelation};
+use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
 fn main() -> Result<(), Box<dyn Error + Sync + Send>> {
     // Note that  we must have our logging only write out to stderr.
