@@ -63,6 +63,6 @@ where
         Some(toto_yaml::Entity::Int(n)) => (n.0.checked_ilog10().unwrap_or(0) + 1) as usize,
         Some(toto_yaml::Entity::Float(n)) => n.0.to_string().chars().count(),
         Some(toto_yaml::Entity::Str(s)) => s.0.len(),
-        _ => 1_usize,
+        _ => 0_usize,
     }
 }
