@@ -59,11 +59,7 @@ impl ToscaParser {
 
         let yaml_root = toto_yaml::YamlParser::parse(doc_root, ast);
         if let Err(err) = yaml_root {
-            toto_parser::add_with_loc(
-                toto_parser::ParseError::Custom(err.to_string()),
-                doc_root,
-                ast,
-            );
+            Self::report_yaml_error(err.to_string(), doc_root, ast);
             return Ok(doc_root);
         }
         let yaml_root = yaml_root.unwrap();
@@ -212,11 +208,7 @@ impl ToscaParser {
 
             let yaml_root = toto_yaml::YamlParser::parse(doc_root, ast);
             if let Err(err) = yaml_root {
-                toto_parser::add_with_loc(
-                    toto_parser::ParseError::Custom(err.to_string()),
-                    doc_root,
-                    ast,
-                );
+                Self::report_yaml_error(err.to_string(), doc_root, ast);
                 continue;
             }
             let yaml_root = yaml_root.unwrap();
@@ -252,5 +244,44 @@ impl ToscaParser {
         }
 
         Some(file_handle)
+    }
+
+    fn report_yaml_error<E, R>(
+        err: String,
+        doc_root: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let doc = ast[doc_root].as_file().unwrap();
+
+        let err_lines = err.splitn(4, "\n").collect::<Vec<_>>();
+        let err_pos = err_lines
+            .iter()
+            .nth(2)
+            .and_then(|s| {
+                s.split_once(":")
+                    .map(|s| (s.0.parse::<u32>().unwrap(), s.1.parse::<u32>().unwrap()))
+            })
+            .map(|(lineno, charno)| {
+                toto_yaml::from_lc(doc.content.as_ref().unwrap().as_str(), lineno, charno)
+            })
+            .unwrap_or_default();
+
+        let err_handle = ast.add_node(
+            toto_parser::ParseError::Custom(
+                err_lines
+                    .first()
+                    .map(|e| e.strip_suffix(": ").unwrap_or(e).to_string())
+                    .unwrap_or(err),
+            )
+            .into(),
+        );
+        ast.add_edge(
+            err_handle,
+            doc_root,
+            toto_yaml::FileRelation(err_pos).into(),
+        );
     }
 }
