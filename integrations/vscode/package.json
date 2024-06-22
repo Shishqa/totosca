@@ -1,0 +1,149 @@
+{
+    "name": "totosca",
+    "displayName": "Totosca",
+    "version": "0.0.1",
+    "description": "your TOSCA companion",
+    "publisher": "shishqa",
+    "private": true,
+    "preview": true,
+    "author": {
+        "name": "shishqa",
+        "email": "shishqa.main@gmail.com",
+        "url": "https://github.com/Shishqa/Shishqa"
+    },
+    "license": "SEE LICENSE IN LICENSE",
+    "homepage": "https://github.com/Shishqa/totosca/blob/master/README.md",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Shishqa/totosca"
+    },
+    "bugs": {
+        "url": "https://github.com/Shishqa/totosca/issues",
+        "email": "shishqa.main@gmail.com"
+    },
+    "keywords": [
+        "tosca",
+        "language server",
+        "infrastructure as code",
+        "yaml"
+    ],
+    "categories": [
+        "Other"
+    ],
+    "main": "./out/src/extension.js",
+    "icon": "assets/logo.png",
+    "engines": {
+        "vscode": "^1.86.0"
+    },
+    "badges": [
+        {
+            "url": "https://img.shields.io/badge/PRs-welcome-brightgreen.svg",
+            "description": "PRs Welcome",
+            "href": "https://github.com/Shishqa/totosca/fork"
+        }
+    ],
+    "activationEvents": [
+      "onLanguage:yaml"
+    ],
+    "contributes": {
+      "languages": [
+        {
+          "id": "yaml.tosca",
+          "aliases": [
+            "TOSCA"
+          ],
+          "extensions": [
+            ".yml",
+            ".yaml"
+          ],
+          "configuration": "./language-configuration.json"
+        }
+      ],
+      "grammars": [
+        {
+          "language": "yaml.tosca",
+          "scopeName": "source.yaml",
+          "path": "./syntaxes/yaml.tmLanguage.json"
+        }
+      ],
+      "configuration": {
+        "type": "object",
+        "title": "Example configuration",
+        "properties": {
+          "languageServerExample.maxNumberOfProblems": {
+            "scope": "resource",
+            "type": "number",
+            "default": 100,
+            "description": "Controls the maximum number of problems produced by the server."
+          },
+          "languageServerExample.trace.server": {
+            "scope": "window",
+            "type": "string",
+            "enum": [
+              "off",
+              "messages",
+              "verbose"
+            ],
+            "default": "off",
+            "description": "Traces the communication between VS Code and the language server."
+          }
+        }
+      }
+    },
+    "eslintConfig": {
+        "extends": "@yutengjing/eslint-config-typescript",
+        "ignorePatterns": [
+            "test-workspace"
+        ]
+    },
+    "prettier": "@yutengjing/prettier-config",
+    "lint-staged": {
+        "*.{ts,json,md}": [
+            "eslint --fix",
+            "prettier --write"
+        ]
+    },
+    "scripts": {
+        "vscode:prepublish": "pnpm esbuild:base --minify",
+        "preinstall": "npx only-allow pnpm",
+        "postinstall": "stale-dep -u",
+        "clean": "npx rimraf -rf ./out",
+        "esbuild:base": "stale-dep && tsx scripts/esbuild.ts",
+        "esbuild:watch": "pnpm esbuild:base --sourcemap --watch",
+        "esbuild:analyze": "pnpm esbuild:base --minify --metafile --analyze && esbuild-visualizer --metadata ./meta.json --open",
+        "compile:test": "pnpm clean && tsc -b ./test/tsconfig.json",
+        "lint": "eslint src --ext ts",
+        "test": "stale-dep && pnpm compile:test && node ./out/test/runTests.js",
+        "package": "vsce package --no-dependencies",
+        "release": "npx @yutengjing/release",
+        "publish:vs-marketplace": "vsce publish --no-dependencies",
+        "publish:open-vsx": "ovsx publish --no-dependencies"
+    },
+    "dependencies": {
+      "vscode-languageclient": "^9.0.1"
+    },
+    "devDependencies": {
+        "@types/glob": "^8.1.0",
+        "@types/mocha": "^10.0.6",
+        "@types/node": "^20.11.20",
+        "@types/vscode": "^1.86.0",
+        "@vscode/test-electron": "^2.3.9",
+        "@vscode/vsce": "^2.24.0",
+        "@yutengjing/eslint-config-typescript": "^0.5.2",
+        "@yutengjing/prettier-config": "^1.1.2",
+        "@yutengjing/release": "^0.2.0",
+        "@yutengjing/tsconfig-node": "^0.0.5",
+        "esbuild": "^0.20.1",
+        "esbuild-visualizer": "^0.6.0",
+        "eslint": "^8.57.0",
+        "glob": "^10.3.10",
+        "lint-staged": "^15.2.2",
+        "mocha": "^10.3.0",
+        "ovsx": "^0.8.3",
+        "prettier": "^3.2.5",
+        "rimraf": "^5.0.5",
+        "stale-dep": "^0.7.0",
+        "tsx": "^4.7.1",
+        "typescript": "^5.3.3"
+    }
+}

@@ -5,6 +5,10 @@ version.workspace = true
 authors.workspace = true
 license.workspace = true
 
+[[bin]]
+name = "toto"
+path = "src/main.rs"
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
@@ -15,7 +19,9 @@ petgraph.workspace = true
 url.workspace = true
 derive_more.workspace = true
 clap = { version = "4.5.7", features = ["derive"] }
+colored = "2.1.0"
 toto_ast = { path = "../toto_ast" }
 toto_yaml = { path = "../toto_yaml" }
 toto_parser = { path = "../toto_parser" }
 toto_tosca = { path = "../toto_tosca" }
+toto_lsp = { path = "../toto_lsp" }

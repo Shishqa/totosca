@@ -162,12 +162,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use petgraph::dot::Dot;
-    use petgraph::visit::{EdgeFiltered, NodeFiltered, NodeRef};
     use toto_parser::{get_errors, report_error};
 
     use crate::grammar::tests::{Entity, Relation};
-    use crate::{AsToscaEntity, AsToscaRelation, ToscaParser};
+    use crate::ToscaParser;
 
     #[test]
     fn tosca_2_0() {
@@ -179,11 +177,6 @@ mod tests {
 
         let mut parser = ToscaParser::new();
         parser.parse(&doc_path, &mut ast).unwrap();
-
-        let tosca_graph = NodeFiltered::from_fn(&ast, |n| ast[n.id()].as_tosca().is_some());
-        let tosca_graph = EdgeFiltered::from_fn(&tosca_graph, |e| e.weight().as_tosca().is_some());
-
-        dbg!(Dot::new(&tosca_graph));
 
         get_errors(&ast).for_each(|(what, loc)| report_error(what, loc, &ast));
     }

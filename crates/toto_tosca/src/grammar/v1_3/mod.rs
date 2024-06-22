@@ -7,16 +7,22 @@ use super::{v2_0, ToscaDefinitionsVersion};
 pub struct Tosca1_3<E, R>(PhantomData<(E, R)>);
 
 pub mod artifact;
+pub mod capability;
 pub mod data;
 pub mod file;
 pub mod import;
 pub mod relationship;
+pub mod requirement;
+pub mod substitution_mapping;
 
 pub use artifact::*;
+pub use capability::*;
 pub use data::*;
 pub use file::*;
 pub use import::*;
 pub use relationship::*;
+pub use requirement::*;
+pub use substitution_mapping::*;
 use toto_parser::add_with_loc;
 
 impl<E, R> ToscaDefinitionsVersion for Tosca1_3<E, R>
@@ -49,10 +55,10 @@ where
     type WorkflowDefinition = v2_0::WorkflowDefinition<Self>;
     type WorkflowStepDefinition = v2_0::WorkflowStepDefinition<Self>;
     type WorkflowActivityDefinition = v2_0::WorkflowActivityDefinition<Self>;
-    type SubstitutionMapping = v2_0::SubstitutionMapping<Self>;
-    type CapabilityDefinition = v2_0::CapabilityDefinition<Self>;
-    type CapabilityAssignment = v2_0::CapabilityAssignment<Self>;
-    type CapabilityTypeDefinition = v2_0::CapabilityTypeDefinition<Self>;
+    type SubstitutionMapping = self::SubstitutionMapping<Self>;
+    type CapabilityDefinition = self::CapabilityDefinition<Self>;
+    type CapabilityAssignment = self::CapabilityAssignment<Self>;
+    type CapabilityTypeDefinition = self::CapabilityTypeDefinition<Self>;
     type InterfaceAssignment = v2_0::InterfaceAssignment<Self>;
     type InterfaceDefinition = v2_0::InterfaceDefinition<Self>;
     type InterfaceTypeDefinition = v2_0::InterfaceTypeDefinition<Self>;
@@ -60,8 +66,8 @@ where
     type OperationAssignment = v2_0::OperationAssignment<Self>;
     type NotificationDefinition = v2_0::NotificationDefinition<Self>;
     type NotificationAssignment = v2_0::NotificationAssignment<Self>;
-    type RequirementDefinition = v2_0::RequirementDefinition<Self>;
-    type RequirementAssignment = v2_0::RequirementAssignment<Self>;
+    type RequirementDefinition = self::RequirementDefinition<Self>;
+    type RequirementAssignment = self::RequirementAssignment<Self>;
     type RelationshipDefinition = v2_0::RelationshipDefinition<Self>;
     type RelationshipAssignment = v2_0::RelationshipAssignment<Self>;
     type RelationshipTypeDefinition = self::RelationshipTypeDefinition<Self>;

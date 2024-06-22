@@ -4,7 +4,7 @@ use petgraph::{
     algo::toposort,
     data::DataMap,
     visit::{EdgeFiltered, EdgeRef, NodeFiltered, NodeRef},
-    Direction::{Incoming, Outgoing},
+    Direction::Outgoing,
 };
 use toto_parser::{add_with_loc, ParseError};
 
@@ -57,7 +57,7 @@ impl Derive {
 
         toposort(&def_graph, None)
             .map_err(|err| err.node_id())
-            .map(|v| dbg!(v.into_iter().rev()))
+            .map(|v| v.into_iter().rev())
     }
 
     fn inherit<E, R>(def_handle: toto_ast::GraphHandle, ast: &mut toto_ast::AST<E, R>)
@@ -65,12 +65,6 @@ impl Derive {
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        dbg!(ast.node_weight(def_handle));
-        dbg!(ast
-            .edges_directed(def_handle, Incoming)
-            .map(|e| e.weight())
-            .collect::<Vec<_>>());
-
         let Some((_inherit_kind, parent_handle)) = ast
             .edges_directed(def_handle, Outgoing)
             .find_map(|e| match e.weight().as_tosca() {
@@ -80,7 +74,6 @@ impl Derive {
                 _ => None,
             })
         else {
-            dbg!("no parent");
             return;
         };
 
@@ -90,17 +83,13 @@ impl Derive {
                 Some(crate::Relation::Definition(_)) => Some((
                     (
                         e.weight().as_tosca().unwrap().clone(),
-                        *ast.node_weight(e.target())
-                            .unwrap()
-                            .as_tosca()
-                            .unwrap(),
+                        *ast.node_weight(e.target()).unwrap().as_tosca().unwrap(),
                     ),
                     e.target(),
                 )),
                 _ => None,
             })
             .collect::<HashMap<(crate::Relation, crate::Entity), toto_ast::GraphHandle>>();
-        dbg!(&parent_definitions);
 
         let child_definitions = ast
             .edges_directed(def_handle, Outgoing)
@@ -111,10 +100,7 @@ impl Derive {
                     Some((
                         (
                             e.weight().as_tosca().unwrap().clone(),
-                            *ast.node_weight(e.target())
-                                .unwrap()
-                                .as_tosca()
-                                .unwrap(),
+                            *ast.node_weight(e.target()).unwrap().as_tosca().unwrap(),
                         ),
                         e.target(),
                     ))
@@ -122,15 +108,13 @@ impl Derive {
                 _ => None,
             })
             .collect::<HashMap<(crate::Relation, crate::Entity), toto_ast::GraphHandle>>();
-        dbg!(&child_definitions);
 
         child_definitions
             .iter()
             .for_each(|((rel, ent), child_def_handle)| {
                 match rel {
                     crate::Relation::Definition(_) => {
-                        let Some(refined_def) = dbg!(parent_definitions.get(&(rel.clone(), *ent)))
-                        else {
+                        let Some(refined_def) = parent_definitions.get(&(rel.clone(), *ent)) else {
                             return;
                         };
                         // TODO: check refinement
@@ -141,10 +125,10 @@ impl Derive {
                         );
                     }
                     crate::Relation::Assignment(crate::AssignmentRelation(name)) => {
-                        let Some(assigned_def) = dbg!(parent_definitions.get(&(
+                        let Some(assigned_def) = parent_definitions.get(&(
                             crate::Relation::from(DefinitionRelation(name.clone())),
                             *ent,
-                        ))) else {
+                        )) else {
                             add_with_loc(
                                 toto_parser::ParseError::Custom(format!("unknown {:?}", ent)),
                                 *child_def_handle,
