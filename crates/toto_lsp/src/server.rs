@@ -26,7 +26,7 @@ impl Server {
     pub fn run(mut self) -> Result<(), Box<dyn Error + Sync + Send>> {
         let server_capabilities = serde_json::to_value(lsp_types::ServerCapabilities {
             text_document_sync: Some(lsp_types::TextDocumentSyncCapability::Kind(
-                lsp_types::TextDocumentSyncKind::NONE,
+                lsp_types::TextDocumentSyncKind::INCREMENTAL,
             )),
             definition_provider: Some(lsp_types::OneOf::Left(true)),
             references_provider: Some(lsp_types::OneOf::Left(true)),
@@ -81,6 +81,12 @@ impl Server {
                     match not.method.as_str() {
                         lsp_types::notification::DidOpenTextDocument::METHOD => {
                             let params: lsp_types::DidOpenTextDocumentParams =
+                                from_value(not.params)?;
+                            self.refresh_diag(&params.text_document.uri)?;
+                            continue;
+                        }
+                        lsp_types::notification::DidChangeTextDocument::METHOD => {
+                            let params: lsp_types::DidChangeTextDocumentParams =
                                 from_value(not.params)?;
                             self.refresh_diag(&params.text_document.uri)?;
                             continue;
