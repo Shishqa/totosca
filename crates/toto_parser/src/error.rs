@@ -44,7 +44,7 @@ pub fn report_error<E, R>(
 
     Report::build(ReportKind::Error, file.url.as_str(), pos)
         .with_label(
-            Label::new((file.url.as_str(), pos..pos + len)).with_message(format!("{:?}", err)),
+            Label::new((file.url.as_str(), pos..pos + len)).with_message(format!("{}", err)),
         )
         .finish()
         .eprint((

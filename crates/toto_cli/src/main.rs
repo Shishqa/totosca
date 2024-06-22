@@ -61,7 +61,7 @@ fn check(path: String) -> Result<(), Box<dyn Error + Send + Sync>> {
     if !has_errors {
         Ok(())
     } else {
-        Err("".into())
+        Err("validation failed".into())
     }
 }
 

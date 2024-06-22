@@ -50,16 +50,7 @@ pub(crate) fn get_diagnostics(
                 None,
                 None,
                 None,
-                format!(
-                    "{:?} [{},{}] [({},{}),({},{})]",
-                    ast.node_weight(what).unwrap().as_parse().unwrap(),
-                    pos,
-                    pos + len,
-                    lineno_start,
-                    charno_start,
-                    lineno_end,
-                    charno_end,
-                ),
+                format!("{}", ast.node_weight(what).unwrap().as_parse().unwrap()),
                 None,
                 None,
             ));

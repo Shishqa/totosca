@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use petgraph::{data::DataMap, visit::EdgeRef, Direction::Outgoing};
 use toto_yaml::{AsFileEntity, AsFileRelation, FileRelation};
@@ -9,6 +9,17 @@ pub enum ParseError {
     MissingField(&'static str),
     UnexpectedType(&'static str),
     Custom(String),
+}
+
+impl Display for ParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self {
+            &Self::Custom(err) => f.write_str(&err),
+            &Self::MissingField(f_name) => f.write_fmt(format_args!("missing field: {}", f_name)),
+            &Self::UnknownField(_) => f.write_str("unsupported field"),
+            &Self::UnexpectedType(t_name) => f.write_fmt(format_args!("expected {}", t_name)),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
