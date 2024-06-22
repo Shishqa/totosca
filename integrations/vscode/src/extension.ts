@@ -1,49 +1,44 @@
-import * as path from 'path';
-import { workspace, ExtensionContext } from 'vscode';
+import type { TextDocument, ExtensionContext } from 'vscode';
+import { workspace, languages } from 'vscode';
+import type { LanguageClientOptions, ServerOptions } from 'vscode-languageclient/node';
+import { LanguageClient, MessageStrategy } from 'vscode-languageclient/node';
 
-import {
-  LanguageClient,
-  LanguageClientOptions,
-  ServerOptions,
-  TransportKind
-} from 'vscode-languageclient/node';
+const tosca_extension = 'yaml.tosca';
 
 let client: LanguageClient;
 
 export function activate(context: ExtensionContext) {
-  // If the extension is launched in debug mode then the debug server options are used
-  // Otherwise the run options are used
   const serverOptions: ServerOptions = {
     run: {
       command: 'toto',
-      args: [
-        'ls'
-      ],
+      args: ['ls'],
     },
     debug: {
       command: 'toto',
-      args: [
-        'ls'
-      ],
+      args: ['ls'],
     },
   };
 
-  // Options to control the language client
   const clientOptions: LanguageClientOptions = {
-    // Register the server for plain text documents
-    documentSelector: [{ scheme: 'file', language: 'yaml' }],
+    documentSelector: [{ scheme: 'file', language: tosca_extension }],
   };
 
-  // Create the language client and start the client.
   client = new LanguageClient(
-    'languageServerExample',
-    'Language Server Example',
+    'totosca',
+    'TOSCA language server',
     serverOptions,
     clientOptions
   );
 
-  // Start the client. This will also launch the server
+  checkAllDocumentsExtensions();
+
   client.start();
+
+  let disposable = workspace.onDidOpenTextDocument(checkExtension);
+  context.subscriptions.push(disposable);
+
+  disposable = workspace.onDidSaveTextDocument(checkExtension);
+  context.subscriptions.push(disposable);
 }
 
 export function deactivate(): Thenable<void> | undefined {
@@ -51,4 +46,19 @@ export function deactivate(): Thenable<void> | undefined {
     return undefined;
   }
   return client.stop();
+}
+
+function checkAllDocumentsExtensions() {
+  for (const textDocument of workspace.textDocuments) {
+    checkExtension(textDocument);
+  }
+}
+
+const tosca_regex = /^tosca_definitions_version: /m
+const yaml_regex = /.yaml$/
+
+function checkExtension(textDocument: TextDocument) {
+  if (yaml_regex.test(textDocument.fileName) && tosca_regex.test(textDocument.getText())) {
+    languages.setTextDocumentLanguage(textDocument, tosca_extension);
+  }
 }
