@@ -29,6 +29,7 @@ impl Server {
                 lsp_types::TextDocumentSyncKind::NONE,
             )),
             definition_provider: Some(lsp_types::OneOf::Left(true)),
+            references_provider: Some(lsp_types::OneOf::Left(true)),
             completion_provider: Some(lsp_types::CompletionOptions {
                 trigger_characters: Some(vec![": ".to_string(), "  ".to_string()]),
                 ..Default::default()
@@ -62,6 +63,10 @@ impl Server {
                         }
                         lsp_types::request::Completion::METHOD => {
                             self.completion(&req)?;
+                            continue;
+                        }
+                        lsp_types::request::References::METHOD => {
+                            self.references(&req)?;
                             continue;
                         }
                         &_ => {}
@@ -170,6 +175,40 @@ impl Server {
         let response = lsp_types::GotoDefinitionResponse::from(location);
         let response = serde_json::to_value(response)?;
 
+        let response = lsp_server::Message::Response(lsp_server::Response {
+            id: req.id.clone(),
+            result: Some(response),
+            error: None,
+        });
+
+        eprintln!("sending: {response:?}");
+        self.connection.sender.send(response)?;
+
+        Ok(())
+    }
+
+    fn references(
+        &mut self,
+        req: &lsp_server::Request,
+    ) -> Result<(), Box<dyn Error + Sync + Send>> {
+        let params =
+            from_value::<lsp_types::ReferenceParams>(req.params.clone())?.text_document_position;
+
+        self.refresh_diag(&params.text_document.uri)?;
+
+        let usages = capabilities::find_usages::find_usages(
+            &mut self.ast,
+            &params.text_document.uri,
+            params.position.line,
+            params.position.character,
+        );
+        let usages = if usages.is_empty() {
+            None
+        } else {
+            Some(usages)
+        };
+
+        let response = serde_json::to_value(usages)?;
         let response = lsp_server::Message::Response(lsp_server::Response {
             id: req.id.clone(),
             result: Some(response),
