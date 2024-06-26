@@ -11,6 +11,7 @@ pub mod notification;
 pub mod operation;
 pub mod policy;
 pub mod relationship;
+pub mod repository;
 pub mod requirement;
 pub mod service_template;
 pub mod substitution_mapping;
@@ -32,6 +33,7 @@ pub use notification::*;
 pub use operation::*;
 pub use policy::*;
 pub use relationship::*;
+pub use repository::*;
 pub use requirement::*;
 pub use service_template::*;
 pub use substitution_mapping::*;
@@ -54,6 +56,7 @@ where
     type Relation = R;
     type FileDefinition = self::ToscaFileDefinition<Self>;
     type ImportDefinition = self::ImportDefinition<Self>;
+    type RepositoryDefinition = self::RepositoryDefinition<Self>;
     type ServiceTemplateDefinition = self::ServiceTemplateDefinition<Self>;
     type SubstitutionMapping = self::SubstitutionMapping<Self>;
 

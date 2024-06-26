@@ -24,8 +24,8 @@ where
         "metadata" => Collection::<crate::MetadataRelation, v2_0::value::AnyValue>::parse,
         "description" => Field::<crate::DescriptionRelation, v2_0::value::StringValue>::parse,
         "dsl_definitions" => |_, _, _| {},
-        // todo: repositories
         "imports" => List::<crate::ImportRelation, V::ImportDefinition>::parse,
+        "repositories" => Collection::<crate::DefinitionRelation, V::RepositoryDefinition>::parse,
         "artifact_types" => Collection::<crate::TypeRelation, V::ArtifactTypeDefinition>::parse,
         "data_types" => Collection::<crate::TypeRelation, V::DataTypeDefinition>::parse,
         "capability_types" => Collection::<crate::TypeRelation, V::CapabilityTypeDefinition>::parse,

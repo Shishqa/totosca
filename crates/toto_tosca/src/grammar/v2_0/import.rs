@@ -3,9 +3,9 @@ use std::{collections::HashSet, marker::PhantomData};
 use toto_parser::{add_with_loc, RelationParser};
 
 use crate::{
-    grammar::{field::Field, ToscaDefinitionsVersion},
-    ImportNamespaceRelation, ImportProfileRelation, ImportRepositoryRelation, ImportUrlRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation,
+    grammar::{field::Field, field_ref::DefRef, ToscaDefinitionsVersion},
+    ImportNamespaceRelation, ImportProfileRelation, ImportUrlRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation,
 };
 
 use super::value::{self};
@@ -22,9 +22,8 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::ImportEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "url" => Field::<ImportUrlRelation, value::StringValue>::parse,
-
         "profile" => Field::<ImportProfileRelation, value::StringValue>::parse,
-        "repository" => Field::<ImportRepositoryRelation, value::StringValue>::parse,
+        "repository" => DefRef::<crate::FileEntity, crate::RepositoryEntity, crate::RepositoryRelation>::parse,
         "namespace" => Field::<ImportNamespaceRelation, value::StringValue>::parse,
     };
 

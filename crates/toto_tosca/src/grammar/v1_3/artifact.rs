@@ -11,8 +11,8 @@ use crate::{
         v2_0, ToscaDefinitionsVersion,
     },
     AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation, DefinitionRelation,
-    DescriptionRelation, HasFileRelation, PrimaryArtifactRelation, RepositoryRelation,
-    ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
+    DescriptionRelation, HasFileRelation, PrimaryArtifactRelation, ToscaCompatibleEntity,
+    ToscaCompatibleRelation, VersionRelation,
 };
 
 #[derive(Debug)]
@@ -31,7 +31,7 @@ where
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => TypeRef::<crate::ArtifactEntity, crate::HasTypeRelation>::parse,
         "file" => Field::<HasFileRelation, v2_0::value::StringValue>::parse,
-        "repository" => Field::<RepositoryRelation, v2_0::value::StringValue>::parse,
+        "repository" => DefRef::<crate::FileEntity, crate::RepositoryEntity, crate::RepositoryRelation>::parse,
         "description" => Field::<DescriptionRelation, v2_0::value::StringValue>::parse,
         "deploy_path" => Field::<DefinitionRelation, v2_0::value::StringValue>::parse,
         "artifact_version" => Field::<VersionRelation, v2_0::value::StringValue>::parse,
