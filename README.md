@@ -1,5 +1,7 @@
 # totosca
 
+![build and test](https://github.com/Shishqa/totosca/actions/workflows/rust.yml/badge.svg)
+
 <p align="center">
     <img src="./docs/assets/logo.png" width="128">
 </p>
