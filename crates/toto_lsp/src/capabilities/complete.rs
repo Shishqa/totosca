@@ -60,7 +60,7 @@ pub(crate) fn complete_at(
     }
     let lookuper = lookuper.unwrap();
 
-    let suggests = lookuper
+    lookuper
         .1
         .lookup_suggests(&ast, lookuper.0)
         .into_iter()
@@ -75,7 +75,5 @@ pub(crate) fn complete_at(
 
             item
         })
-        .collect::<Vec<_>>();
-
-    suggests
+        .collect::<Vec<_>>()
 }

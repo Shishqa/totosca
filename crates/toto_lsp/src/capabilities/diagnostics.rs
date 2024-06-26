@@ -18,7 +18,7 @@ pub(crate) fn get_diagnostics(
     let mut diagnostics = HashMap::<url::Url, Vec<lsp_types::Diagnostic>>::new();
 
     toto_parser::get_errors(&ast).for_each(|(what, loc)| {
-        let len = loc.map(|l| toto_parser::get_yaml_len(l, &ast)).unwrap_or(1);
+        let len = loc.map_or(1, |l| toto_parser::get_yaml_len(l, &ast));
         let (pos, file) = ast
             .edges(what)
             .find_map(|e| e.weight().as_file().map(|pos| (pos.0, e.target())))

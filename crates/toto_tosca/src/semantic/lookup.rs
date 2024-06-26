@@ -121,7 +121,7 @@ impl SimpleLookuper {
             path.push(curr_node);
         };
 
-        let target_rel = (self.what_rel)("".to_string());
+        let target_rel = (self.what_rel)(String::new());
         let lookuped = ast
             .edges_directed(root, petgraph::Direction::Outgoing)
             .filter_map(|e| {
@@ -133,7 +133,7 @@ impl SimpleLookuper {
                         let name = match rel {
                             crate::Relation::Type(type_rel) => type_rel.0.clone(),
                             crate::Relation::Definition(def_rel) => def_rel.0.clone(),
-                            _ => "".to_string(),
+                            _ => String::new(),
                         };
                         return Some((name, rel, e.target()));
                     }
