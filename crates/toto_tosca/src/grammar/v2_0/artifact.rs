@@ -13,8 +13,7 @@ use crate::{
     ArtifactEntity, AssignmentRelation, ChecksumAlgorithmRelation, ChecksumRelation,
     DefinitionRelation, DependencyArtifactRelation, DerivedFromRelation, DescriptionRelation,
     FileExtRelation, HasFileRelation, HasTypeRelation, MetadataRelation, MimeTypeRelation,
-    PrimaryArtifactRelation, RepositoryRelation, ToscaCompatibleEntity, ToscaCompatibleRelation,
-    VersionRelation,
+    PrimaryArtifactRelation, ToscaCompatibleEntity, ToscaCompatibleRelation, VersionRelation,
 };
 
 use super::value;
@@ -59,7 +58,7 @@ where
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "type" => TypeRef::<ArtifactEntity, HasTypeRelation>::parse,
         "file" => Field::<HasFileRelation, value::StringValue>::parse,
-        "repository" => Field::<RepositoryRelation, value::StringValue>::parse,
+        "repository" => DefRef::<crate::FileEntity, crate::RepositoryEntity, crate::RepositoryRelation>::parse,
         "description" => Field::<DescriptionRelation, value::StringValue>::parse,
         "metadata" => Collection::<MetadataRelation, value::AnyValue>::parse,
         "artifact_version" => Field::<VersionRelation, value::StringValue>::parse,

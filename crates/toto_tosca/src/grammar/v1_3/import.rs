@@ -3,7 +3,7 @@ use std::{collections::HashSet, marker::PhantomData};
 use toto_parser::{add_with_loc, mandatory, RelationParser};
 
 use crate::{
-    grammar::{field::Field, v2_0, ToscaDefinitionsVersion},
+    grammar::{field::Field, field_ref::DefRef, v2_0, ToscaDefinitionsVersion},
     ToscaCompatibleEntity, ToscaCompatibleRelation,
 };
 
@@ -19,7 +19,7 @@ where
     const SELF: fn() -> E = || crate::Entity::from(crate::ImportEntity).into();
     const SCHEMA: toto_parser::StaticSchemaMap<E, R> = phf::phf_map! {
         "file" => Field::<crate::ImportUrlRelation, v2_0::value::StringValue>::parse,
-        "repository" => Field::<crate::ImportRepositoryRelation, v2_0::value::StringValue>::parse,
+        "repository" => DefRef::<crate::FileEntity, crate::RepositoryEntity, crate::RepositoryRelation>::parse,
         "namespace_prefix" => Field::<crate::ImportNamespaceRelation, v2_0::value::StringValue>::parse,
     };
 

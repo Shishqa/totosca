@@ -183,6 +183,9 @@ pub struct ImportRelation(pub usize);
 pub struct ImportUrlRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
+pub struct RepositoryUrlRelation;
+
+#[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
 pub struct ImportTargetRelation;
 
 #[derive(Debug, Default, PartialEq, Eq, Hash, Clone)]
@@ -412,6 +415,8 @@ pub enum Relation {
     ImportProfile(ImportProfileRelation),
     ImportRepository(ImportRepositoryRelation),
     ImportNamespace(ImportNamespaceRelation),
+
+    RepositoryUrl(RepositoryUrlRelation),
 
     Type(TypeRelation),
     Definition(DefinitionRelation),

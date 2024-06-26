@@ -36,6 +36,7 @@ where
     type Relation = R;
     type FileDefinition = self::file::ToscaFileDefinition<Self>;
     type ImportDefinition = self::import::ImportDefinition<Self>;
+    type RepositoryDefinition = v2_0::RepositoryDefinition<Self>;
     type ServiceTemplateDefinition = v2_0::ServiceTemplateDefinition<Self>;
     type NodeTypeDefinition = v2_0::NodeTypeDefinition<Self>;
     type NodeTemplateDefinition = v2_0::NodeTemplateDefinition<Self>;
