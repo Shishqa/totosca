@@ -109,54 +109,49 @@ impl Derive {
             })
             .collect::<HashMap<(crate::Relation, crate::Entity), toto_ast::GraphHandle>>();
 
-        child_definitions
-            .iter()
-            .for_each(|((rel, ent), child_def_handle)| {
-                match rel {
-                    crate::Relation::Definition(_) => {
-                        let Some(refined_def) = parent_definitions.get(&(rel.clone(), *ent)) else {
-                            return;
-                        };
-                        // TODO: check refinement
-                        ast.add_edge(
-                            *child_def_handle,
-                            *refined_def,
-                            crate::Relation::from(crate::RefinedFromRelation).into(),
-                        );
-                    }
-                    crate::Relation::Assignment(crate::AssignmentRelation(name)) => {
-                        let Some(assigned_def) = parent_definitions.get(&(
-                            crate::Relation::from(DefinitionRelation(name.clone())),
-                            *ent,
-                        )) else {
-                            add_with_loc(
-                                toto_parser::ParseError::Custom(format!("unknown {:?}", ent)),
-                                *child_def_handle,
-                                ast,
-                            );
-                            return;
-                        };
-
-                        ast.add_edge(
-                            *child_def_handle,
-                            *assigned_def,
-                            crate::Relation::from(crate::DefinedByRelation).into(),
-                        );
-                    }
-                    _ => {}
-                }
-            });
-
-        parent_definitions
-            .iter()
-            .for_each(|((rel, ent), parent_def_handle)| match rel {
+        for ((rel, ent), child_def_handle) in child_definitions.iter() {
+            match rel {
                 crate::Relation::Definition(_) => {
-                    let None = child_definitions.get(&(rel.clone(), *ent)) else {
+                    let Some(refined_def) = parent_definitions.get(&(rel.clone(), *ent)) else {
                         return;
                     };
-                    ast.add_edge(def_handle, *parent_def_handle, rel.clone().into());
+                    // TODO: check refinement
+                    ast.add_edge(
+                        *child_def_handle,
+                        *refined_def,
+                        crate::Relation::from(crate::RefinedFromRelation).into(),
+                    );
+                }
+                crate::Relation::Assignment(crate::AssignmentRelation(name)) => {
+                    let Some(assigned_def) = parent_definitions.get(&(
+                        crate::Relation::from(DefinitionRelation(name.clone())),
+                        *ent,
+                    )) else {
+                        add_with_loc(
+                            toto_parser::ParseError::Custom(format!("unknown {:?}", ent)),
+                            *child_def_handle,
+                            ast,
+                        );
+                        return;
+                    };
+
+                    ast.add_edge(
+                        *child_def_handle,
+                        *assigned_def,
+                        crate::Relation::from(crate::DefinedByRelation).into(),
+                    );
                 }
                 _ => {}
-            });
+            }
+        }
+
+        for ((rel, ent), parent_def_handle) in parent_definitions.iter() {
+            if let crate::Relation::Definition(_) = rel {
+                let None = child_definitions.get(&(rel.clone(), *ent)) else {
+                    return;
+                };
+                ast.add_edge(def_handle, *parent_def_handle, rel.clone().into());
+            }
+        }
     }
 }

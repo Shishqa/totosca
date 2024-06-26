@@ -1,6 +1,6 @@
 use lsp_types::Location;
 use petgraph::{
-    visit::{EdgeRef, IntoEdgesDirected},
+    visit::EdgeRef,
     Direction::{Incoming, Outgoing},
 };
 use toto_parser::{get_yaml_len, AsParseLoc};
@@ -38,29 +38,20 @@ pub fn find_usages(
         .filter_map(|e| e.weight().as_file().map(|pos| (pos.0, e.source())))
         .filter_map(
             |(pos, source)| match ast.node_weight(source).unwrap().as_yaml() {
-                Some(_) => Some((pos, get_yaml_len(source, &ast), source)),
+                Some(_) => Some((pos, get_yaml_len(source, ast), source)),
                 _ => None,
             },
         )
         .filter_map(|(pos, len, source)| {
-            let Some(new_source) = ast
+            let new_source = ast
                 .edges_directed(source, Outgoing)
                 .chain(ast.edges_directed(source, Incoming))
                 .find_map(|e| match e.weight().as_yaml() {
                     Some(toto_yaml::Relation::MapValue(_)) if e.source() == source => {
                         Some(e.target())
                     }
-                    // None => match e.weight().as_tosca() {
-                    //     Some(toto_tosca::Relation::Ref(_)) if e.target() == source => {
-                    //         Some(e.source())
-                    //     }
-                    //     _ => None,
-                    // },
                     _ => None,
-                })
-            else {
-                return None;
-            };
+                })?;
 
             if pos <= params_pos && params_pos <= pos + len {
                 Some(ast.edges_directed(new_source, Incoming))

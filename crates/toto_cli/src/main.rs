@@ -36,17 +36,17 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     let args = Args::parse();
 
     match args.command {
-        Command::Check { path } => check(path),
+        Command::Check { path } => check(&path),
         Command::LS => run_ls(),
     }
 }
 
-fn check(path: String) -> Result<(), Box<dyn Error + Send + Sync>> {
+fn check(path: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
     let mut ast = toto_ast::AST::<models::Entity, models::Relation>::new();
 
     let doc_path = "file://".to_string() + env::current_dir().unwrap().to_str().unwrap() + "/";
     let doc_path = url::Url::parse(&doc_path).unwrap();
-    let doc_path = doc_path.join(&path).or(url::Url::parse(&path)).unwrap();
+    let doc_path = doc_path.join(path).or(url::Url::parse(path)).unwrap();
 
     let mut parser = ToscaParser::new();
     parser.parse(&doc_path, &mut ast).unwrap();
@@ -58,10 +58,10 @@ fn check(path: String) -> Result<(), Box<dyn Error + Send + Sync>> {
         .into_iter()
         .for_each(|(what, loc)| report_error(what, loc, &ast));
 
-    if !has_errors {
-        Ok(())
-    } else {
+    if has_errors {
         Err("validation failed".into())
+    } else {
+        Ok(())
     }
 }
 
