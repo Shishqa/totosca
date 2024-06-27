@@ -869,11 +869,23 @@ dependencies = [
  "serde",
  "serde_json",
  "toto_ast",
+ "toto_ir",
  "toto_lsp",
  "toto_parser",
  "toto_tosca",
  "toto_yaml",
  "url",
+]
+
+[[package]]
+name = "toto_ir"
+version = "0.0.1"
+dependencies = [
+ "derive_more",
+ "toto_ast",
+ "toto_parser",
+ "toto_tosca",
+ "toto_yaml",
 ]
 
 [[package]]
@@ -889,6 +901,7 @@ dependencies = [
  "serde",
  "serde_json",
  "toto_ast",
+ "toto_ir",
  "toto_parser",
  "toto_tosca",
  "toto_yaml",

@@ -4,10 +4,8 @@ use toto_parser::get_yaml_len;
 use toto_tosca::AsToscaRelation;
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity};
 
-use crate::models;
-
 pub(crate) fn complete_at(
-    ast: &mut toto_ast::AST<models::Entity, models::Relation>,
+    ast: &mut toto_ast::AST<toto_ir::Entity, toto_ir::Relation>,
     uri: &url::Url,
     lineno: u32,
     charno: u32,

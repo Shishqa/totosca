@@ -4,11 +4,9 @@ use petgraph::visit::EdgeRef;
 use toto_parser::AsParseError;
 use toto_yaml::{AsFileEntity, AsFileRelation};
 
-use crate::models;
-
 pub(crate) fn get_diagnostics(
     parser: &mut toto_tosca::ToscaParser,
-    ast: &mut toto_ast::AST<models::Entity, models::Relation>,
+    ast: &mut toto_ast::AST<toto_ir::Entity, toto_ir::Relation>,
     uri: &url::Url,
 ) -> Result<HashMap<url::Url, Vec<lsp_types::Diagnostic>>, Box<dyn Error + Sync + Send>> {
     eprintln!("trying read: {uri:?}");

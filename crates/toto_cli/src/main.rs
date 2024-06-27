@@ -2,7 +2,6 @@ use std::{env, error::Error};
 
 use clap::{Parser, Subcommand};
 
-mod models;
 use toto_parser::{get_errors, report_error};
 use toto_tosca::ToscaParser;
 
@@ -42,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
 }
 
 fn check(path: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
-    let mut ast = toto_ast::AST::<models::Entity, models::Relation>::new();
+    let mut ast = toto_ast::AST::<toto_ir::Entity, toto_ir::Relation>::new();
 
     let doc_path = "file://".to_string() + env::current_dir().unwrap().to_str().unwrap() + "/";
     let doc_path = url::Url::parse(&doc_path).unwrap();

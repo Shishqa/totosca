@@ -17,3 +17,4 @@ toto_ast = { path = "../toto_ast" }
 toto_yaml = { path = "../toto_yaml" }
 toto_parser = { path = "../toto_parser" }
 toto_tosca = { path = "../toto_tosca" }
+toto_ir = { path = "../toto_ir" }

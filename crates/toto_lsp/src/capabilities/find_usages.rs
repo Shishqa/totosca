@@ -7,10 +7,8 @@ use toto_parser::{get_yaml_len, AsParseLoc};
 use toto_tosca::{AsToscaEntity, AsToscaRelation};
 use toto_yaml::{AsFileEntity, AsFileRelation, AsYamlEntity, AsYamlRelation};
 
-use crate::models;
-
 pub fn find_usages(
-    ast: &mut toto_ast::AST<models::Entity, models::Relation>,
+    ast: &mut toto_ast::AST<toto_ir::Entity, toto_ir::Relation>,
     uri: &url::Url,
     lineno: u32,
     charno: u32,

@@ -3,12 +3,12 @@ use lsp_types::request::Request;
 use serde_json::from_value;
 use std::error::Error;
 
-use crate::{capabilities, models};
+use crate::capabilities;
 
 pub struct Server {
     connection: lsp_server::Connection,
     io_threads: lsp_server::IoThreads,
-    ast: toto_ast::AST<models::Entity, models::Relation>,
+    ast: toto_ast::AST<toto_ir::Entity, toto_ir::Relation>,
     parser: toto_tosca::ToscaParser,
 }
 
@@ -18,7 +18,7 @@ impl Server {
         Self {
             connection,
             io_threads,
-            ast: toto_ast::AST::<models::Entity, models::Relation>::new(),
+            ast: toto_ast::AST::<toto_ir::Entity, toto_ir::Relation>::new(),
             parser: toto_tosca::ToscaParser::default(),
         }
     }
