@@ -1,7 +1,7 @@
 extern crate derive_more;
 use derive_more::{From, TryInto};
 
-#[derive(Debug, From, TryInto)]
+#[derive(Debug, From, Clone, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Entity {
     File(toto_yaml::FileEntity),
@@ -10,7 +10,7 @@ pub enum Entity {
     Tosca(toto_tosca::Entity),
 }
 
-#[derive(Debug, From, TryInto)]
+#[derive(Debug, From, Clone, TryInto)]
 #[try_into(owned, ref, ref_mut)]
 pub enum Relation {
     File(toto_yaml::FileRelation),

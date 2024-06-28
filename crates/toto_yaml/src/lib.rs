@@ -7,6 +7,7 @@ use anyhow::anyhow;
 use petgraph::{data::DataMap, visit::EdgeRef};
 
 // TODO: move to a separate crate
+#[derive(Clone)]
 pub struct FileEntity {
     pub url: url::Url,
     pub content: Option<String>,
@@ -39,7 +40,7 @@ impl Debug for FileEntity {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct FileRelation(pub usize);
 
 #[derive(Debug, Clone)]

@@ -37,26 +37,35 @@ impl ToscaParser {
         ast.clear();
         self.files.clear();
 
-        let doc_root = self.parse_file(uri, ast)?;
-
-        Importer::import_all_types(ast);
-        Lookup::lookup(ast);
-        Derive::inherit_all_definitions(ast);
-
-        Ok(doc_root)
+        let doc_root = self.files.add_file(uri, ast)?;
+        self.parse_file(doc_root, ast)
     }
 
-    pub fn parse_file<E, R>(
+    pub fn parse_str<E, R>(
         &mut self,
-        uri: &url::Url,
+        source: &str,
         ast: &mut toto_ast::AST<E, R>,
     ) -> anyhow::Result<toto_ast::GraphHandle>
     where
         E: ToscaCompatibleEntity,
         R: ToscaCompatibleRelation,
     {
-        let doc_root = self.files.add_file(uri, ast)?;
+        ast.clear();
+        self.files.clear();
 
+        let doc_root = self.files.add_str_file(source, ast)?;
+        self.parse_file(doc_root, ast)
+    }
+
+    pub fn parse_file<E, R>(
+        &mut self,
+        doc_root: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> anyhow::Result<toto_ast::GraphHandle>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
         let yaml_root = toto_yaml::YamlParser::parse(doc_root, ast);
         if let Err(err) = yaml_root {
             Self::report_yaml_error(err.to_string(), doc_root, ast);
@@ -70,10 +79,10 @@ impl ToscaParser {
 
         match tosca_version.1.as_str() {
             Tosca1_3::<E, R>::NAME => {
-                self.parse_versioned::<E, R, Tosca1_3<E, R>>(uri, yaml_root, ast)
+                self.parse_versioned::<E, R, Tosca1_3<E, R>>(doc_root, yaml_root, ast)
             }
             Tosca2_0::<E, R>::NAME => {
-                self.parse_versioned::<E, R, Tosca2_0<E, R>>(uri, yaml_root, ast)
+                self.parse_versioned::<E, R, Tosca2_0<E, R>>(doc_root, yaml_root, ast)
             }
             _ => {
                 add_with_loc(
@@ -85,12 +94,16 @@ impl ToscaParser {
             }
         };
 
+        Importer::import_all_types(ast);
+        Lookup::lookup(ast);
+        Derive::inherit_all_definitions(ast);
+
         Ok(doc_root)
     }
 
     fn parse_versioned<E, R, V>(
         &mut self,
-        uri: &url::Url,
+        doc_root: toto_ast::GraphHandle,
         yaml_root: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> Option<toto_ast::GraphHandle>
@@ -113,7 +126,7 @@ impl ToscaParser {
 
         V::add_builtins(builtin_handle, ast);
 
-        self.parse_file_versioned::<E, R, V>(uri, yaml_root, builtin_root, builtin_handle, ast)
+        self.parse_file_versioned::<E, R, V>(doc_root, yaml_root, builtin_root, builtin_handle, ast)
     }
 
     fn find_file<E, R>(
@@ -142,7 +155,7 @@ impl ToscaParser {
 
     fn parse_file_versioned<E, R, V>(
         &mut self,
-        uri: &url::Url,
+        doc_root: toto_ast::GraphHandle,
         yaml_root: toto_ast::GraphHandle,
         builtin_root: toto_ast::GraphHandle,
         builtin_handle: toto_ast::GraphHandle,
@@ -172,6 +185,8 @@ impl ToscaParser {
             builtin_root,
             crate::Relation::from(crate::ImportTargetRelation).into(),
         );
+
+        let uri = &ast[doc_root].as_file().unwrap().url.clone();
 
         for (import_uri, import_def) in Importer::iter_imports(uri, file_handle, ast) {
             if let Some(handle) = self.files.get_file(&import_uri) {
@@ -229,7 +244,7 @@ impl ToscaParser {
             }
 
             if let Some(target_handle) = self.parse_file_versioned::<E, R, V>(
-                &import_uri,
+                doc_root,
                 yaml_root,
                 builtin_root,
                 builtin_handle,

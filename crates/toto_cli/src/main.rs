@@ -29,6 +29,9 @@ enum Command {
     /// real-time error checking, enhancing the efficiency and accuracy
     /// of working with TOSCA files
     LS,
+
+    /// experiment
+    Viz,
 }
 
 fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
@@ -37,6 +40,7 @@ fn main() -> Result<(), Box<dyn Error + Send + Sync>> {
     match args.command {
         Command::Check { path } => check(&path),
         Command::LS => run_ls(),
+        Command::Viz => run_viz(),
     }
 }
 
@@ -67,4 +71,9 @@ fn check(path: &str) -> Result<(), Box<dyn Error + Send + Sync>> {
 fn run_ls() -> Result<(), Box<dyn Error + Send + Sync>> {
     let server = toto_lsp::server::Server::new();
     server.run()
+}
+
+fn run_viz() -> Result<(), Box<dyn Error + Send + Sync>> {
+    toto_viz::run();
+    Ok(())
 }

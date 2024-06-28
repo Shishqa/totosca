@@ -1,4 +1,7 @@
-use petgraph::{data::DataMap, visit::EdgeRef};
+use petgraph::{
+    data::DataMap,
+    visit::{EdgeRef, IntoEdgeReferences},
+};
 use toto_parser::add_with_loc;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};

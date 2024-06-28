@@ -7,6 +7,7 @@ use petgraph::{
     Direction::Outgoing,
 };
 use toto_parser::{add_with_loc, ParseError};
+use url::Url;
 
 use crate::{ToscaCompatibleEntity, ToscaCompatibleRelation};
 
@@ -40,6 +41,24 @@ impl FileStorage {
 
         let doc_handle = ast.add_node(doc.into());
         self.existing_urls.insert(uri.clone(), doc_handle);
+        Ok(doc_handle)
+    }
+
+    pub fn add_str_file<E, R>(
+        &mut self,
+        source: &str,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> anyhow::Result<toto_ast::GraphHandle>
+    where
+        E: ToscaCompatibleEntity,
+        R: ToscaCompatibleRelation,
+    {
+        let uri = Url::parse("file://inline")?;
+        let mut doc = toto_yaml::FileEntity::from_url(uri.clone());
+        doc.content = Some(source.to_string());
+
+        let doc_handle = ast.add_node(doc.into());
+        self.existing_urls.insert(uri, doc_handle);
         Ok(doc_handle)
     }
 
