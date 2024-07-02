@@ -20,7 +20,6 @@ data_types:
 
   b:
     derived_from: a:test2
-    hah: hehe
 
   c:
     derived_from: a:test1
@@ -29,6 +28,9 @@ node_types:
 
   wrong:
     derived_from: b:base
+    properties:
+      a:
+        type: string
 
 service_template:
   node_templates:
@@ -42,4 +44,6 @@ service_template:
       type: a:b:base
 
     wrong:
-      type: a:test1
+      type: wrong
+      properties:
+        a: b
