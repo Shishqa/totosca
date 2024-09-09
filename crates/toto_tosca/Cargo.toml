@@ -10,7 +10,7 @@ serde.workspace = true
 ordered-float.workspace = true
 once_cell.workspace = true
 url.workspace = true
-yaml-peg.workspace = true
+yaml_parser.workspace = true
 derive_more.workspace = true
 toto_parser = { path = "../toto_parser" }
 toto_ast = { path = "../toto_ast" }
