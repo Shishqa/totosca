@@ -622,9 +622,5 @@ mod tests {
         let doc_handle = ast.add_node(doc.into());
 
         YamlParser::parse(doc_handle, &mut ast).unwrap();
-
-        dbg!(Dot::new(&ast));
-
-        assert!(false);
     }
 }
