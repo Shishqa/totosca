@@ -1,5 +1,6 @@
 extern crate derive_more;
 use derive_more::{From, TryInto};
+use yaml_parser::ast::AstNode;
 
 use std::fmt::Debug;
 
@@ -92,18 +93,42 @@ pub enum Relation {
     ListValue(YamlListValue),
 }
 
-impl From<&yaml_peg::NodeRc> for Entity {
-    fn from(value: &yaml_peg::NodeRc) -> Self {
-        match value.yaml() {
-            yaml_peg::Yaml::Null => Self::Null(YamlNull),
-            yaml_peg::Yaml::Str(v) => Self::Str(YamlString(v.to_string())),
-            yaml_peg::Yaml::Int(_) => Self::Int(YamlInt(value.as_int().unwrap())),
-            yaml_peg::Yaml::Bool(v) => Self::Bool(YamlBool(*v)),
-            yaml_peg::Yaml::Float(_) => Self::Float(YamlFloat(value.as_float().unwrap())),
-            yaml_peg::Yaml::Seq(_) => Self::List(YamlList),
-            yaml_peg::Yaml::Map(_) => Self::Map(YamlMap),
-            _ => Self::Null(YamlNull),
+impl From<&yaml_parser::ast::Block> for Entity {
+    fn from(value: &yaml_parser::ast::Block) -> Self {
+        if let Some(scalar) = value.block_scalar() {
+            return Self::Str(YamlString(scalar.text().unwrap().text().to_string()));
+        } else if value.block_map().is_some() {
+            return Self::Map(YamlMap);
+        } else if value.block_seq().is_some() {
+            return Self::List(YamlList);
         }
+        Self::Null(YamlNull)
+    }
+}
+
+impl From<&yaml_parser::ast::Flow> for Entity {
+    fn from(value: &yaml_parser::ast::Flow) -> Self {
+        if let Some(scalar) = value.plain_scalar() {
+            if scalar.text() == "null" {
+                return Self::Null(YamlNull);
+            } else if let Ok(b) = scalar.text().parse::<bool>() {
+                return Self::Bool(YamlBool(b));
+            } else if let Ok(f) = scalar.text().parse::<f64>() {
+                return Self::Float(YamlFloat(f));
+            } else if let Ok(i) = scalar.text().parse::<i64>() {
+                return Self::Int(YamlInt(i));
+            }
+            return Self::Str(YamlString(scalar.text().to_string()));
+        } else if let Some(scalar) = value.single_quoted_scalar() {
+            return Self::Str(YamlString(scalar.text().to_string()));
+        } else if let Some(scalar) = value.double_qouted_scalar() {
+            return Self::Str(YamlString(scalar.text().to_string()));
+        } else if value.flow_map().is_some() {
+            return Self::Map(YamlMap);
+        } else if value.flow_seq().is_some() {
+            return Self::List(YamlList);
+        }
+        Self::Null(YamlNull)
     }
 }
 
@@ -129,7 +154,7 @@ impl YamlParser {
     pub fn parse<E, R>(
         doc_handle: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
-    ) -> anyhow::Result<toto_ast::GraphHandle>
+    ) -> Result<toto_ast::GraphHandle, yaml_parser::SyntaxError>
     where
         E: AsFileEntity + From<Entity>,
         R: From<Relation> + From<FileRelation>,
@@ -139,14 +164,212 @@ impl YamlParser {
             .expect("node not found")
             .as_file()
             .expect("should be a file");
-        let yaml = yaml_peg::parse::<yaml_peg::repr::RcRepr>(
-            doc.content.as_ref().expect("should have content"),
-        );
-        Ok(Self::parse_node(yaml?.remove(0), doc_handle, ast))
+
+        let tree = yaml_parser::parse(doc.content.as_ref().expect("should have content"))?;
+        let root = yaml_parser::ast::Root::cast(tree).expect("should be a root yaml");
+        let doc = root
+            .documents()
+            .nth(0)
+            .expect("should have at least one document");
+
+        if let Some(b) = doc.block() {
+            return Ok(Self::parse_block(b, doc_handle, ast));
+        } else if let Some(f) = doc.flow() {
+            return Ok(Self::parse_flow(f, doc_handle, ast));
+        }
+
+        Ok(doc_handle)
     }
 
-    fn parse_node<E, R>(
-        n: yaml_peg::NodeRc,
+    fn create_at<E, R>(
+        ent: Entity,
+        at: &yaml_parser::SyntaxNode,
+        doc_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> toto_ast::GraphHandle
+    where
+        E: From<Entity>,
+        R: From<FileRelation>,
+    {
+        let node_handle = ast.add_node(ent.into());
+        ast.add_edge(
+            node_handle,
+            doc_handle,
+            FileRelation(usize::from(at.text_range().start())).into(),
+        );
+
+        node_handle
+    }
+
+    fn parse_flow<E, R>(
+        n: yaml_parser::ast::Flow,
+        doc_handle: toto_ast::GraphHandle,
+        ast: &mut toto_ast::AST<E, R>,
+    ) -> toto_ast::GraphHandle
+    where
+        E: From<Entity>,
+        R: From<Relation> + From<FileRelation>,
+    {
+        let node_handle = Self::create_at(Entity::from(&n), n.syntax(), doc_handle, ast);
+        match n.flow_map() {
+            Some(m) if m.entries().is_some() => {
+                for e in m.entries().unwrap().entries() {
+                    let k = e.key();
+                    let v = e.value();
+
+                    let k_handle = k
+                        .and_then(|k| {
+                            k.flow()
+                                .map(|f| Self::parse_flow(f, doc_handle, ast))
+                                .or_else(|| {
+                                    Some(Self::create_at(
+                                        Entity::Null(YamlNull),
+                                        k.syntax(),
+                                        doc_handle,
+                                        ast,
+                                    ))
+                                })
+                        })
+                        .or_else(|| {
+                            Some(Self::create_at(
+                                Entity::Null(YamlNull),
+                                e.syntax(),
+                                doc_handle,
+                                ast,
+                            ))
+                        })
+                        .unwrap();
+                    ast.add_edge(node_handle, k_handle, Relation::from(YamlMapKey).into());
+
+                    let v_handle = v
+                        .and_then(|v| {
+                            v.flow()
+                                .map(|f| Self::parse_flow(f, doc_handle, ast))
+                                .or_else(|| {
+                                    Some(Self::create_at(
+                                        Entity::Null(YamlNull),
+                                        v.syntax(),
+                                        doc_handle,
+                                        ast,
+                                    ))
+                                })
+                        })
+                        .or_else(|| {
+                            Some(Self::create_at(
+                                Entity::Null(YamlNull),
+                                e.syntax(),
+                                doc_handle,
+                                ast,
+                            ))
+                        })
+                        .unwrap();
+                    ast.add_edge(k_handle, v_handle, Relation::from(YamlMapValue).into());
+                }
+            }
+            _ => {}
+        };
+
+        match n.flow_seq() {
+            Some(s) if s.entries().is_some() => {
+                for (i, v) in s.entries().unwrap().entries().enumerate() {
+                    let v_handle = None
+                        .or_else(|| v.flow().map(|f| Self::parse_flow(f, doc_handle, ast)))
+                        .or_else(|| {
+                            v.flow_pair().map(|e| {
+                                let node_handle = ast.add_node(Entity::Map(YamlMap).into());
+                                ast.add_edge(
+                                    node_handle,
+                                    doc_handle,
+                                    FileRelation(usize::from(e.syntax().text_range().start()))
+                                        .into(),
+                                );
+
+                                let k = e.key();
+                                let v = e.value();
+
+                                let k_handle = k
+                                    .and_then(|k| {
+                                        k.flow()
+                                            .map(|f| Self::parse_flow(f, doc_handle, ast))
+                                            .or_else(|| {
+                                                Some(Self::create_at(
+                                                    Entity::Null(YamlNull),
+                                                    k.syntax(),
+                                                    doc_handle,
+                                                    ast,
+                                                ))
+                                            })
+                                    })
+                                    .or_else(|| {
+                                        Some(Self::create_at(
+                                            Entity::Null(YamlNull),
+                                            e.syntax(),
+                                            doc_handle,
+                                            ast,
+                                        ))
+                                    })
+                                    .unwrap();
+                                ast.add_edge(
+                                    node_handle,
+                                    k_handle,
+                                    Relation::from(YamlMapKey).into(),
+                                );
+
+                                let v_handle = v
+                                    .and_then(|v| {
+                                        v.flow()
+                                            .map(|f| Self::parse_flow(f, doc_handle, ast))
+                                            .or_else(|| {
+                                                Some(Self::create_at(
+                                                    Entity::Null(YamlNull),
+                                                    v.syntax(),
+                                                    doc_handle,
+                                                    ast,
+                                                ))
+                                            })
+                                    })
+                                    .or_else(|| {
+                                        Some(Self::create_at(
+                                            Entity::Null(YamlNull),
+                                            e.syntax(),
+                                            doc_handle,
+                                            ast,
+                                        ))
+                                    })
+                                    .unwrap();
+                                ast.add_edge(
+                                    k_handle,
+                                    v_handle,
+                                    Relation::from(YamlMapValue).into(),
+                                );
+
+                                node_handle
+                            })
+                        })
+                        .or_else(|| {
+                            Some(Self::create_at(
+                                Entity::Null(YamlNull),
+                                v.syntax(),
+                                doc_handle,
+                                ast,
+                            ))
+                        })
+                        .unwrap();
+                    ast.add_edge(
+                        node_handle,
+                        v_handle,
+                        Relation::from(YamlListValue(i)).into(),
+                    );
+                }
+            }
+            _ => {}
+        }
+
+        node_handle
+    }
+
+    fn parse_block<E, R>(
+        n: yaml_parser::ast::Block,
         doc_handle: toto_ast::GraphHandle,
         ast: &mut toto_ast::AST<E, R>,
     ) -> toto_ast::GraphHandle
@@ -158,30 +381,88 @@ impl YamlParser {
         ast.add_edge(
             node_handle,
             doc_handle,
-            FileRelation(n.pos() as usize).into(),
+            FileRelation(usize::from(n.syntax().text_range().start())).into(),
         );
-        match n.yaml() {
-            yaml_peg::Yaml::Map(m) => {
-                for (k, v) in m.iter() {
-                    let k_handle = Self::parse_node(k.clone(), doc_handle, ast);
-                    ast.add_edge(node_handle, k_handle, Relation::from(YamlMapKey).into());
 
-                    let v_handle = Self::parse_node(v.clone(), doc_handle, ast);
-                    ast.add_edge(k_handle, v_handle, Relation::from(YamlMapValue).into());
-                }
+        if let Some(m) = n.block_map() {
+            for e in m.entries() {
+                let k = e.key();
+                let v = e.value();
+
+                let k_handle = k
+                    .and_then(|k| {
+                        k.flow()
+                            .map(|f| Self::parse_flow(f, doc_handle, ast))
+                            .or_else(|| k.block().map(|b| Self::parse_block(b, doc_handle, ast)))
+                            .or_else(|| {
+                                Some(Self::create_at(
+                                    Entity::Null(YamlNull),
+                                    k.syntax(),
+                                    doc_handle,
+                                    ast,
+                                ))
+                            })
+                    })
+                    .or_else(|| {
+                        Some(Self::create_at(
+                            Entity::Null(YamlNull),
+                            e.syntax(),
+                            doc_handle,
+                            ast,
+                        ))
+                    })
+                    .unwrap();
+                ast.add_edge(node_handle, k_handle, Relation::from(YamlMapKey).into());
+
+                let v_handle = v
+                    .and_then(|v| {
+                        v.flow()
+                            .map(|f| Self::parse_flow(f, doc_handle, ast))
+                            .or_else(|| v.block().map(|b| Self::parse_block(b, doc_handle, ast)))
+                            .or_else(|| {
+                                Some(Self::create_at(
+                                    Entity::Null(YamlNull),
+                                    v.syntax(),
+                                    doc_handle,
+                                    ast,
+                                ))
+                            })
+                    })
+                    .or_else(|| {
+                        Some(Self::create_at(
+                            Entity::Null(YamlNull),
+                            e.syntax(),
+                            doc_handle,
+                            ast,
+                        ))
+                    })
+                    .unwrap();
+                ast.add_edge(k_handle, v_handle, Relation::from(YamlMapValue).into());
             }
-            yaml_peg::Yaml::Seq(s) => {
-                for (i, v) in s.iter().enumerate() {
-                    let v_handle = Self::parse_node(v.clone(), doc_handle, ast);
-                    ast.add_edge(
-                        node_handle,
-                        v_handle,
-                        Relation::from(YamlListValue(i)).into(),
-                    );
-                }
-            }
-            _ => {}
         }
+
+        if let Some(s) = n.block_seq() {
+            for (i, v) in s.entries().enumerate() {
+                let v_handle = None
+                    .or_else(|| v.flow().map(|f| Self::parse_flow(f, doc_handle, ast)))
+                    .or_else(|| v.block().map(|b| Self::parse_block(b, doc_handle, ast)))
+                    .or_else(|| {
+                        Some(Self::create_at(
+                            Entity::Null(YamlNull),
+                            v.syntax(),
+                            doc_handle,
+                            ast,
+                        ))
+                    })
+                    .unwrap();
+                ast.add_edge(
+                    node_handle,
+                    v_handle,
+                    Relation::from(YamlListValue(i)).into(),
+                );
+            }
+        }
+
         node_handle
     }
 }
@@ -301,6 +582,7 @@ pub fn from_lc(doc: &str, lineno: u32, charno: u32) -> usize {
 mod tests {
     extern crate derive_more;
     use derive_more::{From, TryInto};
+    use petgraph::dot::Dot;
 
     use crate::{AsFileEntity, FileEntity, FileRelation, YamlParser};
 
